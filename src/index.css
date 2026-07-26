@@ -1,0 +1,10 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Anek Bangla', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --font-serif: 'Cinzel', 'Anek Bangla', Georgia, serif;
+}
+
+body {
+  font-family: 'Anek Bangla', 'Plus Jakarta Sans', sans-serif;
+}

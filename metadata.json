@@ -1,0 +1,8 @@
+{
+  "name": "Gaan Bristy Grand Get-Together 2026",
+  "description": "Official website and ticket registration portal for Gaan Bristy Grand Get-Together 2026: Melody at Gulshan Club, Dhaka.",
+  "requestFramePermissions": [
+    "camera"
+  ],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
