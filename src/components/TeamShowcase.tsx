@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { TEAM_MEMBERS } from '../data/eventData';
-import { Crown, Shield, Users, Search, Sparkles, Star, Phone } from 'lucide-react';
+import { Crown, Shield, Users, Search, Sparkles, Star, Phone, Mic } from 'lucide-react';
 
 export default function TeamShowcase() {
   const [selectedRoleFilter, setSelectedRoleFilter] = useState<'All' | 'Captain' | 'Co-Captain' | 'Sub-Admin'>('All');
@@ -14,26 +14,24 @@ export default function TeamShowcase() {
   });
 
   const captain = TEAM_MEMBERS.find(m => m.role === 'Captain');
-  const coCaptains = TEAM_MEMBERS.filter(m => m.role === 'Co-Captain');
-  const subAdmins = TEAM_MEMBERS.filter(m => m.role === 'Sub-Admin');
 
   return (
-    <section id="team" className="py-16 bg-slate-900 text-slate-100 border-t border-amber-500/20 relative">
+    <section id="team" className="py-16 bg-[#0F0C1A] text-[#F6EFE0] border-t border-[#D4AF37]/30 relative">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-12">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-semibold mb-3">
-            <Users className="w-3.5 h-3.5 text-amber-400" />
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#7A1F3D]/60 border border-[#D4AF37]/40 text-[#F0D78C] text-xs font-semibold mb-3">
+            <Users className="w-3.5 h-3.5 text-[#D4AF37]" />
             <span>ফ্যামিলি কমিটি ও আয়োজক পরিষদ</span>
           </div>
-          <h2 className="text-3xl sm:text-4xl font-black font-serif text-white tracking-tight">
-            গান বৃষ্টি ফ্যামিলি মেম্বারস
+          <h2 className="text-3xl sm:text-5xl font-extrabold font-english-heading text-[#F0D78C] tracking-tight">
+            Gaan Bristy Family Team
           </h2>
-          <p className="text-slate-400 text-sm mt-2">
+          <p className="text-[#B3A6C9] text-sm mt-1 font-body">
             ১ জন ক্যাপ্টেন • ৫ জন কো-ক্যাপ্টেন • ৮ জন সাব-এডমিন এর নেতৃত্ব ও ভালোবাসায় গড়া আয়োজন
           </p>
-          <div className="w-20 h-1 bg-gradient-to-r from-amber-500 to-red-500 mx-auto my-4 rounded-full"></div>
+          <div className="w-24 h-1 bg-gradient-to-r from-[#D4AF37] to-[#7A1F3D] mx-auto my-4 rounded-full"></div>
         </div>
 
         {/* Filter Tabs & Search Bar */}
@@ -41,39 +39,39 @@ export default function TeamShowcase() {
           <div className="flex flex-wrap gap-2">
             <button
               onClick={() => setSelectedRoleFilter('All')}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition ${selectedRoleFilter === 'All' ? 'bg-amber-500 text-slate-950 shadow-md' : 'bg-slate-950 text-slate-300 border border-slate-800'}`}
+              className={`px-4 py-2 rounded-full text-xs font-bold transition ${selectedRoleFilter === 'All' ? 'gold-gradient-btn text-[#0F0C1A]' : 'bg-[#1C1730] text-[#B3A6C9] border border-[#D4AF37]/30 hover:text-[#F6EFE0]'}`}
             >
               সকল মেম্বার (১৪)
             </button>
             <button
               onClick={() => setSelectedRoleFilter('Captain')}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${selectedRoleFilter === 'Captain' ? 'bg-amber-500 text-slate-950 shadow-md' : 'bg-slate-950 text-slate-300 border border-slate-800'}`}
+              className={`px-4 py-2 rounded-full text-xs font-bold transition flex items-center gap-1.5 ${selectedRoleFilter === 'Captain' ? 'gold-gradient-btn text-[#0F0C1A]' : 'bg-[#1C1730] text-[#B3A6C9] border border-[#D4AF37]/30 hover:text-[#F6EFE0]'}`}
             >
-              <Crown className="w-3.5 h-3.5 text-amber-400" />
+              <Crown className="w-3.5 h-3.5 text-[#D4AF37]" />
               ক্যাপ্টেন (১)
             </button>
             <button
               onClick={() => setSelectedRoleFilter('Co-Captain')}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition ${selectedRoleFilter === 'Co-Captain' ? 'bg-amber-500 text-slate-950 shadow-md' : 'bg-slate-950 text-slate-300 border border-slate-800'}`}
+              className={`px-4 py-2 rounded-full text-xs font-bold transition ${selectedRoleFilter === 'Co-Captain' ? 'gold-gradient-btn text-[#0F0C1A]' : 'bg-[#1C1730] text-[#B3A6C9] border border-[#D4AF37]/30 hover:text-[#F6EFE0]'}`}
             >
               কো-ক্যাপ্টেন (৫)
             </button>
             <button
               onClick={() => setSelectedRoleFilter('Sub-Admin')}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition ${selectedRoleFilter === 'Sub-Admin' ? 'bg-amber-500 text-slate-950 shadow-md' : 'bg-slate-950 text-slate-300 border border-slate-800'}`}
+              className={`px-4 py-2 rounded-full text-xs font-bold transition ${selectedRoleFilter === 'Sub-Admin' ? 'gold-gradient-btn text-[#0F0C1A]' : 'bg-[#1C1730] text-[#B3A6C9] border border-[#D4AF37]/30 hover:text-[#F6EFE0]'}`}
             >
               সাব-এডমিন (৮)
             </button>
           </div>
 
           <div className="relative w-full sm:w-64">
-            <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
+            <Search className="absolute left-3 top-2.5 w-4 h-4 text-[#B3A6C9]" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="নাম বা আইডি খুঁজুন..."
-              className="w-full bg-slate-950 border border-slate-800 focus:border-amber-400 rounded-xl pl-9 pr-4 py-2 text-xs text-white outline-none transition"
+              className="w-full bg-[#1C1730] border border-[#D4AF37]/30 focus:border-[#D4AF37] rounded-full pl-9 pr-4 py-2 text-xs text-[#F6EFE0] outline-none transition"
             />
           </div>
         </div>
@@ -81,38 +79,43 @@ export default function TeamShowcase() {
         {/* Highlight Captain if 'All' or 'Captain' selected */}
         {(selectedRoleFilter === 'All' || selectedRoleFilter === 'Captain') && captain && !searchQuery && (
           <div className="mb-12">
-            <div className="max-w-2xl mx-auto bg-gradient-to-br from-slate-950 via-amber-950/20 to-slate-950 border-2 border-amber-400/80 rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden group">
-              <div className="absolute top-0 right-0 bg-amber-500 text-slate-950 font-black text-xs px-4 py-1.5 rounded-bl-2xl shadow-md flex items-center gap-1.5">
-                <Crown className="w-4 h-4 text-slate-950 fill-slate-950" />
+            <div className="max-w-2xl mx-auto bg-[#1C1730] border-2 border-[#D4AF37] rounded-3xl p-6 sm:p-8 shadow-[0_0_30px_rgba(212,175,55,0.2)] relative overflow-hidden group">
+              <div className="absolute top-0 right-0 bg-[#7A1F3D] text-[#F0D78C] font-black text-xs px-4 py-1.5 rounded-bl-2xl shadow-md flex items-center gap-1.5 border-b border-l border-[#D4AF37]/40">
+                <Crown className="w-4 h-4 text-[#F0D78C] fill-[#F0D78C]" />
                 <span>ফ্যামিলি ক্যাপ্টেন</span>
               </div>
 
               <div className="flex flex-col sm:flex-row items-center gap-6">
                 <div className="relative shrink-0">
-                  <div className="w-28 h-28 sm:w-36 sm:h-36 rounded-full border-4 border-amber-400 shadow-xl overflow-hidden">
+                  <div className="w-28 h-28 sm:w-36 sm:h-36 rounded-full border-4 border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.4)] overflow-hidden animate-pulse">
                     <img 
                       src={captain.image} 
                       alt={captain.name} 
                       className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
                     />
                   </div>
-                  <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-amber-400 text-slate-950 rounded-full p-1.5 shadow-lg">
-                    <Crown className="w-5 h-5 fill-slate-950" />
+                  <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-[#D4AF37] text-[#0F0C1A] rounded-full p-1.5 shadow-lg">
+                    <Crown className="w-5 h-5 fill-[#0F0C1A]" />
                   </div>
                 </div>
 
                 <div className="text-center sm:text-left space-y-2">
-                  <div className="inline-flex items-center gap-1 text-xs text-amber-400 font-bold">
-                    <Star className="w-3.5 h-3.5 fill-amber-400" />
+                  <div className="inline-flex items-center gap-1 text-xs text-[#F0D78C] font-bold">
+                    <Star className="w-3.5 h-3.5 fill-[#F0D78C]" />
                     <span>Gaan Bristy Family Leader</span>
                   </div>
-                  <h3 className="text-2xl font-black font-serif text-white">{captain.name}</h3>
-                  <p className="text-xs font-mono text-amber-300">{captain.starMakerId}</p>
-                  <p className="text-sm text-slate-300 leading-relaxed">{captain.bio}</p>
+                  <h3 className="text-2xl font-black font-serif text-[#F0D78C]">{captain.name}</h3>
+                  <div className="pt-0.5 pb-1 flex items-center justify-center sm:justify-start">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#0F0C1A] text-[#F0D78C] border border-[#D4AF37]/50 rounded-full text-xs font-mono shadow-sm">
+                      <Mic className="w-3.5 h-3.5 text-[#D4AF37] shrink-0" />
+                      <span>ID: {captain.starMakerId}</span>
+                    </span>
+                  </div>
+                  <p className="text-sm text-[#B3A6C9] leading-relaxed font-body">{captain.bio}</p>
                   
                   {captain.phone && (
-                    <div className="pt-2 flex items-center justify-center sm:justify-start gap-1.5 text-xs text-slate-400">
-                      <Phone className="w-3.5 h-3.5 text-amber-400" />
+                    <div className="pt-2 flex items-center justify-center sm:justify-start gap-1.5 text-xs text-[#B3A6C9]">
+                      <Phone className="w-3.5 h-3.5 text-[#D4AF37]" />
                       <span>যোগাযোগ: {captain.phone}</span>
                     </div>
                   )}
@@ -122,50 +125,138 @@ export default function TeamShowcase() {
           </div>
         )}
 
-        {/* Co-Captains & Sub-Admins Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {filteredMembers
-            .filter(m => selectedRoleFilter !== 'All' || m.role !== 'Captain') // Don't repeat Captain if already highlighted
-            .map((member) => (
-              <div 
-                key={member.id}
-                className="bg-slate-950 border border-slate-800 hover:border-amber-500/50 rounded-2xl p-5 text-center transition duration-300 hover:-translate-y-1 shadow-lg relative group flex flex-col justify-between"
-              >
-                <div>
-                  {/* Role Badge */}
-                  <div className="mb-3">
-                    <span className={`inline-flex items-center gap-1 text-[11px] font-extrabold px-3 py-1 rounded-full border ${
-                      member.role === 'Co-Captain'
-                        ? 'bg-amber-500/10 text-amber-300 border-amber-400/30'
-                        : 'bg-blue-500/10 text-blue-300 border-blue-400/30'
-                    }`}>
-                      {member.role === 'Co-Captain' ? <Shield className="w-3 h-3 text-amber-400" /> : <Sparkles className="w-3 h-3 text-blue-400" />}
-                      <span>{member.roleBengali}</span>
-                    </span>
-                  </div>
-
-                  {/* Photo Frame */}
-                  <div className="w-24 h-24 mx-auto rounded-full p-1 bg-gradient-to-tr from-amber-500 to-slate-800 mb-3 shadow-md overflow-hidden">
-                    <img 
-                      src={member.image} 
-                      alt={member.name} 
-                      className="w-full h-full rounded-full object-cover group-hover:scale-105 transition duration-300"
-                    />
-                  </div>
-
-                  {/* Name & ID */}
-                  <h4 className="text-base font-bold text-white font-serif">{member.name}</h4>
-                  <p className="text-xs font-mono text-amber-400/90 mt-0.5">{member.starMakerId}</p>
-                </div>
-
-                <div className="mt-4 pt-3 border-t border-slate-900">
-                  <p className="text-xs text-slate-400 line-clamp-2">{member.bio}</p>
-                </div>
+        {/* Co-Captains Section */}
+        {(selectedRoleFilter === 'All' || selectedRoleFilter === 'Co-Captain') && (
+          <div className="mb-14">
+            <div className="flex items-center gap-3 mb-6 border-b border-[#D4AF37]/20 pb-3">
+              <div className="p-2 bg-[#7A1F3D]/60 border border-[#D4AF37]/50 rounded-xl">
+                <Shield className="w-5 h-5 text-[#F0D78C]" />
               </div>
-            ))}
-        </div>
+              <div>
+                <h3 className="text-xl sm:text-2xl font-bold font-serif text-[#F0D78C] flex items-center gap-2">
+                  <span>কো-ক্যাপ্টেন পরিষদ</span>
+                  <span className="text-xs font-sans bg-[#7A1F3D] text-[#F0D78C] border border-[#D4AF37]/40 px-2.5 py-0.5 rounded-full font-bold">
+                    {TEAM_MEMBERS.filter(m => m.role === 'Co-Captain').length} জন
+                  </span>
+                </h3>
+                <p className="text-xs text-[#B3A6C9]">ইভেন্ট কালচারাল, রেজিস্টেশন ও ওভারঅল কো-অর্ডিনেশন টিম</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 gap-6">
+              {filteredMembers
+                .filter(m => m.role === 'Co-Captain')
+                .map((member) => (
+                  <div 
+                    key={member.id}
+                    className="bg-[#1C1730] border border-[#D4AF37]/40 hover:border-[#D4AF37] rounded-2xl p-5 text-center transition duration-300 hover:-translate-y-1 shadow-xl relative group flex flex-col justify-between"
+                  >
+                    <div>
+                      {/* Role Badge */}
+                      <div className="mb-3">
+                        <span className="inline-flex items-center gap-1 text-[11px] font-bold px-3 py-1 rounded-full border bg-[#7A1F3D]/60 text-[#F0D78C] border-[#D4AF37]/40">
+                          <Shield className="w-3 h-3 text-[#D4AF37]" />
+                          <span>{member.roleBengali}</span>
+                        </span>
+                      </div>
+
+                      {/* Photo Frame with Gold Border & Glow */}
+                      <div className="w-28 h-28 mx-auto rounded-full p-1 border-2 border-[#D4AF37] shadow-[0_0_18px_rgba(212,175,55,0.35)] mb-3 overflow-hidden">
+                        <img 
+                          src={member.image} 
+                          alt={member.name} 
+                          className="w-full h-full rounded-full object-cover group-hover:scale-105 transition duration-300"
+                        />
+                      </div>
+
+                      {/* Name & ID */}
+                      <h4 className="text-lg font-bold text-[#F6EFE0] font-serif">{member.name}</h4>
+                      <div className="mt-1.5 flex items-center justify-center">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-[#0F0C1A] text-[#F0D78C] border border-[#D4AF37]/40 rounded-full text-xs font-mono shadow-sm">
+                          <Mic className="w-3 h-3 text-[#D4AF37] shrink-0" />
+                          <span>ID: {member.starMakerId}</span>
+                        </span>
+                      </div>
+                    </div>
+
+                    {member.bio && (
+                      <div className="mt-4 pt-3 border-t border-[#D4AF37]/20">
+                        <p className="text-xs text-[#B3A6C9] line-clamp-2 font-body">{member.bio}</p>
+                      </div>
+                    )}
+                  </div>
+                ))}
+            </div>
+          </div>
+        )}
+
+        {/* Sub-Admins Section */}
+        {(selectedRoleFilter === 'All' || selectedRoleFilter === 'Sub-Admin') && (
+          <div>
+            <div className="flex items-center gap-3 mb-6 border-b border-[#D4AF37]/20 pb-3">
+              <div className="p-2 bg-[#0F0C1A] border border-[#D4AF37]/40 rounded-xl">
+                <Sparkles className="w-5 h-5 text-[#D4AF37]" />
+              </div>
+              <div>
+                <h3 className="text-xl sm:text-2xl font-bold font-serif text-[#F0D78C] flex items-center gap-2">
+                  <span>সাব-এডমিন পরিষদ</span>
+                  <span className="text-xs font-sans bg-[#0F0C1A] text-[#B3A6C9] border border-[#D4AF37]/30 px-2.5 py-0.5 rounded-full font-bold">
+                    {TEAM_MEMBERS.filter(m => m.role === 'Sub-Admin').length} জন
+                  </span>
+                </h3>
+                <p className="text-xs text-[#B3A6C9]">মিডিয়া, গেট সিকিউরিটি, লজিস্টিকস ও টেকনিক্যাল হেল্পডেস্ক টিম</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {filteredMembers
+                .filter(m => m.role === 'Sub-Admin')
+                .map((member) => (
+                  <div 
+                    key={member.id}
+                    className="bg-[#1C1730] border border-[#D4AF37]/30 hover:border-[#D4AF37] rounded-2xl p-5 text-center transition duration-300 hover:-translate-y-1 shadow-xl relative group flex flex-col justify-between"
+                  >
+                    <div>
+                      {/* Role Badge */}
+                      <div className="mb-3">
+                        <span className="inline-flex items-center gap-1 text-[11px] font-bold px-3 py-1 rounded-full border bg-[#0F0C1A] text-[#B3A6C9] border-[#D4AF37]/30">
+                          <Sparkles className="w-3 h-3 text-[#F0D78C]" />
+                          <span>{member.roleBengali}</span>
+                        </span>
+                      </div>
+
+                      {/* Photo Frame with Gold Border */}
+                      <div className="w-24 h-24 mx-auto rounded-full p-1 border-2 border-[#D4AF37]/70 shadow-[0_0_12px_rgba(212,175,55,0.2)] mb-3 overflow-hidden">
+                        <img 
+                          src={member.image} 
+                          alt={member.name} 
+                          className="w-full h-full rounded-full object-cover group-hover:scale-105 transition duration-300"
+                        />
+                      </div>
+
+                      {/* Name & ID */}
+                      <h4 className="text-base font-bold text-[#F6EFE0] font-serif">{member.name}</h4>
+                      <div className="mt-1.5 flex items-center justify-center">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-[#0F0C1A] text-[#F0D78C] border border-[#D4AF37]/30 rounded-full text-xs font-mono shadow-sm">
+                          <Mic className="w-3 h-3 text-[#D4AF37] shrink-0" />
+                          <span>ID: {member.starMakerId}</span>
+                        </span>
+                      </div>
+                    </div>
+
+                    {member.bio && (
+                      <div className="mt-4 pt-3 border-t border-[#D4AF37]/20">
+                        <p className="text-xs text-[#B3A6C9] line-clamp-2 font-body">{member.bio}</p>
+                      </div>
+                    )}
+                  </div>
+                ))}
+            </div>
+          </div>
+        )}
 
       </div>
     </section>
   );
 }
+

@@ -5,6 +5,7 @@ import EventDetails from './components/EventDetails';
 import Schedule from './components/Schedule';
 import TeamShowcase from './components/TeamShowcase';
 import GallerySection from './components/GallerySection';
+import DigitalGuestbook from './components/DigitalGuestbook';
 import VenueSection from './components/VenueSection';
 import RegistrationModal from './components/RegistrationModal';
 import CanvaGuideModal from './components/CanvaGuideModal';
@@ -31,7 +32,7 @@ export default function App() {
   };
 
   return (
-    <div id="app-root" className="min-h-screen bg-slate-950 text-slate-100 font-sans antialiased selection:bg-amber-500 selection:text-slate-950">
+    <div id="app-root" className="min-h-screen bg-[#0F0C1A] text-[#F6EFE0] font-sans antialiased selection:bg-[#D4AF37] selection:text-[#0F0C1A] midnight-bg-glow">
       
       {/* Sticky Header */}
       <Header 
@@ -58,13 +59,16 @@ export default function App() {
         {/* 3. Classy Event Schedule (07:00 PM to 11:00 PM) */}
         <Schedule />
 
-        {/* 4. Family Committee & Leadership Showcase (1 Captain, 5 Co-Captains, 8 Sub-Admins) */}
+        {/* 4. Family Committee & Leadership Showcase (1 Captain, 6 Co-Captains, 8 Sub-Admins) */}
         <TeamShowcase />
 
         {/* 5. Memory Gallery of Previous Gatherings */}
         <GallerySection />
 
-        {/* 6. Venue Details & Google Map Embed (Gulshan Club) */}
+        {/* 6. Digital Guestbook & Attendees Messages */}
+        <DigitalGuestbook />
+
+        {/* 7. Venue Details & Google Map Embed (Gulshan Club) */}
         <VenueSection />
 
       </main>

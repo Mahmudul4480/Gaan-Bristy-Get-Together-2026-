@@ -39,3 +39,15 @@ export interface GalleryPhoto {
   url: string;
   category: 'Previous Events' | 'Family Meeting' | 'Performance';
 }
+
+export interface GuestbookEntry {
+  id: string;
+  name: string;
+  starMakerId?: string;
+  message: string;
+  favoriteSong?: string;
+  timestamp: string;
+  likes: number;
+  badge?: string;
+  avatarColor?: string;
+}

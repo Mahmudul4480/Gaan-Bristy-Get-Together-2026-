@@ -3,23 +3,32 @@ import { TeamMember, ScheduleItem, GalleryPhoto } from '../types';
 export const LOGO_URL = "https://i.postimg.cc/XvqDcBGk/de84b0f9-3f92-4302-80c0-f102a03319a7.jpg";
 
 export const EVENT_DETAILS = {
-  title: "Gaan Bristy Grand Get-Together 2026",
-  subtitle: "Melody at Gulshan Club",
+  title: "Get Together 2026",
+  subtitle: "গান গাও প্রাণ খুলে",
+  fullTitle: "Gaan Bristy Get Together 2026",
   tagline: "গান গাও প্রাণ খুলে",
-  dateBengali: "২০ সেপ্টেম্বর, ২০২৬",
+  taglineEnglish: "Sing a Song, Open the Soul",
+  dateBengali: "১৯ সেপ্টেম্বর, ২০২৬",
   timeBengali: "সন্ধ্যা ৭:০০ টা",
-  dateISO: "2026-09-20T19:00:00",
+  dateISO: "2026-09-19T19:00:00",
   registrationDeadlineISO: "2026-09-15T23:59:59",
   registrationDeadlineBengali: "১৫ সেপ্টেম্বর, ২০২৬",
   venueNameBengali: "গুলশান ক্লাব, ঢাকা",
+  venueNameEnglish: "Gulshan Club, Dhaka",
   venueAddress: "Block NW(J), Plot 2, Road 53, Gulshan-1, Dhaka-1212",
   totalSeats: 150,
   reservedSeatsCount: 122,
   feeAdult: 2000,
-  feeKid: 1000,
+  feeKid: 0,
+  feeTextBengali: "রেজিস্ট্রেশন ফি — ২,০০০/- টাকা (জনপ্রতি)",
+  feeTextEnglish: "Registration Fee — BDT 2,000/- (Two Thousand Taka Only)",
   currency: "টাকা",
-  urgencyText: "মাত্র ১৫০ জন অতিথির জন্য আসন সংরক্ষিত",
-  agencyName: "Social Media Careing",
+  urgencyText: "ONLY 150 SEATS RESERVED",
+  urgencyTextBengali: "মাত্র ১৫০ জন অতিথির জন্য আসন সংরক্ষিত",
+  organizerName: "Gaan Bristy Family",
+  organizerNameBengali: "গান বৃষ্টি ফ্যামিলি",
+  designerName: "Social Media Care",
+  agencyName: "Social Media Care",
   agencyUrl: "https://www.socialmediacareing.com",
   agencyPhone: "01761870650",
   bkashNumber: "01761870650",
@@ -76,59 +85,68 @@ export const TEAM_MEMBERS: TeamMember[] = [
   // 1 Captain
   {
     id: "capt-1",
-    name: "ফ্যামিলি ক্যাপ্টেন (Captain)",
+    name: "Mahmudul Hossain",
     role: "Captain",
     roleBengali: "ক্যাপ্টেন",
-    starMakerId: "@GaanBristy_Captain",
+    starMakerId: "13374391997",
     phone: "01761870650",
-    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=600",
+    image: "https://i.postimg.cc/jqNyrcR8/Captain-OF-GB.jpg",
     bio: "গান বৃষ্টি ফ্যামিলির প্রতিষ্ঠাতা ও প্রধান উদ্যোক্তা।"
   },
-  // 2-6 Co-Captains (5 members)
+  // 2-7 Co-Captains (6 members)
   {
     id: "co-1",
-    name: "কো-ক্যাপ্টেন ১",
+    name: "Tasin Chowdhury",
     role: "Co-Captain",
     roleBengali: "কো-ক্যাপ্টেন",
-    starMakerId: "@GB_CoCapt1",
-    image: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=600",
-    bio: "ইভেন্ট ম্যানেজমেন্ট ও কালচারাল হেড।"
+    starMakerId: "13316847052",
+    image: "https://i.postimg.cc/4y23cnt9/Brand-person-using-logo-2K-202608061732.jpg",
+    bio: ""
   },
   {
     id: "co-2",
-    name: "কো-ক্যাপ্টেন ২",
+    name: "Manabendra",
     role: "Co-Captain",
     roleBengali: "কো-ক্যাপ্টেন",
-    starMakerId: "@GB_CoCapt2",
-    image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=600",
-    bio: "মিউজিক্যাল ডিরেক্টর ও রিসেপশন হেড।"
+    starMakerId: "62008412358",
+    image: "https://i.postimg.cc/jjyC1x0C/Adding-logo-to-image-2K-202608061733.jpg",
+    bio: ""
   },
   {
     id: "co-3",
-    name: "কো-ক্যাপ্টেন ৩",
+    name: "Shahidul Islam",
     role: "Co-Captain",
     roleBengali: "কো-ক্যাপ্টেন",
-    starMakerId: "@GB_CoCapt3",
-    image: "https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&q=80&w=600",
-    bio: "রেজিস্ট্রেশন ও গেস্ট কেয়ার সমন্বয়কারী।"
+    starMakerId: "13386969727",
+    image: "https://i.postimg.cc/N0RLnsqM/Brand-person-using-logo-2K-202608061733.jpg",
+    bio: ""
   },
   {
     id: "co-4",
-    name: "কো-ক্যাপ্টেন ৪ (রেজা)",
+    name: "Shoma Rahman",
     role: "Co-Captain",
     roleBengali: "কো-ক্যাপ্টেন",
-    starMakerId: "@Reza_Unplugged",
-    image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=600",
-    bio: "আনপ্লাগড মিউজিক সেশন পারফর্মার ও কো-অর্ডিনেটর।"
+    starMakerId: "62014887474",
+    image: "https://i.postimg.cc/sxhYHFcs/Adding-logo-to-image-2K-202608061717.jpg",
+    bio: ""
   },
   {
     id: "co-5",
-    name: "কো-ক্যাপ্টেন ৫",
+    name: "Dolly Iqbal",
     role: "Co-Captain",
     roleBengali: "কো-ক্যাপ্টেন",
-    starMakerId: "@GB_CoCapt5",
-    image: "https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?auto=format&fit=crop&q=80&w=600",
-    bio: "ওয়েলফায়ার ও লজিস্টিকস ইনচার্জ।"
+    starMakerId: "62011290458",
+    image: "https://i.postimg.cc/LsjhW9KF/Adding-logo-to-image-2K-202608061733-(1).jpg",
+    bio: ""
+  },
+  {
+    id: "co-6",
+    name: "Munira Sheemu",
+    role: "Co-Captain",
+    roleBengali: "কো-ক্যাপ্টেন",
+    starMakerId: "62031392121",
+    image: "https://i.postimg.cc/N0RLnsqj/Blend-image-with-logo-2K-202608061733.jpg",
+    bio: ""
   },
   // 7-14 Sub-Admins (8 members)
   {

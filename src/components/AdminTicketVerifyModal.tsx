@@ -197,44 +197,44 @@ export default function AdminTicketVerifyModal({ isOpen, onClose, registeredTick
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md overflow-y-auto">
-      <div className="relative w-full max-w-xl bg-slate-900 border border-emerald-500/40 rounded-3xl p-6 sm:p-8 shadow-2xl text-slate-100 my-8">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0F0C1A]/90 backdrop-blur-md overflow-y-auto">
+      <div className="relative w-full max-w-xl bg-[#1C1730] border-2 border-[#D4AF37] rounded-3xl p-6 sm:p-8 shadow-2xl text-[#F6EFE0] my-8">
         
         {/* Close Button */}
         <button
           onClick={handleModalClose}
-          className="absolute top-5 right-5 p-2 rounded-full bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 transition"
+          className="absolute top-5 right-5 p-2 rounded-full bg-[#0F0C1A] text-[#B3A6C9] hover:text-[#F6EFE0] border border-[#D4AF37]/30 hover:border-[#D4AF37] transition cursor-pointer"
         >
           <X className="w-5 h-5" />
         </button>
 
         {/* Modal Header */}
         <div className="flex items-center gap-3 mb-6">
-          <div className="p-3 bg-emerald-500/20 text-emerald-300 rounded-2xl border border-emerald-500/40">
-            <ShieldCheck className="w-6 h-6" />
+          <div className="p-3 bg-[#7A1F3D]/60 text-[#F0D78C] rounded-2xl border border-[#D4AF37]/40">
+            <ShieldCheck className="w-6 h-6 text-[#D4AF37]" />
           </div>
           <div>
-            <h2 className="text-xl font-bold font-serif text-white flex items-center gap-2">
+            <h2 className="text-xl font-bold font-serif text-[#F0D78C] flex items-center gap-2">
               <span>এন্ট্রি গেট টিকিট যাচাইকরণ</span>
-              <span className="bg-emerald-500/20 text-emerald-300 text-[10px] font-mono px-2 py-0.5 rounded border border-emerald-400/40">Admin Gate</span>
+              <span className="bg-[#7A1F3D] text-[#F0D78C] text-[10px] font-mono px-2 py-0.5 rounded border border-[#D4AF37]/40">Admin Gate</span>
             </h2>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-[#B3A6C9] font-body">
               গুলশান ক্লাব গেটে অতিথির টিকিট লাইভ ক্যামেরা দিয়ে স্ক্যান বা ম্যানুয়াল আইডি দিয়ে সার্চ করুন
             </p>
           </div>
         </div>
 
         {/* Mode Selector Tabs */}
-        <div className="flex bg-slate-950 p-1.5 rounded-2xl border border-slate-800 mb-6">
+        <div className="flex bg-[#0F0C1A] p-1.5 rounded-2xl border border-[#D4AF37]/30 mb-6 font-body">
           <button
             onClick={() => {
               setActiveTab('camera');
               setSearchError('');
             }}
-            className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 ${
+            className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
               activeTab === 'camera'
-                ? 'bg-emerald-600 text-white shadow-md'
-                : 'text-slate-400 hover:text-white'
+                ? 'gold-gradient-btn text-[#0F0C1A] shadow-md'
+                : 'text-[#B3A6C9] hover:text-[#F6EFE0]'
             }`}
           >
             <Camera className="w-4 h-4" />
@@ -247,10 +247,10 @@ export default function AdminTicketVerifyModal({ isOpen, onClose, registeredTick
               setActiveTab('manual');
               setSearchError('');
             }}
-            className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 ${
+            className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
               activeTab === 'manual'
-                ? 'bg-emerald-600 text-white shadow-md'
-                : 'text-slate-400 hover:text-white'
+                ? 'gold-gradient-btn text-[#0F0C1A] shadow-md'
+                : 'text-[#B3A6C9] hover:text-[#F6EFE0]'
             }`}
           >
             <Search className="w-4 h-4" />
@@ -260,20 +260,20 @@ export default function AdminTicketVerifyModal({ isOpen, onClose, registeredTick
 
         {/* TAB 1: Camera Scanner */}
         {activeTab === 'camera' && (
-          <div className="space-y-4 mb-6">
-            <div className="bg-slate-950 border border-slate-800 rounded-2xl p-4 text-center relative overflow-hidden">
+          <div className="space-y-4 mb-6 font-body">
+            <div className="bg-[#0F0C1A] border border-[#D4AF37]/30 rounded-2xl p-4 text-center relative overflow-hidden">
               
               {/* Hidden file scanner container */}
               <div id="qr-reader-file" className="hidden"></div>
 
               {!isScanning ? (
                 <div className="py-6 flex flex-col items-center space-y-4">
-                  <div className="p-4 bg-emerald-500/10 rounded-full border border-emerald-500/20 text-emerald-400">
+                  <div className="p-4 bg-[#7A1F3D]/40 rounded-full border border-[#D4AF37]/40 text-[#D4AF37]">
                     <QrCode className="w-12 h-12" />
                   </div>
                   <div>
-                    <h3 className="text-sm font-bold text-white">লাইভ ক্যামেরা স্ক্যানার রেডি</h3>
-                    <p className="text-xs text-slate-400 mt-1 max-w-xs mx-auto">
+                    <h3 className="text-sm font-bold text-[#F0D78C]">লাইভ ক্যামেরা স্ক্যানার রেডি</h3>
+                    <p className="text-xs text-[#B3A6C9] mt-1 max-w-xs mx-auto">
                       অতিথির ই-টিকিটের QR কোডটি ফ্রন্ট বা ব্যাক ক্যামেরার সামনে ধরুন
                     </p>
                   </div>
@@ -281,17 +281,17 @@ export default function AdminTicketVerifyModal({ isOpen, onClose, registeredTick
                   <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
                     <button
                       onClick={startCameraScanner}
-                      className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs transition flex items-center gap-2 shadow-lg"
+                      className="px-5 py-2.5 gold-gradient-btn text-[#0F0C1A] font-extrabold rounded-xl text-xs transition flex items-center gap-2 shadow-lg cursor-pointer"
                     >
-                      <Camera className="w-4 h-4" />
+                      <Camera className="w-4 h-4 text-[#0F0C1A]" />
                       <span>ক্যামেরা চালু করুন</span>
                     </button>
 
                     <button
                       onClick={() => fileInputRef.current?.click()}
-                      className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium rounded-xl text-xs transition flex items-center gap-2 border border-slate-700"
+                      className="px-4 py-2.5 bg-[#1C1730] hover:bg-[#1C1730]/80 text-[#F6EFE0] font-medium rounded-xl text-xs transition flex items-center gap-2 border border-[#D4AF37]/40 cursor-pointer"
                     >
-                      <Upload className="w-4 h-4 text-amber-400" />
+                      <Upload className="w-4 h-4 text-[#D4AF37]" />
                       <span>টিকিট ইমেজ আপলোড</span>
                     </button>
                     <input
@@ -305,14 +305,14 @@ export default function AdminTicketVerifyModal({ isOpen, onClose, registeredTick
                 </div>
               ) : (
                 <div className="space-y-3">
-                  <div className="relative w-full max-w-xs mx-auto rounded-xl overflow-hidden border-2 border-emerald-400 shadow-xl bg-black">
+                  <div className="relative w-full max-w-xs mx-auto rounded-xl overflow-hidden border-2 border-[#D4AF37] shadow-xl bg-black">
                     <div id="qr-reader" className="w-full"></div>
                   </div>
 
                   <div className="flex justify-center">
                     <button
                       onClick={stopCameraScanner}
-                      className="px-4 py-2 bg-red-600 hover:bg-red-500 text-white font-bold rounded-xl text-xs transition flex items-center gap-1.5"
+                      className="px-4 py-2 bg-[#7A1F3D] hover:bg-[#7A1F3D]/80 text-[#F0D78C] font-bold rounded-xl text-xs transition flex items-center gap-1.5 border border-[#D4AF37]/40 cursor-pointer"
                     >
                       <CameraOff className="w-4 h-4" />
                       <span>ক্যামেরা বন্ধ করুন</span>
@@ -322,7 +322,7 @@ export default function AdminTicketVerifyModal({ isOpen, onClose, registeredTick
               )}
 
               {cameraError && (
-                <p className="text-xs text-red-400 bg-red-950/40 p-2.5 rounded-xl border border-red-500/30 mt-3">
+                <p className="text-xs text-[#F0D78C] bg-[#7A1F3D]/40 p-2.5 rounded-xl border border-[#D4AF37]/30 mt-3">
                   {cameraError}
                 </p>
               )}
@@ -333,23 +333,23 @@ export default function AdminTicketVerifyModal({ isOpen, onClose, registeredTick
 
         {/* TAB 2: Manual Search Form */}
         {activeTab === 'manual' && (
-          <form onSubmit={handleManualSearch} className="mb-6 space-y-3">
+          <form onSubmit={handleManualSearch} className="mb-6 space-y-3 font-body">
             <div className="relative">
-              <Search className="absolute left-3.5 top-3.5 w-4 h-4 text-slate-400" />
+              <Search className="absolute left-3.5 top-3.5 w-4 h-4 text-[#B3A6C9]" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="টিকিট আইডি (যেমন: GB2026-1001) বা মোবাইল নম্বর লিখুন..."
-                className="w-full bg-slate-950 border border-slate-800 focus:border-emerald-400 rounded-xl pl-10 pr-4 py-3 text-sm text-white font-mono outline-none transition"
+                className="w-full bg-[#0F0C1A] border border-[#D4AF37]/40 focus:border-[#D4AF37] rounded-xl pl-10 pr-4 py-3 text-sm text-[#F6EFE0] font-mono outline-none transition"
               />
             </div>
 
             <button
               type="submit"
-              className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl transition text-sm flex items-center justify-center gap-2 shadow-lg"
+              className="w-full py-3 gold-gradient-btn text-[#0F0C1A] font-extrabold rounded-xl transition text-sm flex items-center justify-center gap-2 shadow-lg cursor-pointer"
             >
-              <Search className="w-4 h-4" />
+              <Search className="w-4 h-4 text-[#0F0C1A]" />
               <span>টিকিট ম্যানুয়ালি সার্চ করুন</span>
             </button>
           </form>
@@ -357,67 +357,67 @@ export default function AdminTicketVerifyModal({ isOpen, onClose, registeredTick
 
         {/* Search / Scan Error Message */}
         {searchError && (
-          <div className="p-3.5 bg-red-950/60 border border-red-500/40 text-red-200 rounded-xl text-xs flex items-center gap-2 mb-4 animate-shake">
-            <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
+          <div className="p-3.5 bg-[#7A1F3D]/60 border border-[#D4AF37]/40 text-[#F6EFE0] rounded-xl text-xs flex items-center gap-2 mb-4 font-body">
+            <AlertCircle className="w-4 h-4 text-[#F0D78C] shrink-0" />
             <span>{searchError}</span>
           </div>
         )}
 
         {/* Searched / Scanned Result Card */}
         {searchedTicket && (
-          <div className="bg-slate-950 border-2 border-emerald-500/50 rounded-2xl p-5 space-y-4 shadow-2xl relative overflow-hidden">
-            <div className="absolute top-0 right-0 bg-emerald-500 text-slate-950 font-black text-[10px] px-3 py-1 rounded-bl-xl uppercase">
+          <div className="bg-[#0F0C1A] border-2 border-[#D4AF37] rounded-2xl p-5 space-y-4 shadow-2xl relative overflow-hidden font-body">
+            <div className="absolute top-0 right-0 bg-[#D4AF37] text-[#0F0C1A] font-black text-[10px] px-3 py-1 rounded-bl-xl uppercase font-mono">
               Verified Ticket
             </div>
 
-            <div className="flex justify-between items-center pb-3 border-b border-slate-800">
-              <div className="flex items-center gap-1.5 text-xs text-emerald-400 font-bold">
-                <CheckCircle2 className="w-4 h-4" />
+            <div className="flex justify-between items-center pb-3 border-b border-[#D4AF37]/30">
+              <div className="flex items-center gap-1.5 text-xs text-[#F0D78C] font-bold">
+                <CheckCircle2 className="w-4 h-4 text-[#D4AF37]" />
                 <span>বৈধ টিকিট (VALID VIP TICKET)</span>
               </div>
-              <span className="font-mono text-amber-300 font-bold text-xs bg-amber-500/10 px-2.5 py-0.5 rounded border border-amber-400/30">
+              <span className="font-mono text-[#F0D78C] font-bold text-xs bg-[#7A1F3D]/60 px-2.5 py-0.5 rounded border border-[#D4AF37]/40">
                 {searchedTicket.ticketId}
               </span>
             </div>
 
             <div className="grid grid-cols-2 gap-3 text-xs">
               <div>
-                <span className="text-slate-400 block">অতিথির নাম:</span>
-                <span className="font-bold text-white text-sm">{searchedTicket.fullName}</span>
+                <span className="text-[#B3A6C9] block">অতিথির নাম:</span>
+                <span className="font-bold text-[#F6EFE0] text-sm">{searchedTicket.fullName}</span>
               </div>
 
               <div>
-                <span className="text-slate-400 block">স্টারমেকার আইডি:</span>
-                <span className="font-bold text-amber-300">{searchedTicket.starMakerId}</span>
+                <span className="text-[#B3A6C9] block">স্টারমেকার আইডি:</span>
+                <span className="font-bold text-[#F0D78C]">{searchedTicket.starMakerId}</span>
               </div>
 
               <div>
-                <span className="text-slate-400 block">মোবাইল:</span>
-                <span className="font-mono text-slate-200">{searchedTicket.phone}</span>
+                <span className="text-[#B3A6C9] block">মোবাইল:</span>
+                <span className="font-mono text-[#F6EFE0]">{searchedTicket.phone}</span>
               </div>
 
               <div>
-                <span className="text-slate-400 block">আসন সংখ্যা:</span>
-                <span className="font-bold text-white">Adult ({searchedTicket.adultCount}), Kid ({searchedTicket.kidCount})</span>
+                <span className="text-[#B3A6C9] block">আসন সংখ্যা:</span>
+                <span className="font-bold text-[#F6EFE0]">Adult ({searchedTicket.adultCount}), Kid ({searchedTicket.kidCount})</span>
               </div>
             </div>
 
-            <div className="p-3 bg-slate-900 rounded-xl flex items-center justify-between text-xs">
-              <span className="text-slate-400">পরিশোধিত টাকা:</span>
-              <span className="font-extrabold text-amber-400 font-serif text-sm">{searchedTicket.totalAmount}/- টাকা</span>
+            <div className="p-3 bg-[#1C1730] border border-[#D4AF37]/20 rounded-xl flex items-center justify-between text-xs">
+              <span className="text-[#B3A6C9]">পরিশোধিত টাকা:</span>
+              <span className="font-extrabold text-[#F0D78C] font-serif text-sm">{searchedTicket.totalAmount}/- টাকা</span>
             </div>
 
             {/* Check-in Gate Action */}
             <div className="pt-2 flex gap-3">
               {entryChecked ? (
-                <div className="w-full p-3 bg-emerald-500/20 text-emerald-300 border border-emerald-400/40 rounded-xl text-xs font-bold text-center flex items-center justify-center gap-2">
-                  <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                <div className="w-full p-3 bg-[#7A1F3D]/60 text-[#F0D78C] border border-[#D4AF37]/50 rounded-xl text-xs font-bold text-center flex items-center justify-center gap-2">
+                  <CheckCircle2 className="w-5 h-5 text-[#D4AF37]" />
                   <span>গেটে প্রবেশ সম্পন্ন হয়েছে! (ENTRY GRANTED)</span>
                 </div>
               ) : (
                 <button
                   onClick={() => setEntryChecked(true)}
-                  className="w-full py-3.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-black rounded-xl text-xs transition shadow-md"
+                  className="w-full py-3.5 gold-gradient-btn text-[#0F0C1A] font-black rounded-xl text-xs transition shadow-md cursor-pointer"
                 >
                   গেটে প্রবেশ নিশ্চিত করুন (MARK ENTRANCE)
                 </button>
@@ -428,10 +428,10 @@ export default function AdminTicketVerifyModal({ isOpen, onClose, registeredTick
                   setSearchedTicket(null);
                   if (activeTab === 'camera') startCameraScanner();
                 }}
-                className="px-3.5 py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold shrink-0 transition flex items-center gap-1"
+                className="px-3.5 py-3 bg-[#1C1730] border border-[#D4AF37]/40 hover:border-[#D4AF37] text-[#F6EFE0] rounded-xl text-xs font-semibold shrink-0 transition flex items-center gap-1 cursor-pointer"
                 title="পরবর্তী স্ক্যান"
               >
-                <RefreshCw className="w-3.5 h-3.5" />
+                <RefreshCw className="w-3.5 h-3.5 text-[#D4AF37]" />
                 <span>পরবর্তী</span>
               </button>
             </div>
@@ -442,3 +442,4 @@ export default function AdminTicketVerifyModal({ isOpen, onClose, registeredTick
     </div>
   );
 }
+
