@@ -15,22 +15,22 @@ export default function Schedule() {
   };
 
   return (
-    <section id="schedule" className="py-16 bg-[#0F0C1A] text-[#F6EFE0] border-t border-[#D4AF37]/30 relative">
+    <section id="schedule" className="py-16 bg-[#0F0C1A] text-[#F6EFE0] border-t border-[#D4AF37]/20 relative">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-14">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#7A1F3D]/60 border border-[#D4AF37]/40 text-[#F0D78C] text-xs font-semibold mb-3">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#7A1F3D] border border-[#D4AF37]/50 text-[#F0D78C] text-xs font-bold mb-3 shadow-md">
             <Calendar className="w-3.5 h-3.5 text-[#D4AF37]" />
             <span>অভিজাত সময়সূচী (Schedule)</span>
           </div>
-          <h2 className="text-3xl sm:text-5xl font-extrabold font-english-heading text-[#F0D78C] tracking-tight">
+          <h2 className="text-3xl sm:text-5xl font-extrabold font-english-heading text-[#F6EFE0] tracking-tight">
             Event Schedule
           </h2>
           <p className="text-[#B3A6C9] text-sm mt-1 font-body">
             গুলশান ক্লাবের রাজকীয় আবহে পরিকল্পিত বিশেষ সময়সূচী
           </p>
-          <div className="w-24 h-1 bg-gradient-to-r from-[#D4AF37] to-[#7A1F3D] mx-auto my-4 rounded-full"></div>
+          <div className="w-24 h-1 bg-gradient-to-r from-[#D4AF37] to-[#F0D78C] mx-auto my-4 rounded-full"></div>
         </div>
 
         {/* Timeline Container */}
@@ -45,7 +45,7 @@ export default function Schedule() {
 
               {/* Time Badge */}
               <div className="md:absolute md:-left-36 md:top-2 mb-2 md:mb-0 md:text-right">
-                <span className="inline-block bg-[#7A1F3D]/80 border border-[#D4AF37]/40 text-[#F0D78C] font-mono font-bold text-xs px-3 py-1 rounded-full shadow-sm">
+                <span className="inline-block bg-[#7A1F3D] border border-[#D4AF37]/50 text-[#F0D78C] font-mono font-bold text-xs px-3 py-1 rounded-full shadow-sm">
                   {item.time}
                 </span>
               </div>
@@ -73,4 +73,3 @@ export default function Schedule() {
     </section>
   );
 }
-

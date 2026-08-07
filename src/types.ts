@@ -1,11 +1,12 @@
 export interface TeamMember {
   id: string;
   name: string;
-  role: 'Captain' | 'Co-Captain' | 'Sub-Admin';
+  role: 'Captain' | 'Co-Captain' | 'Admin' | 'Super Active Member';
   roleBengali: string;
   starMakerId?: string;
   phone?: string;
   image: string;
+  imageClass?: string;
   bio?: string;
 }
 

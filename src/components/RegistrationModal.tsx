@@ -3,7 +3,7 @@ import confetti from 'canvas-confetti';
 import { Ticket } from '../types';
 import { EVENT_DETAILS } from '../data/eventData';
 import ETicketCard from './ETicketCard';
-import { X, CheckCircle2, Ticket as TicketIcon, User, Phone, Sparkles, Copy, Check } from 'lucide-react';
+import { X, CheckCircle2, Ticket as TicketIcon, User, Phone, Sparkles, Copy, Check, ArrowLeft } from 'lucide-react';
 
 interface RegistrationModalProps {
   isOpen: boolean;
@@ -68,11 +68,12 @@ export default function RegistrationModal({ isOpen, onClose, onTicketCreated }: 
       seatNumbers: Array.from({ length: adultCount + kidCount }, (_, i) => `VIP-${100 + randomCode + i}`),
     };
 
-    // Confetti effect!
+    // Confetti effect with gold & wine colors!
     confetti({
       particleCount: 120,
       spread: 70,
-      origin: { y: 0.6 }
+      origin: { y: 0.6 },
+      colors: ['#D4AF37', '#F0D78C', '#7A1F3D', '#F6EFE0']
     });
 
     setCreatedTicket(newTicket);
@@ -83,12 +84,12 @@ export default function RegistrationModal({ isOpen, onClose, onTicketCreated }: 
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0F0C1A]/90 backdrop-blur-md overflow-y-auto">
-      <div className="relative w-full max-w-3xl bg-[#1C1730] border-2 border-[#D4AF37] rounded-3xl p-6 sm:p-8 shadow-2xl text-[#F6EFE0] my-8">
+      <div className="relative w-full max-w-3xl bg-[#1C1730] border-2 border-[#D4AF37] rounded-3xl p-6 sm:p-8 shadow-[0_0_50px_rgba(212,175,55,0.25)] text-[#F6EFE0] my-8">
         
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-5 right-5 p-2 rounded-full bg-[#0F0C1A] text-[#B3A6C9] hover:text-[#F6EFE0] border border-[#D4AF37]/30 hover:border-[#D4AF37] transition cursor-pointer"
+          className="absolute top-5 right-5 p-2 rounded-full bg-[#0F0C1A] text-[#B3A6C9] hover:text-[#F6EFE0] border border-[#D4AF37]/40 hover:border-[#D4AF37] transition cursor-pointer"
         >
           <X className="w-5 h-5" />
         </button>
@@ -97,23 +98,34 @@ export default function RegistrationModal({ isOpen, onClose, onTicketCreated }: 
         {createdTicket ? (
           <div>
             <div className="text-center mb-6">
-              <div className="inline-flex items-center gap-2 p-3 bg-[#7A1F3D]/60 text-[#F0D78C] rounded-full border border-[#D4AF37]/50 mb-3">
-                <CheckCircle2 className="w-6 h-6 text-[#D4AF37]" />
+              <div className="inline-flex items-center gap-2 p-3 bg-[#7A1F3D] text-[#F0D78C] rounded-full border border-[#D4AF37] mb-3 shadow-[0_0_20px_rgba(212,175,55,0.3)]">
+                <CheckCircle2 className="w-6 h-6 text-[#F0D78C]" />
               </div>
-              <h2 className="text-2xl sm:text-3xl font-extrabold text-[#F0D78C] font-serif">
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-[#F6EFE0] font-serif">
                 অভিনন্দন! আপনার টিকিট বুকিং সফল হয়েছে
               </h2>
               <p className="text-sm text-[#B3A6C9] mt-1 font-body">
-                নিচে আপনার অফিসিয়াল ই-টিকিট দেখা যাচ্ছে। এটি সেভ বা ডাউনলোড করে রাখুন।
+                নিচে আপনার অফিসিয়াল ই-টিকিট দেখা যাচ্ছে। এটি সেভ বা ডাউনলোড করে রাখুন।
               </p>
             </div>
 
             <ETicketCard ticket={createdTicket} onClose={onClose} />
 
-            <div className="text-center mt-6">
+            <div className="text-center mt-6 flex flex-wrap items-center justify-center gap-4">
+              {/* Back / Edit Button */}
               <button
+                type="button"
+                onClick={() => setCreatedTicket(null)}
+                className="px-6 py-3 bg-[#1C1730] hover:bg-[#7A1F3D] border-2 border-[#D4AF37] text-[#F0D78C] hover:text-[#F6EFE0] rounded-full text-sm font-extrabold transition duration-300 shadow-md flex items-center gap-2 cursor-pointer"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span>আগের পেজে ফিরুন / পরিবর্তন করুন</span>
+              </button>
+
+              <button
+                type="button"
                 onClick={onClose}
-                className="px-6 py-2.5 bg-[#0F0C1A] border border-[#D4AF37]/40 hover:border-[#D4AF37] text-[#F6EFE0] rounded-full text-sm font-semibold transition cursor-pointer"
+                className="px-6 py-3 bg-[#0F0C1A] border border-[#D4AF37]/50 hover:border-[#D4AF37] text-[#F6EFE0] rounded-full text-sm font-bold transition cursor-pointer"
               >
                 বন্ধ করুন
               </button>
@@ -123,11 +135,11 @@ export default function RegistrationModal({ isOpen, onClose, onTicketCreated }: 
           /* Registration Form */
           <div>
             <div className="flex items-center gap-3 mb-6">
-              <div className="p-3 bg-[#7A1F3D]/60 text-[#D4AF37] rounded-2xl border border-[#D4AF37]/40">
-                <TicketIcon className="w-6 h-6 text-[#D4AF37]" />
+              <div className="p-3 bg-[#7A1F3D] text-[#F0D78C] rounded-2xl border border-[#D4AF37]/50 shadow-md">
+                <TicketIcon className="w-6 h-6 text-[#F0D78C]" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold font-serif text-[#F0D78C]">
+                <h2 className="text-2xl font-black font-serif text-[#F6EFE0]">
                   অনলাইন টিকিট রেজিস্ট্রেশন
                 </h2>
                 <p className="text-xs text-[#B3A6C9] font-mono">
@@ -150,7 +162,7 @@ export default function RegistrationModal({ isOpen, onClose, onTicketCreated }: 
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
                     placeholder="যেমন: তানভীর আহমেদ"
-                    className="w-full bg-[#0F0C1A] border border-[#D4AF37]/30 focus:border-[#D4AF37] rounded-xl px-4 py-2.5 text-sm text-[#F6EFE0] outline-none transition"
+                    className="w-full bg-[#0F0C1A] border border-[#D4AF37]/40 focus:border-[#D4AF37] rounded-xl px-4 py-2.5 text-sm text-[#F6EFE0] outline-none transition"
                   />
                   {errors.fullName && <p className="text-xs text-rose-400 mt-1">{errors.fullName}</p>}
                 </div>
@@ -165,7 +177,7 @@ export default function RegistrationModal({ isOpen, onClose, onTicketCreated }: 
                     value={starMakerId}
                     onChange={(e) => setStarMakerId(e.target.value)}
                     placeholder="যেমন: @GB_Tanveer"
-                    className="w-full bg-[#0F0C1A] border border-[#D4AF37]/30 focus:border-[#D4AF37] rounded-xl px-4 py-2.5 text-sm text-[#F6EFE0] outline-none transition"
+                    className="w-full bg-[#0F0C1A] border border-[#D4AF37]/40 focus:border-[#D4AF37] rounded-xl px-4 py-2.5 text-sm text-[#F6EFE0] outline-none transition"
                   />
                   {errors.starMakerId && <p className="text-xs text-rose-400 mt-1">{errors.starMakerId}</p>}
                 </div>
@@ -180,7 +192,7 @@ export default function RegistrationModal({ isOpen, onClose, onTicketCreated }: 
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     placeholder="017xxxxxxxx"
-                    className="w-full bg-[#0F0C1A] border border-[#D4AF37]/30 focus:border-[#D4AF37] rounded-xl px-4 py-2.5 text-sm text-[#F6EFE0] outline-none transition font-mono"
+                    className="w-full bg-[#0F0C1A] border border-[#D4AF37]/40 focus:border-[#D4AF37] rounded-xl px-4 py-2.5 text-sm text-[#F6EFE0] outline-none transition font-mono"
                   />
                   {errors.phone && <p className="text-xs text-rose-400 mt-1">{errors.phone}</p>}
                 </div>
@@ -194,14 +206,14 @@ export default function RegistrationModal({ isOpen, onClose, onTicketCreated }: 
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="example@mail.com"
-                    className="w-full bg-[#0F0C1A] border border-[#D4AF37]/30 focus:border-[#D4AF37] rounded-xl px-4 py-2.5 text-sm text-[#F6EFE0] outline-none transition"
+                    className="w-full bg-[#0F0C1A] border border-[#D4AF37]/40 focus:border-[#D4AF37] rounded-xl px-4 py-2.5 text-sm text-[#F6EFE0] outline-none transition"
                   />
                 </div>
               </div>
 
               {/* Ticket Quantity Counters */}
-              <div className="bg-[#0F0C1A] border border-[#D4AF37]/30 rounded-2xl p-4 space-y-4">
-                <h3 className="text-sm font-bold text-[#F0D78C] font-serif">টিকিট সংখ্যা নির্বাচন</h3>
+              <div className="bg-[#0F0C1A] border border-[#D4AF37]/40 rounded-2xl p-4 space-y-4">
+                <h3 className="text-sm font-bold text-[#F6EFE0] font-serif">টিকিট সংখ্যা নির্বাচন</h3>
                 
                 <div className="flex items-center justify-between">
                   <div>
@@ -212,7 +224,7 @@ export default function RegistrationModal({ isOpen, onClose, onTicketCreated }: 
                     <button
                       type="button"
                       onClick={() => setAdultCount(Math.max(1, adultCount - 1))}
-                      className="w-8 h-8 rounded-lg bg-[#1C1730] border border-[#D4AF37]/30 text-[#F6EFE0] font-bold flex items-center justify-center cursor-pointer"
+                      className="w-8 h-8 rounded-lg bg-[#1C1730] border border-[#D4AF37]/40 text-[#F6EFE0] font-bold flex items-center justify-center cursor-pointer hover:bg-[#7A1F3D]"
                     >
                       -
                     </button>
@@ -220,7 +232,7 @@ export default function RegistrationModal({ isOpen, onClose, onTicketCreated }: 
                     <button
                       type="button"
                       onClick={() => setAdultCount(adultCount + 1)}
-                      className="w-8 h-8 rounded-lg bg-[#1C1730] border border-[#D4AF37]/30 text-[#F6EFE0] font-bold flex items-center justify-center cursor-pointer"
+                      className="w-8 h-8 rounded-lg bg-[#1C1730] border border-[#D4AF37]/40 text-[#F6EFE0] font-bold flex items-center justify-center cursor-pointer hover:bg-[#7A1F3D]"
                     >
                       +
                     </button>
@@ -236,7 +248,7 @@ export default function RegistrationModal({ isOpen, onClose, onTicketCreated }: 
                     <button
                       type="button"
                       onClick={() => setKidCount(Math.max(0, kidCount - 1))}
-                      className="w-8 h-8 rounded-lg bg-[#1C1730] border border-[#D4AF37]/30 text-[#F6EFE0] font-bold flex items-center justify-center cursor-pointer"
+                      className="w-8 h-8 rounded-lg bg-[#1C1730] border border-[#D4AF37]/40 text-[#F6EFE0] font-bold flex items-center justify-center cursor-pointer hover:bg-[#7A1F3D]"
                     >
                       -
                     </button>
@@ -244,7 +256,7 @@ export default function RegistrationModal({ isOpen, onClose, onTicketCreated }: 
                     <button
                       type="button"
                       onClick={() => setKidCount(kidCount + 1)}
-                      className="w-8 h-8 rounded-lg bg-[#1C1730] border border-[#D4AF37]/30 text-[#F6EFE0] font-bold flex items-center justify-center cursor-pointer"
+                      className="w-8 h-8 rounded-lg bg-[#1C1730] border border-[#D4AF37]/40 text-[#F6EFE0] font-bold flex items-center justify-center cursor-pointer hover:bg-[#7A1F3D]"
                     >
                       +
                     </button>
@@ -260,7 +272,7 @@ export default function RegistrationModal({ isOpen, onClose, onTicketCreated }: 
               {/* Payment Instructions & Transaction ID */}
               <div className="bg-[#7A1F3D]/30 border border-[#D4AF37]/40 rounded-2xl p-4 space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-[#F0D78C] uppercase">পেমেন্ট করার নিয়ম</span>
+                  <span className="text-xs font-bold text-[#F6EFE0] uppercase">পেমেন্ট করার নিয়ম</span>
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
@@ -286,7 +298,7 @@ export default function RegistrationModal({ isOpen, onClose, onTicketCreated }: 
                   </div>
                 </div>
 
-                <div className="p-3 bg-[#0F0C1A] rounded-xl border border-[#D4AF37]/30 flex items-center justify-between text-xs sm:text-sm">
+                <div className="p-3 bg-[#0F0C1A] rounded-xl border border-[#D4AF37]/40 flex items-center justify-between text-xs sm:text-sm">
                   <div>
                     <span className="text-[#B3A6C9]">বিকাশ/নগদ/রকেট নম্বর: </span>
                     <span className="font-bold text-[#F0D78C] font-mono text-base">{EVENT_DETAILS.bkashNumber}</span>
@@ -294,9 +306,9 @@ export default function RegistrationModal({ isOpen, onClose, onTicketCreated }: 
                   <button
                     type="button"
                     onClick={handleCopyNumber}
-                    className="flex items-center gap-1 bg-[#1C1730] border border-[#D4AF37]/30 hover:border-[#D4AF37] text-[#F6EFE0] px-2.5 py-1 rounded-lg text-xs cursor-pointer"
+                    className="flex items-center gap-1 bg-[#1C1730] border border-[#D4AF37]/40 hover:border-[#D4AF37] text-[#F6EFE0] px-2.5 py-1 rounded-lg text-xs cursor-pointer"
                   >
-                    {isCopied ? <Check className="w-3.5 h-3.5 text-[#F0D78C]" /> : <Copy className="w-3.5 h-3.5" />}
+                    {isCopied ? <Check className="w-3.5 h-3.5 text-[#F0D78C]" /> : <Copy className="w-3.5 h-3.5 text-[#D4AF37]" />}
                     <span>{isCopied ? 'কপি হয়েছে' : 'কপি করুন'}</span>
                   </button>
                 </div>
@@ -310,7 +322,7 @@ export default function RegistrationModal({ isOpen, onClose, onTicketCreated }: 
                     value={transactionId}
                     onChange={(e) => setTransactionId(e.target.value)}
                     placeholder="যেমন: BK109283746"
-                    className="w-full bg-[#0F0C1A] border border-[#D4AF37]/30 focus:border-[#D4AF37] rounded-xl px-4 py-2.5 text-sm text-[#F6EFE0] font-mono outline-none transition"
+                    className="w-full bg-[#0F0C1A] border border-[#D4AF37]/40 focus:border-[#D4AF37] rounded-xl px-4 py-2.5 text-sm text-[#F6EFE0] font-mono outline-none transition"
                   />
                   {errors.transactionId && <p className="text-xs text-rose-400 mt-1">{errors.transactionId}</p>}
                 </div>
@@ -326,16 +338,16 @@ export default function RegistrationModal({ isOpen, onClose, onTicketCreated }: 
                   value={songRequest}
                   onChange={(e) => setSongRequest(e.target.value)}
                   placeholder="আপনার প্রিয় গানের নাম লিখুন..."
-                  className="w-full bg-[#0F0C1A] border border-[#D4AF37]/30 focus:border-[#D4AF37] rounded-xl px-4 py-2.5 text-sm text-[#F6EFE0] outline-none transition"
+                  className="w-full bg-[#0F0C1A] border border-[#D4AF37]/40 focus:border-[#D4AF37] rounded-xl px-4 py-2.5 text-sm text-[#F6EFE0] outline-none transition"
                 />
               </div>
 
-              {/* Submit Button */}
+              {/* Submit CTA Button */}
               <button
                 type="submit"
-                className="w-full py-4 gold-gradient-btn text-[#0F0C1A] font-extrabold text-base rounded-full transition shadow-xl flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full py-4 bg-gradient-to-r from-[#F0D78C] to-[#D4AF37] text-[#0F0C1A] font-extrabold text-base sm:text-lg rounded-full transition duration-300 shadow-[0_8px_24px_rgba(212,175,55,0.3)] hover:shadow-[0_12px_32px_rgba(212,175,55,0.5)] flex items-center justify-center gap-2.5 cursor-pointer"
               >
-                <TicketIcon className="w-5 h-5" />
+                <TicketIcon className="w-6 h-6 text-[#0F0C1A]" />
                 <span>বুকিং কনফার্ম করুন (টাকা {totalAmount}/-)</span>
               </button>
 
@@ -347,4 +359,3 @@ export default function RegistrationModal({ isOpen, onClose, onTicketCreated }: 
     </div>
   );
 }
-

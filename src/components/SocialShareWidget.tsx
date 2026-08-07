@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import { Share2, Copy, Check, ExternalLink, Sparkles } from 'lucide-react';
-import { EVENT_DETAILS } from '../data/eventData';
+import { Share2, Copy, Check, Sparkles } from 'lucide-react';
 
 interface SocialShareWidgetProps {
   className?: string;
@@ -23,7 +22,6 @@ export default function SocialShareWidget({ className = '' }: SocialShareWidgetP
   // Social Share URLs
   const facebookShareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`;
   const whatsappShareUrl = `https://api.whatsapp.com/send?text=${encodedSummary}`;
-  const twitterShareUrl = `https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodeURIComponent(shareSummary)}`;
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(`${shareSummary}\n${currentUrl}`);
@@ -40,40 +38,24 @@ export default function SocialShareWidget({ className = '' }: SocialShareWidgetP
     }, 1500);
   };
 
-  const handleNativeShare = async () => {
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: shareTitle,
-          text: shareSummary,
-          url: currentUrl,
-        });
-      } catch {
-        // User cancelled or error
-      }
-    } else {
-      handleCopyLink();
-    }
-  };
-
   return (
-    <div className={`bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 border border-amber-500/30 rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden ${className}`}>
+    <div className={`bg-[#1C1730] border border-[#D4AF37]/30 rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden ${className}`}>
       {/* Glow Effects */}
-      <div className="absolute top-0 right-0 w-48 h-48 bg-amber-500/5 rounded-full blur-2xl pointer-events-none"></div>
+      <div className="absolute top-0 right-0 w-48 h-48 bg-[#D4AF37]/5 rounded-full blur-2xl pointer-events-none"></div>
 
       <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-6">
         
         {/* Left Side Info */}
         <div className="text-center lg:text-left space-y-1.5 max-w-xl">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-semibold">
-            <Share2 className="w-3.5 h-3.5 text-amber-400" />
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#D4AF37]/15 border border-[#D4AF37]/30 text-[#F0D78C] text-xs font-semibold">
+            <Share2 className="w-3.5 h-3.5 text-[#D4AF37]" />
             <span>ইভেন্ট শেয়ার করুন • Spread the Melody</span>
           </div>
-          <h3 className="text-xl sm:text-2xl font-bold font-serif text-white flex items-center justify-center lg:justify-start gap-2">
+          <h3 className="text-xl sm:text-2xl font-bold font-serif text-[#F6EFE0] flex items-center justify-center lg:justify-start gap-2">
             <span>বন্ধু ও মিউজিক প্রেমীদের সাথে শেয়ার করুন</span>
-            <Sparkles className="w-5 h-5 text-amber-400" />
+            <Sparkles className="w-5 h-5 text-[#D4AF37]" />
           </h3>
-          <p className="text-xs sm:text-sm text-slate-300">
+          <p className="text-xs sm:text-sm text-[#B3A6C9]">
             ফেসবুক, হোয়াটসঅ্যাপ বা ইনস্টাগ্রামে গান বৃষ্টির ২০২৬ মিলনমেলার আমন্ত্রণ ছড়িয়ে দিন এবং সবাইকে সাথে নিয়ে আসুন।
           </p>
         </div>
@@ -81,7 +63,7 @@ export default function SocialShareWidget({ className = '' }: SocialShareWidgetP
         {/* Right Side Buttons */}
         <div className="flex flex-wrap items-center justify-center lg:justify-end gap-3 w-full lg:w-auto">
           
-          {/* Facebook Button */}
+          {/* Facebook Button (keeps native brand blue) */}
           <a
             href={facebookShareUrl}
             target="_blank"
@@ -94,7 +76,7 @@ export default function SocialShareWidget({ className = '' }: SocialShareWidgetP
             <span>Facebook</span>
           </a>
 
-          {/* WhatsApp Button */}
+          {/* WhatsApp Button (keeps native brand green) */}
           <a
             href={whatsappShareUrl}
             target="_blank"
@@ -107,11 +89,11 @@ export default function SocialShareWidget({ className = '' }: SocialShareWidgetP
             <span>WhatsApp</span>
           </a>
 
-          {/* Instagram Button */}
+          {/* Instagram Button (keeps native brand gradient) */}
           <button
             onClick={handleInstagramShare}
             type="button"
-            className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-600/20 via-pink-600/20 to-rose-600/20 hover:from-purple-600 hover:via-pink-600 hover:to-rose-600 border border-pink-500/40 text-pink-200 hover:text-white font-bold rounded-2xl transition duration-200 text-xs sm:text-sm shadow-md group"
+            className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-600/20 via-pink-600/20 to-rose-600/20 hover:from-purple-600 hover:via-pink-600 hover:to-rose-600 border border-pink-500/40 text-pink-200 hover:text-white font-bold rounded-2xl transition duration-200 text-xs sm:text-sm shadow-md group cursor-pointer"
           >
             <svg className="w-4 h-4 fill-current text-pink-400 group-hover:text-white transition" viewBox="0 0 24 24">
               <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
@@ -123,16 +105,16 @@ export default function SocialShareWidget({ className = '' }: SocialShareWidgetP
           <button
             onClick={handleCopyLink}
             type="button"
-            className="flex items-center gap-2 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-amber-500/40 text-slate-200 font-bold rounded-2xl transition duration-200 text-xs sm:text-sm shadow-md"
+            className="flex items-center gap-2 px-4 py-2.5 bg-[#0F0C1A] hover:bg-[#1C1730] border border-[#D4AF37]/50 text-[#F0D78C] font-bold rounded-2xl transition duration-200 text-xs sm:text-sm shadow-md cursor-pointer"
           >
             {copied ? (
               <>
-                <Check className="w-4 h-4 text-emerald-400" />
-                <span className="text-emerald-300">কপি হয়েছে!</span>
+                <Check className="w-4 h-4 text-[#F0D78C]" />
+                <span className="text-[#F0D78C]">কপি হয়েছে!</span>
               </>
             ) : (
               <>
-                <Copy className="w-4 h-4 text-amber-400" />
+                <Copy className="w-4 h-4 text-[#D4AF37]" />
                 <span>লিংক কপি করুন</span>
               </>
             )}
@@ -144,8 +126,8 @@ export default function SocialShareWidget({ className = '' }: SocialShareWidgetP
 
       {/* Instagram Copy Toast Notice */}
       {instagramNotice && (
-        <div className="mt-4 p-3 bg-pink-500/20 border border-pink-500/40 text-pink-300 text-xs font-semibold rounded-2xl text-center flex items-center justify-center gap-2 animate-in fade-in">
-          <Check className="w-4 h-4 text-pink-400" />
+        <div className="mt-4 p-3 bg-[#7A1F3D]/40 border border-[#D4AF37]/40 text-[#F0D78C] text-xs font-semibold rounded-2xl text-center flex items-center justify-center gap-2 animate-in fade-in">
+          <Check className="w-4 h-4 text-[#D4AF37]" />
           <span>ক্যাপশন ও লিংক কপি হয়েছে! ইনস্টাগ্রামের মেসেজ বা স্টোরিতে পেস্ট করুন।</span>
         </div>
       )}

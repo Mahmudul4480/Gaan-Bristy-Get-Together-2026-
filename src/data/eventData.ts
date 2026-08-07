@@ -1,6 +1,7 @@
 import { TeamMember, ScheduleItem, GalleryPhoto } from '../types';
 
 export const LOGO_URL = "https://i.postimg.cc/XvqDcBGk/de84b0f9-3f92-4302-80c0-f102a03319a7.jpg";
+export const AGENCY_LOGO_URL = "https://i.postimg.cc/j2DKJTbM/Financial-Solution-In-BD-Logo-png-202608061833.jpg";
 
 export const EVENT_DETAILS = {
   title: "Get Together 2026",
@@ -91,9 +92,10 @@ export const TEAM_MEMBERS: TeamMember[] = [
     starMakerId: "13374391997",
     phone: "01761870650",
     image: "https://i.postimg.cc/jqNyrcR8/Captain-OF-GB.jpg",
+    imageClass: "scale-[1.3] object-top",
     bio: "গান বৃষ্টি ফ্যামিলির প্রতিষ্ঠাতা ও প্রধান উদ্যোক্তা।"
   },
-  // 2-7 Co-Captains (6 members)
+  // Co-Captains (6 members)
   {
     id: "co-1",
     name: "Tasin Chowdhury",
@@ -101,7 +103,8 @@ export const TEAM_MEMBERS: TeamMember[] = [
     roleBengali: "কো-ক্যাপ্টেন",
     starMakerId: "13316847052",
     image: "https://i.postimg.cc/4y23cnt9/Brand-person-using-logo-2K-202608061732.jpg",
-    bio: ""
+    imageClass: "scale-[1.55] object-top",
+    bio: "কো-ক্যাপ্টেন ১ — গান বৃষ্টি ইভেন্ট ম্যানেজমেন্ট টিম।"
   },
   {
     id: "co-2",
@@ -110,7 +113,8 @@ export const TEAM_MEMBERS: TeamMember[] = [
     roleBengali: "কো-ক্যাপ্টেন",
     starMakerId: "62008412358",
     image: "https://i.postimg.cc/jjyC1x0C/Adding-logo-to-image-2K-202608061733.jpg",
-    bio: ""
+    imageClass: "scale-[1.55] object-top",
+    bio: "কো-ক্যাপ্টেন ২ — কালচারাল ও মিউজিক্যাল অ্যাক্টিভিটি।"
   },
   {
     id: "co-3",
@@ -119,7 +123,8 @@ export const TEAM_MEMBERS: TeamMember[] = [
     roleBengali: "কো-ক্যাপ্টেন",
     starMakerId: "13386969727",
     image: "https://i.postimg.cc/N0RLnsqM/Brand-person-using-logo-2K-202608061733.jpg",
-    bio: ""
+    imageClass: "scale-[1.55] object-top",
+    bio: "কো-ক্যাপ্টেন ৩ — মেম্বারশিপ ও নেটওয়ার্কিং।"
   },
   {
     id: "co-4",
@@ -128,7 +133,8 @@ export const TEAM_MEMBERS: TeamMember[] = [
     roleBengali: "কো-ক্যাপ্টেন",
     starMakerId: "62014887474",
     image: "https://i.postimg.cc/sxhYHFcs/Adding-logo-to-image-2K-202608061717.jpg",
-    bio: ""
+    imageClass: "scale-[1.3] object-top",
+    bio: "কো-ক্যাপ্টেন ৪ — হসপিটালিটি ও গ্যাদারিং।"
   },
   {
     id: "co-5",
@@ -137,7 +143,8 @@ export const TEAM_MEMBERS: TeamMember[] = [
     roleBengali: "কো-ক্যাপ্টেন",
     starMakerId: "62011290458",
     image: "https://i.postimg.cc/LsjhW9KF/Adding-logo-to-image-2K-202608061733-(1).jpg",
-    bio: ""
+    imageClass: "scale-[1.3] object-top",
+    bio: "কো-ক্যাপ্টেন ৫ — ওয়েলকাম ও স্টেজ কো-অর্ডিনেশন।"
   },
   {
     id: "co-6",
@@ -146,80 +153,240 @@ export const TEAM_MEMBERS: TeamMember[] = [
     roleBengali: "কো-ক্যাপ্টেন",
     starMakerId: "62031392121",
     image: "https://i.postimg.cc/N0RLnsqj/Blend-image-with-logo-2K-202608061733.jpg",
-    bio: ""
+    imageClass: "scale-[1.55] object-top",
+    bio: "কো-ক্যাপ্টেন ৬ — ইভেন্ট কো-অর্ডিনেশন উইং।"
   },
-  // 7-14 Sub-Admins (8 members)
+  // Admins (10 members)
   {
-    id: "sub-1",
-    name: "সাব এডমিন ১",
-    role: "Sub-Admin",
-    roleBengali: "সাব এডমিন",
-    starMakerId: "@GB_SubAdmin1",
-    image: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&q=80&w=600",
-    bio: "সোশ্যাল মিডিয়া ও ডিজিটাল প্রমোশন।"
-  },
-  {
-    id: "sub-2",
-    name: "সাব এডমিন ২",
-    role: "Sub-Admin",
-    roleBengali: "সাব এডমিন",
-    starMakerId: "@GB_SubAdmin2",
-    image: "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&q=80&w=600",
-    bio: "টিকেট ভেরিফিকেশন ও এন্ট্রি পাস ম্যানেজমেন্ট।"
+    id: "admin-1",
+    name: "Eng Harun",
+    role: "Admin",
+    roleBengali: "এডমিন ০১",
+    starMakerId: "13367267542",
+    image: "https://i.postimg.cc/j50mNQn7/Brand-person-using-logo-2K-202608071020.jpg",
+    imageClass: "scale-[1.5] object-top",
+    bio: "এডমিন — আইটি ও ডিজিটাল স্ট্র্যাটেজি।"
   },
   {
-    id: "sub-3",
-    name: "সাব এডমিন ৩",
-    role: "Sub-Admin",
-    roleBengali: "সাব এডমিন",
-    starMakerId: "@GB_SubAdmin3",
-    image: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&q=80&w=600",
-    bio: "ভেন্যু সজ্জা ও স্টেজ ডেকোরেশন।"
+    id: "admin-2",
+    name: "Zahid",
+    role: "Admin",
+    roleBengali: "এডমিন ০২",
+    starMakerId: "62002961019",
+    image: "https://i.postimg.cc/Hsd2MvSv/Adding-brand-logo-to-image-202608071041.jpg",
+    imageClass: "scale-[1.5] object-top",
+    bio: "এডমিন — ইভেন্ট ভেরিফিকেশন ও এন্ট্রি সাপোর্ট।"
   },
   {
-    id: "sub-4",
-    name: "সাব এডমিন ৪",
-    role: "Sub-Admin",
-    roleBengali: "সাব এডমিন",
-    starMakerId: "@GB_SubAdmin4",
-    image: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=600",
-    bio: "হসপিটালিটি ও ফুড কর্নার দায়িত্বপ্রাপ্ত।"
+    id: "admin-3",
+    name: "Zarin Moon",
+    role: "Admin",
+    roleBengali: "এডমিন ০৩",
+    starMakerId: "13312878819",
+    image: "https://i.postimg.cc/28ctTfBR/Brand-person-using-logo-2K-202608061801-(1).jpg",
+    imageClass: "scale-[1.5] object-top",
+    bio: "এডমিন — সোশ্যাল মিডিয়া ও পিআর কো-অর্ডিনেটর।"
   },
   {
-    id: "sub-5",
-    name: "সাব এডমিন ৫",
-    role: "Sub-Admin",
-    roleBengali: "সাব এডমিন",
-    starMakerId: "@GB_SubAdmin5",
-    image: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&q=80&w=600",
-    bio: "সাউন্ড ও অ্যাকোস্টিক সিস্টেম টেক্স।"
+    id: "admin-4",
+    name: "Sazid",
+    role: "Admin",
+    roleBengali: "এডমিন ০৪",
+    starMakerId: "13373962946",
+    image: "https://i.postimg.cc/DyjN5Kbw/Brand-person-using-logo-2K-202608061801.jpg",
+    imageClass: "scale-[1.5] object-top",
+    bio: "এডমিন — লজিস্টিকস ও টেকনিক্যাল ম্যানেজমেন্ট।"
   },
   {
-    id: "sub-6",
-    name: "সাব এডমিন ৬",
-    role: "Sub-Admin",
-    roleBengali: "সাব এডমিন",
-    starMakerId: "@GB_SubAdmin6",
-    image: "https://images.unsplash.com/photo-1501196354995-cbb51c65aaea?auto=format&fit=crop&q=80&w=600",
-    bio: "ফটোগ্রাফি ও ভিডিও মেমোরিজ।"
+    id: "admin-5",
+    name: "Juhan",
+    role: "Admin",
+    roleBengali: "এডমিন ০৫",
+    starMakerId: "62065764957",
+    image: "https://i.postimg.cc/8PNHvXyy/Adding-logo-to-brand-image-202608071041-(1).jpg",
+    imageClass: "scale-[1.5] object-top",
+    bio: "এডমিন — গেস্ট রিলেশনশিপ ও হেল্পডেস্ক।"
   },
   {
-    id: "sub-7",
-    name: "সাব এডমিন ৭",
-    role: "Sub-Admin",
-    roleBengali: "সাব এডমিন",
-    starMakerId: "@GB_SubAdmin7",
-    image: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&q=80&w=600",
-    bio: "গিফট উইং ও অ্যাওয়ার্ডস কো-অর্ডিনেটর।"
+    id: "admin-6",
+    name: "Dr. Kaniz",
+    role: "Admin",
+    roleBengali: "এডমিন ০৬",
+    starMakerId: "13304381270",
+    image: "https://i.postimg.cc/RCcdNxTk/Adding-logo-to-brand-image-202608071041-(2).jpg",
+    imageClass: "scale-[1.5] object-top",
+    bio: "এডমিন — মেডিকেল সাপোর্ট ও ওয়েলফেয়ার।"
   },
   {
-    id: "sub-8",
-    name: "সাব এডমিন ৮",
-    role: "Sub-Admin",
-    roleBengali: "সাব এডমিন",
-    starMakerId: "@GB_SubAdmin8",
-    image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=600",
-    bio: "সিকিউরিটি ও প্রোটোকল ম্যানেজার।"
+    id: "admin-7",
+    name: "Rifat",
+    role: "Admin",
+    roleBengali: "এডমিন ০৭",
+    starMakerId: "13374766242",
+    image: "https://i.postimg.cc/MZy5vJD2/Adding-logo-to-brand-image-202608071041.jpg",
+    imageClass: "scale-[1.5] object-top",
+    bio: "এডমিন — সাউন্ড ও কালচারাল লজিস্টিকস।"
+  },
+  {
+    id: "admin-8",
+    name: "Nafees",
+    role: "Admin",
+    roleBengali: "এডমিন ০৮",
+    starMakerId: "13383761434",
+    image: "https://i.postimg.cc/J4MqXY6w/Adding-logo-to-brand-image-202608071031.jpg",
+    imageClass: "scale-[1.5] object-top",
+    bio: "এডমিন — সিকিউরিটি ও ভেন্যু প্রোটোকল।"
+  },
+  {
+    id: "admin-9",
+    name: "Sumona",
+    role: "Admin",
+    roleBengali: "এডমিন ০৯",
+    starMakerId: "62102366781",
+    image: "https://i.postimg.cc/bNC5LjSM/Brand-person-using-logo-2K-202608061801-(3).jpg",
+    imageClass: "scale-[1.5] object-top",
+    bio: "এডমিন — হসপিটালিটি ও ক্যাটারিং উইং।"
+  },
+  {
+    id: "admin-10",
+    name: "Mujahid",
+    role: "Admin",
+    roleBengali: "এডমিন ১০",
+    starMakerId: "62101992190",
+    image: "https://i.postimg.cc/gkS74PL7/Brand-person-using-logo-2K-202608061801-(2).jpg",
+    imageClass: "scale-[1.5] object-top",
+    bio: "এডমিন — ফটোগ্রাফি ও গেট কন্ট্রোল।"
+  },
+  {
+    id: "admin-11",
+    name: "Riad",
+    role: "Admin",
+    roleBengali: "এডমিন ১১",
+    starMakerId: "62070958960",
+    image: "https://i.postimg.cc/kGYKkC8B/Adding-logo-to-brand-image-202608071104.jpg",
+    imageClass: "scale-[1.5] object-top",
+    bio: "এডমিন — ব্র্যান্ডিং ও কো-অর্ডিনেশন।"
+  },
+  // Super Active Members
+  {
+    id: "super-1",
+    name: "Chobi",
+    role: "Super Active Member",
+    roleBengali: "সুপার অ্যাক্টিভ মেম্বার",
+    starMakerId: "62082749219",
+    image: "https://i.postimg.cc/NFBGcCTS/Adding-logo-to-brand-image-202608071226.jpg",
+    imageClass: "scale-[1.3] object-center",
+    bio: "গান বৃষ্টি ফ্যামিলির সম্মানিত ও পরম সক্রিয় সদস্য।"
+  },
+  {
+    id: "super-2",
+    name: "Faiza Naz",
+    role: "Super Active Member",
+    roleBengali: "সুপার অ্যাক্টিভ মেম্বার",
+    starMakerId: "100104176037",
+    image: "https://i.postimg.cc/QCTMSrXc/Adding-logo-to-brand-image-202608071208.jpg",
+    imageClass: "scale-[1.3] object-center",
+    bio: "গান বৃষ্টি ফ্যামিলির নিবেদিতপ্রাণ ও নিয়মিত সদস্য।"
+  },
+  {
+    id: "super-3",
+    name: "Shahnaz",
+    role: "Super Active Member",
+    roleBengali: "সুপার অ্যাক্টিভ মেম্বার",
+    starMakerId: "13385444884",
+    image: "https://i.postimg.cc/x8nj2pH7/Adding-logo-to-brand-image-202608071226-(1).jpg",
+    imageClass: "scale-[1.3] object-center",
+    bio: "গান বৃষ্টি ফ্যামিলির পরম অনুরাগী সদস্য।"
+  },
+  {
+    id: "super-4",
+    name: "Ashraful Kamal",
+    role: "Super Active Member",
+    roleBengali: "সুপার অ্যাক্টিভ মেম্বার",
+    starMakerId: "13285765432",
+    image: "https://i.postimg.cc/NMLF9HSX/Adding-logo-to-brand-image-202608071215-(2).jpg",
+    imageClass: "scale-[1.3] object-center",
+    bio: "গান বৃষ্টি ফ্যামিলির সক্রিয় সংগীতসঙ্গী।"
+  },
+  {
+    id: "super-5",
+    name: "Shayla",
+    role: "Super Active Member",
+    roleBengali: "সুপার অ্যাক্টিভ মেম্বার",
+    starMakerId: "62037165034",
+    image: "https://images.unsplash.com/photo-1444464666168-49d633b86797?auto=format&fit=crop&q=80&w=600",
+    imageClass: "scale-[1.2] object-center",
+    bio: "গান বৃষ্টি ফ্যামিলির প্রিয় সুরপাখি ও সদস্য।"
+  },
+  {
+    id: "super-6",
+    name: "MD. Shamim",
+    role: "Super Active Member",
+    roleBengali: "সুপার অ্যাক্টিভ মেম্বার",
+    starMakerId: "62018746750",
+    image: "https://i.postimg.cc/SsjR2M3n/Adding-logo-to-brand-image-202608071215-(1).jpg",
+    imageClass: "scale-[1.3] object-center",
+    bio: "গান বৃষ্টি ফ্যামিলির আন্তরিক সদস্য।"
+  },
+  {
+    id: "super-7",
+    name: "BulBul Baari",
+    role: "Super Active Member",
+    roleBengali: "সুপার অ্যাক্টিভ মেম্বার",
+    starMakerId: "13373501944",
+    image: "https://i.postimg.cc/xCq8Jzhc/Adding-logo-to-brand-image-202608071215-(3).jpg",
+    imageClass: "scale-[1.3] object-center",
+    bio: "গান বৃষ্টি ফ্যামিলির সুহৃদ ও পরম সক্রিয় সদস্য।"
+  },
+  {
+    id: "super-8",
+    name: "Rumana Ruma",
+    role: "Super Active Member",
+    roleBengali: "সুপার অ্যাক্টিভ মেম্বার",
+    starMakerId: "13358709961",
+    image: "https://i.postimg.cc/d1D3kypt/Adding-logo-to-brand-image-202608071221.jpg",
+    imageClass: "scale-[1.3] object-center",
+    bio: "গান বৃষ্টি ফ্যামিলির আনন্দদায়ক সংগী ও সদস্য।"
+  },
+  {
+    id: "super-9",
+    name: "Abdul Hannan",
+    role: "Super Active Member",
+    roleBengali: "সুপার অ্যাক্টিভ মেম্বার",
+    starMakerId: "62090671190",
+    image: "https://i.postimg.cc/Bv4m2xTg/Adding-logo-to-brand-image-202608071231.jpg",
+    imageClass: "scale-[1.3] object-center",
+    bio: "গান বৃষ্টি ফ্যামিলির শ্রদ্ধাভাজন ও সক্রিয় সদস্য।"
+  },
+  {
+    id: "super-10",
+    name: "Mifta",
+    role: "Super Active Member",
+    roleBengali: "সুপার অ্যাক্টিভ মেম্বার",
+    starMakerId: "62163305709",
+    image: "https://i.postimg.cc/FzLKGQ9z/Adding-logo-to-brand-image-202608071215.jpg",
+    imageClass: "scale-[1.3] object-center",
+    bio: "গান বৃষ্টি ফ্যামিলির সহমর্মী ও পরম প্রিয় সদস্য।"
+  },
+  {
+    id: "super-11",
+    name: "Tutul Kumar",
+    role: "Super Active Member",
+    roleBengali: "সুপার অ্যাক্টিভ মেম্বার",
+    starMakerId: "13388767627",
+    image: "https://i.postimg.cc/bYKNHjg9/Adding-logo-to-brand-image-202608071542-(1).jpg",
+    imageClass: "scale-[1.3] object-center",
+    bio: "গান বৃষ্টি ফ্যামিলির নিবেদিতপ্রাণ ও সক্রিয় সদস্য।"
+  },
+  {
+    id: "super-12",
+    name: "Shihab",
+    role: "Super Active Member",
+    roleBengali: "সুপার অ্যাক্টিভ মেম্বার",
+    starMakerId: "13387309175",
+    image: "https://i.postimg.cc/y6wYXzjP/Adding-logo-to-brand-image-202608071542.jpg",
+    imageClass: "scale-[1.3] object-center",
+    bio: "গান বৃষ্টি ফ্যামিলির নিবেদিতপ্রাণ ও সক্রিয় সদস্য।"
   }
 ];
 

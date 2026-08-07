@@ -9,27 +9,24 @@ interface EventDetailsProps {
 
 export default function EventDetails({ onOpenRegister }: EventDetailsProps) {
   return (
-    <section id="details" className="py-16 bg-[#0F0C1A] text-[#F6EFE0] relative overflow-hidden border-b border-[#D4AF37]/30">
+    <section id="details" className="py-16 bg-[#0F0C1A] text-[#F6EFE0] relative overflow-hidden border-b border-[#D4AF37]/20">
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Section Header */}
-        <div className="text-center max-w-3xl mx-auto mb-12">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#7A1F3D]/60 border border-[#D4AF37]/40 text-[#F0D78C] text-xs font-semibold mb-3">
+        <div className="text-center max-w-4xl mx-auto mb-12">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#7A1F3D] border border-[#D4AF37]/50 text-[#F0D78C] text-xs font-bold mb-3 shadow-md">
             <Sparkles className="w-3.5 h-3.5 text-[#D4AF37]" />
             <span>ইভেন্টের বিবরণ ও টিকিট ফি</span>
           </div>
-          <h2 className="text-3xl sm:text-5xl font-extrabold font-english-heading text-[#F0D78C] tracking-tight">
-            Gaan Bristy Grand Get-Together 2026
+          <h2 className="text-lg sm:text-2xl md:text-3xl lg:text-4xl font-extrabold font-serif text-[#F6EFE0] tracking-tight whitespace-nowrap overflow-hidden text-ellipsis drop-shadow-md">
+            Gaan Bristy Grand Get-Together 2026: Melody at Gulshan Club
           </h2>
-          <p className="text-lg font-accent text-[#B3A6C9] mt-1 italic">
-            Melody at Gulshan Club
-          </p>
-          <div className="w-24 h-1 bg-gradient-to-r from-[#D4AF37] to-[#7A1F3D] mx-auto my-4 rounded-full"></div>
+          <div className="w-24 h-1 bg-gradient-to-r from-[#D4AF37] to-[#F0D78C] mx-auto my-4 rounded-full"></div>
         </div>
 
-        {/* Description Card with Double Gold Border */}
-        <div className="relative bg-[#1C1730] border border-[#D4AF37]/40 rounded-3xl p-6 sm:p-8 md:p-10 mb-12 shadow-2xl overflow-hidden">
+        {/* Description Card */}
+        <div className="relative bg-[#1C1730] border border-[#D4AF37]/40 rounded-3xl p-6 sm:p-8 md:p-10 mb-12 shadow-[0_0_40px_rgba(212,175,55,0.12)] overflow-hidden">
           
           <div className="gold-corner-diamond gold-corner-tl">✦</div>
           <div className="gold-corner-diamond gold-corner-tr">✦</div>
@@ -39,7 +36,7 @@ export default function EventDetails({ onOpenRegister }: EventDetailsProps) {
           <div className="relative z-10 max-w-4xl mx-auto space-y-6">
             <div className="text-center space-y-4">
               <p className="text-base sm:text-lg md:text-xl text-[#F6EFE0] leading-relaxed font-body">
-                সঙ্গীতের সুর যেখানে আত্মাকে ছুঁয়ে যায়, সেখানেই গড়ে ওঠে আত্মিক বন্ধন। স্টারমেকারের সুপরিচিত ও জনপ্রিয় মিউজিক পরিবার <span className="text-[#F0D78C] font-bold font-serif">"গান বৃষ্টি"</span> আয়োজন করতে যাচ্ছে বছরের সবচেয়ে জাকজমকপূর্ণ ও মার্জিত মিলনমেলা—<span className="text-[#F0D78C] font-bold font-serif">"Gaan Bristy Grand Get-Together 2026: Melody at Gulshan Club"</span>। 
+                সঙ্গীতের সুর যেখানে আত্মাকে ছুঁয়ে যায়, সেখানেই গড়ে ওঠে আত্মিক বন্ধন। স্টারমেকারের সুপরিচিত ও জনপ্রিয় মিউজিক পরিবার <span className="text-[#F0D78C] font-black font-serif">"গান বৃষ্টি"</span> আয়োজন করতে যাচ্ছে বছরের সবচেয়ে জাকজমকপূর্ণ ও মার্জিত মিলনমেলা—<span className="text-[#D4AF37] font-extrabold font-serif">"Gaan Bristy Grand Get-Together 2026: Melody at Gulshan Club"</span>। 
               </p>
               <p className="text-sm sm:text-base text-[#B3A6C9] leading-relaxed font-body">
                 দিনের পর দিন ভার্চুয়াল জগতে যাদের মিষ্টি সুর ও গানে আমাদের মন জুড়িয়েছে, এবার গুলশান ক্লাবের অভিজাত আবহে তাদের সাথে সামনাসামনি আড্ডা, সুরের ঝংকার, রাজকীয় বুফে নৈশভোজ এবং গুণীজন সম্মাননার এক অবিস্মরণীয় সন্ধ্যা কাটাতে আসুন এক ছাদের নিচে। এটি শুধুই একটি গেট-টুগেদার নয়, এটি আমাদের পরিবারটির ঐক্য, প্রীতি ও ভালোবাসার এক অমর উদ্যাপন।
@@ -47,15 +44,15 @@ export default function EventDetails({ onOpenRegister }: EventDetailsProps) {
             </div>
 
             {/* Calendar Reminder Callout Banner */}
-            <div className="pt-6 border-t border-[#D4AF37]/20 flex flex-col md:flex-row items-center justify-between gap-4 bg-[#0F0C1A]/80 p-4 sm:p-5 rounded-2xl border border-[#D4AF37]/30">
+            <div className="pt-6 border-t border-[#D4AF37]/20 flex flex-col md:flex-row items-center justify-between gap-4 bg-[#0F0C1A]/90 p-4 sm:p-5 rounded-2xl border border-[#D4AF37]/30">
               <div className="flex items-center gap-3.5 text-left w-full md:w-auto">
-                <div className="p-3 bg-[#7A1F3D]/50 rounded-2xl border border-[#D4AF37]/40 text-[#F0D78C] shrink-0 shadow-inner">
-                  <Calendar className="w-6 h-6" />
+                <div className="p-3 bg-[#D4AF37]/15 rounded-2xl border border-[#D4AF37]/40 text-[#D4AF37] shrink-0 shadow-inner">
+                  <Calendar className="w-6 h-6 text-[#D4AF37]" />
                 </div>
                 <div>
                   <h4 className="text-sm sm:text-base font-bold text-[#F6EFE0] font-serif flex items-center gap-2">
                     <span>অনুষ্ঠানের তারিখ ও সময় ক্যালেন্ডারে সেভ রাখুন</span>
-                    <span className="hidden sm:inline bg-[#7A1F3D] text-[#F0D78C] text-[10px] px-2 py-0.5 rounded font-mono font-normal border border-[#D4AF37]/30">Reminder</span>
+                    <span className="hidden sm:inline bg-[#7A1F3D] text-[#F0D78C] text-[10px] px-2 py-0.5 rounded font-mono font-bold border border-[#D4AF37]/40">Reminder</span>
                   </h4>
                   <p className="text-xs text-[#B3A6C9] mt-0.5">
                     {EVENT_DETAILS.dateBengali}, {EVENT_DETAILS.timeBengali} | {EVENT_DETAILS.venueNameBengali}
@@ -74,19 +71,19 @@ export default function EventDetails({ onOpenRegister }: EventDetailsProps) {
         {/* Social Media Sharing Widget */}
         <SocialShareWidget className="mb-12" />
 
-        {/* Pricing & Seat Urgency Grid */}
+        {/* Pricing & Seat Urgency Grid - UNIFIED BOTH CARDS WITH CARD BG (#1C1730) & GOLD BORDER (#D4AF37) */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch max-w-5xl mx-auto">
           
           {/* All-Inclusive Ticket Card */}
           <div className="bg-[#1C1730] border-2 border-[#D4AF37] rounded-3xl p-6 sm:p-8 shadow-2xl relative flex flex-col justify-between group transition">
-            <div className="absolute top-4 right-4 bg-[#7A1F3D] text-[#F0D78C] border border-[#D4AF37]/40 text-xs font-bold px-3.5 py-1 rounded-full font-serif">
+            <div className="absolute top-4 right-4 bg-gradient-to-r from-[#D4AF37] to-[#F0D78C] text-[#0F0C1A] text-xs font-black px-3.5 py-1 rounded-full font-serif shadow-md">
               ALL-INCLUSIVE PASS
             </div>
 
             <div>
               <div className="flex items-center gap-3 mb-4">
-                <div className="p-3.5 bg-[#7A1F3D]/60 text-[#F0D78C] rounded-2xl border border-[#D4AF37]/40">
-                  <Users className="w-7 h-7" />
+                <div className="p-3.5 bg-[#D4AF37]/15 text-[#D4AF37] rounded-2xl border border-[#D4AF37]/40">
+                  <Users className="w-7 h-7 text-[#D4AF37]" />
                 </div>
                 <div>
                   <h3 className="text-xl font-bold text-[#F6EFE0] font-serif">প্রতি জন অতিথি (Per Person)</h3>
@@ -123,26 +120,28 @@ export default function EventDetails({ onOpenRegister }: EventDetailsProps) {
 
             <button
               onClick={onOpenRegister}
-              className="w-full py-4 gold-gradient-btn text-[#0F0C1A] font-extrabold rounded-full transition shadow-xl text-base cursor-pointer"
+              className="w-full py-4 bg-gradient-to-r from-[#F0D78C] to-[#D4AF37] text-[#0F0C1A] font-extrabold rounded-full transition shadow-[0_8px_24px_rgba(212,175,55,0.3)] hover:shadow-[0_12px_32px_rgba(212,175,55,0.5)] text-base cursor-pointer"
             >
-              রেজিস্ট্রেশন করুন ও টিকিট বুক করুন
+              <span>রেজিস্ট্রেশন করুন ও টিকিট বুক করুন</span>
             </button>
           </div>
 
-          {/* Limited Seats Urgency & Rules */}
-          <div className="bg-[#1C1730] border-2 border-[#7A1F3D] rounded-3xl p-6 sm:p-8 shadow-2xl flex flex-col justify-between">
+          {/* Limited Seats Urgency & Rules - UNIFIED BOTH CARDS WITH CARD BG (#1C1730) & GOLD BORDER (#D4AF37) */}
+          <div className="bg-[#1C1730] border-2 border-[#D4AF37] rounded-3xl p-6 sm:p-8 shadow-2xl flex flex-col justify-between">
             <div>
-              <div className="inline-flex items-center gap-2 bg-[#7A1F3D] text-[#F0D78C] font-extrabold text-xs px-3.5 py-1.5 rounded-full mb-4 shadow-md">
-                <AlertCircle className="w-4 h-4 text-[#D4AF37]" />
+              <div className="inline-flex items-center gap-2 bg-[#7A1F3D] border border-[#D4AF37]/50 text-[#F0D78C] font-extrabold text-xs px-3.5 py-1.5 rounded-full mb-4 shadow-md">
+                <AlertCircle className="w-4 h-4 text-[#F0D78C]" />
                 <span>জরুরি নোটিশ (Urgent Notice)</span>
               </div>
 
-              <h3 className="text-2xl font-bold text-[#F0D78C] font-serif mb-3">
-                সীমিত ১৫০০ আসন
-              </h3>
-
-              <div className="p-4 bg-[#7A1F3D]/40 border border-[#D4AF37]/40 rounded-2xl mb-5 text-[#F0D78C] text-sm font-semibold text-center font-serif">
-                "{EVENT_DETAILS.urgencyText}"
+              {/* Big Wine-to-Gold Brand Gradient Highlight Box */}
+              <div className="my-4 p-5 bg-gradient-to-r from-[#7A1F3D] to-[#D4AF37] border border-[#F0D78C] rounded-2xl text-center shadow-[0_4px_20px_rgba(212,175,55,0.25)]">
+                <p className="text-xs uppercase text-[#F6EFE0] font-extrabold tracking-widest mb-1">
+                  সর্বোচ্চ ধারণক্ষমতা
+                </p>
+                <h3 className="text-3xl sm:text-4xl md:text-5xl font-black text-[#0F0C1A] font-serif tracking-tight drop-shadow-md">
+                  সীমিত ১৫০ আসন
+                </h3>
               </div>
 
               <p className="text-xs sm:text-sm text-[#B3A6C9] leading-relaxed mb-6 font-body">
@@ -150,15 +149,15 @@ export default function EventDetails({ onOpenRegister }: EventDetailsProps) {
               </p>
 
               <div className="space-y-3 pt-4 border-t border-[#D4AF37]/20 text-xs text-[#F6EFE0]">
-                <div className="flex items-center gap-2 text-[#F0D78C] font-semibold">
+                <div className="flex items-center gap-2 font-semibold">
                   <Utensils className="w-4 h-4 text-[#D4AF37]" />
                   <span>রয়্যাল বুফে ডিনার প্যাকেজ অন্তর্ভুক্ত</span>
                 </div>
-                <div className="flex items-center gap-2 text-[#F0D78C] font-semibold">
+                <div className="flex items-center gap-2 font-semibold">
                   <Music className="w-4 h-4 text-[#D4AF37]" />
                   <span>লাইভ আনপ্লাগড পারফরম্যান্স</span>
                 </div>
-                <div className="flex items-center gap-2 text-[#F0D78C] font-semibold">
+                <div className="flex items-center gap-2 font-semibold">
                   <Award className="w-4 h-4 text-[#D4AF37]" />
                   <span>গুণীজন সম্মাননা ও বিশেষ শুভেচ্ছা মেমেন্টো</span>
                 </div>
@@ -168,9 +167,9 @@ export default function EventDetails({ onOpenRegister }: EventDetailsProps) {
             <div className="mt-6 pt-4 border-t border-[#D4AF37]/20">
               <button
                 onClick={onOpenRegister}
-                className="w-full py-4 bg-[#7A1F3D] hover:bg-[#8b2446] text-[#F0D78C] border border-[#D4AF37]/50 font-bold rounded-full transition shadow-lg text-sm flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full py-4 bg-gradient-to-r from-[#F0D78C] to-[#D4AF37] text-[#0F0C1A] font-extrabold rounded-full transition shadow-[0_8px_24px_rgba(212,175,55,0.3)] hover:shadow-[0_12px_32px_rgba(212,175,55,0.5)] text-sm flex items-center justify-center gap-2 cursor-pointer"
               >
-                <Ticket className="w-4 h-4 text-[#D4AF37]" />
+                <Ticket className="w-4 h-4 text-[#0F0C1A]" />
                 <span>অবশিষ্ট আসন দ্রুত বুকিং করুন</span>
               </button>
             </div>
@@ -182,4 +181,3 @@ export default function EventDetails({ onOpenRegister }: EventDetailsProps) {
     </section>
   );
 }
-

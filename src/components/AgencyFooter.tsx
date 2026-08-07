@@ -1,4 +1,4 @@
-import { EVENT_DETAILS } from '../data/eventData';
+import { EVENT_DETAILS, AGENCY_LOGO_URL } from '../data/eventData';
 import { Globe, Phone, Smartphone, Code, Share2, Sparkles, Heart } from 'lucide-react';
 
 export default function AgencyFooter() {
@@ -16,16 +16,33 @@ export default function AgencyFooter() {
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
             
-            {/* Left Info */}
-            <div className="lg:col-span-7 space-y-3 font-body">
+            {/* Left Info with Animated Agency Logo */}
+            <div className="lg:col-span-7 space-y-4 font-body">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#7A1F3D]/60 border border-[#D4AF37]/40 text-[#F0D78C] text-xs font-bold">
                 <Sparkles className="w-3.5 h-3.5 text-[#D4AF37]" />
                 <span>অফিশিয়াল ডিজিটাল অ্যান্ড টেক পার্টনার</span>
               </div>
 
-              <h3 className="text-2xl sm:text-3xl font-black font-english-heading text-[#F0D78C] tracking-tight">
-                {EVENT_DETAILS.agencyName}
-              </h3>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                {/* Animated Logo */}
+                <div className="relative shrink-0 slow-animated-logo">
+                  <div className="absolute -inset-1.5 bg-gradient-to-r from-[#D4AF37] via-[#F0D78C] to-[#7A1F3D] rounded-2xl blur-sm opacity-80 slow-animated-glow"></div>
+                  <div className="relative p-1.5 bg-[#0F0C1A] rounded-2xl border border-[#D4AF37] shadow-2xl overflow-hidden">
+                    <img 
+                      src={AGENCY_LOGO_URL} 
+                      alt="Social Media Care Logo" 
+                      className="w-16 h-16 sm:w-20 sm:h-20 object-contain rounded-xl bg-white/5"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="text-2xl sm:text-3xl font-black font-english-heading text-[#F0D78C] tracking-tight">
+                    {EVENT_DETAILS.agencyName}
+                  </h3>
+                  <p className="text-xs text-[#D4AF37] font-semibold mt-0.5">Financial Solution In BD & Digital Services</p>
+                </div>
+              </div>
 
               <p className="text-sm text-[#B3A6C9] leading-relaxed">
                 ওয়েবসাইট, মোবাইল অ্যাপস ডেভেলপমেন্ট, সোশ্যাল মিডিয়া সার্ভিস, ডিজিটাল মার্কেটিং এবং গ্রাফিক্স ব্র্যান্ডিং সংক্রান্ত যেকোনো সেবার জন্য আমাদের সাথে যোগাযোগ করুন।

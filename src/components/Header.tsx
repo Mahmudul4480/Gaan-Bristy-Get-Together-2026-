@@ -31,7 +31,7 @@ export default function Header({
         {/* Brand Logo & Name */}
         <div id="header-brand" className="flex items-center gap-3 cursor-pointer select-none shrink-0" onClick={() => scrollToSection('hero')}>
           <div className="relative group slow-animated-logo">
-            <div className="absolute -inset-1 bg-gradient-to-r from-[#D4AF37] to-[#7A1F3D] rounded-full blur opacity-60 group-hover:opacity-100 transition duration-300 slow-animated-glow"></div>
+            <div className="absolute -inset-1 bg-gradient-to-r from-[#D4AF37] via-[#F0D78C] to-[#D4AF37] rounded-full blur opacity-75 group-hover:opacity-100 transition duration-300 slow-animated-glow"></div>
             <img 
               src={LOGO_URL} 
               alt="Gaan Bristy Family Logo" 
@@ -42,10 +42,10 @@ export default function Header({
             />
           </div>
           <div className="flex items-center gap-2">
-            <span className="font-extrabold text-2xl sm:text-3xl text-[#F0D78C] font-bangla tracking-wide drop-shadow-md whitespace-nowrap">
+            <span className="font-extrabold text-2xl sm:text-3xl text-[#F6EFE0] font-bangla tracking-wide drop-shadow-md whitespace-nowrap">
               গান বৃষ্টি
             </span>
-            <span className="bg-[#7A1F3D]/80 text-[#F0D78C] text-xs font-bold px-2 py-0.5 rounded-full border border-[#D4AF37]/50 shadow-sm whitespace-nowrap">
+            <span className="bg-gradient-to-r from-[#D4AF37] to-[#F0D78C] text-[#0F0C1A] text-xs font-black px-2.5 py-0.5 rounded-full border border-white/30 shadow-md whitespace-nowrap">
               ২০২৬
             </span>
           </div>
@@ -53,47 +53,53 @@ export default function Header({
 
         {/* Desktop Navigation */}
         <nav id="desktop-nav" className="hidden md:flex items-center justify-center flex-1 gap-3 md:gap-5 lg:gap-8 xl:gap-10 text-xs md:text-sm lg:text-base font-semibold whitespace-nowrap">
-          <button 
-            onClick={() => scrollToSection('schedule')} 
-            className={`shrink-0 hover:text-[#F0D78C] transition ${activeSection === 'schedule' ? 'text-[#D4AF37] font-bold border-b-2 border-[#D4AF37] pb-0.5' : 'text-[#B3A6C9]'}`}
+          <a 
+            href="#schedule"
+            onClick={(e) => { e.preventDefault(); scrollToSection('schedule'); }} 
+            className={`shrink-0 cursor-pointer no-underline hover:text-[#F0D78C] transition ${activeSection === 'schedule' ? 'text-[#D4AF37] font-bold border-b-2 border-[#D4AF37] pb-0.5' : 'text-[#B3A6C9]'}`}
           >
-            <span>শিডিউল</span>
-          </button>
+            শিডিউল
+          </a>
 
-          <button 
-            onClick={() => scrollToSection('details')} 
-            className={`shrink-0 hover:text-[#F0D78C] transition ${activeSection === 'details' ? 'text-[#D4AF37] font-bold border-b-2 border-[#D4AF37] pb-0.5' : 'text-[#B3A6C9]'}`}
+          <a 
+            href="#details"
+            onClick={(e) => { e.preventDefault(); scrollToSection('details'); }} 
+            className={`shrink-0 cursor-pointer no-underline hover:text-[#F0D78C] transition ${activeSection === 'details' ? 'text-[#D4AF37] font-bold border-b-2 border-[#D4AF37] pb-0.5' : 'text-[#B3A6C9]'}`}
           >
-            <span>ইভেন্ট ফি</span>
-          </button>
+            ইভেন্ট ফি
+          </a>
 
-          <button 
-            onClick={() => scrollToSection('team')} 
-            className={`shrink-0 hover:text-[#F0D78C] transition ${activeSection === 'team' ? 'text-[#D4AF37] font-bold border-b-2 border-[#D4AF37] pb-0.5' : 'text-[#B3A6C9]'}`}
+          <a 
+            href="#team"
+            onClick={(e) => { e.preventDefault(); scrollToSection('team'); }} 
+            className={`shrink-0 cursor-pointer no-underline hover:text-[#F0D78C] transition ${activeSection === 'team' ? 'text-[#D4AF37] font-bold border-b-2 border-[#D4AF37] pb-0.5' : 'text-[#B3A6C9]'}`}
           >
-            <span>ফ্যামিলি টিম</span>
-          </button>
+            ফ্যামিলি টিম
+          </a>
 
-          <button 
-            onClick={() => scrollToSection('gallery')} 
-            className={`shrink-0 hover:text-[#F0D78C] transition ${activeSection === 'gallery' ? 'text-[#D4AF37] font-bold border-b-2 border-[#D4AF37] pb-0.5' : 'text-[#B3A6C9]'}`}
+          <a 
+            href="#gallery"
+            onClick={(e) => { e.preventDefault(); scrollToSection('gallery'); }} 
+            className={`shrink-0 cursor-pointer no-underline hover:text-[#F0D78C] transition ${activeSection === 'gallery' ? 'text-[#D4AF37] font-bold border-b-2 border-[#D4AF37] pb-0.5' : 'text-[#B3A6C9]'}`}
           >
-            <span>গ্যালারী</span>
-          </button>
+            গ্যালারী
+          </a>
 
-          <button 
-            onClick={() => scrollToSection('guestbook')} 
-            className={`shrink-0 hover:text-[#F0D78C] transition ${activeSection === 'guestbook' ? 'text-[#D4AF37] font-bold border-b-2 border-[#D4AF37] pb-0.5' : 'text-[#B3A6C9]'}`}
+          <a 
+            href="#guestbook"
+            onClick={(e) => { e.preventDefault(); scrollToSection('guestbook'); }} 
+            className={`shrink-0 cursor-pointer no-underline hover:text-[#F0D78C] transition ${activeSection === 'guestbook' ? 'text-[#D4AF37] font-bold border-b-2 border-[#D4AF37] pb-0.5' : 'text-[#B3A6C9]'}`}
           >
-            <span>গেস্টবুক</span>
-          </button>
+            গেস্টবুক
+          </a>
 
-          <button 
-            onClick={() => scrollToSection('venue')} 
-            className={`shrink-0 hover:text-[#F0D78C] transition ${activeSection === 'venue' ? 'text-[#D4AF37] font-bold border-b-2 border-[#D4AF37] pb-0.5' : 'text-[#B3A6C9]'}`}
+          <a 
+            href="#venue"
+            onClick={(e) => { e.preventDefault(); scrollToSection('venue'); }} 
+            className={`shrink-0 cursor-pointer no-underline hover:text-[#F0D78C] transition ${activeSection === 'venue' ? 'text-[#D4AF37] font-bold border-b-2 border-[#D4AF37] pb-0.5' : 'text-[#B3A6C9]'}`}
           >
-            <span>ভেন্যু</span>
-          </button>
+            ভেন্যু
+          </a>
         </nav>
 
         {/* Header Actions */}
@@ -102,24 +108,21 @@ export default function Header({
           <button
             onClick={onOpenAdminVerify}
             id="admin-verify-btn"
-            className="hidden sm:flex items-center gap-1.5 text-xs sm:text-sm font-semibold bg-[#1C1730] hover:bg-[#251f3e] text-[#F6EFE0] border border-[#D4AF37]/40 px-3.5 py-2 rounded-xl transition shadow-md"
+            className="hidden sm:flex items-center gap-1.5 text-xs sm:text-sm font-semibold bg-[#1C1730] hover:bg-[#251F3D] text-[#F6EFE0] border border-[#D4AF37]/50 px-3.5 py-2 rounded-xl transition shadow-md cursor-pointer"
             title="এন্ট্রি গেটে টিকিট সার্চ ও ভেরিফিকেশন"
           >
-            <ShieldCheck className="w-4 h-4 text-[#F0D78C]" />
+            <ShieldCheck className="w-4 h-4 text-[#D4AF37]" />
             <span>গেট ভেরিফাই</span>
           </button>
 
-          {/* Primary CTA: Ticket Booking */}
+          {/* Primary CTA: Ticket Booking with Lighting Animation Effect */}
           <button
             onClick={onOpenRegister}
             id="header-register-btn"
-            className="relative group overflow-hidden rounded-full p-px font-semibold text-xs sm:text-sm shadow-lg"
+            className="btn-lighting px-5 py-2.5 rounded-full font-black text-xs sm:text-sm text-[#0F0C1A] bg-gradient-to-r from-[#F0D78C] via-[#D4AF37] to-[#F0D78C] shadow-[0_0_20px_rgba(212,175,55,0.5)] flex items-center gap-2 cursor-pointer border border-[#F0D78C]"
           >
-            <span className="absolute inset-0 bg-gradient-to-r from-[#D4AF37] via-[#F0D78C] to-[#D4AF37] rounded-full"></span>
-            <span className="relative flex items-center gap-1.5 px-4 sm:px-5 py-2 bg-[#0F0C1A] text-[#F0D78C] rounded-full group-hover:bg-opacity-80 transition duration-300 font-extrabold">
-              <TicketIcon className="w-4 h-4 text-[#D4AF37]" />
-              <span>টিকিট বুকিং</span>
-            </span>
+            <TicketIcon className="w-4 h-4 text-[#0F0C1A] shrink-0" />
+            <span className="tracking-wide text-[#0F0C1A] font-black">টিকিট বুকিং</span>
           </button>
 
           {/* Mobile Menu Toggle */}
