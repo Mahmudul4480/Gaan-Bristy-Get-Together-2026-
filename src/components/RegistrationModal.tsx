@@ -164,7 +164,7 @@ export default function RegistrationModal({ isOpen, onClose, onTicketCreated }: 
                     placeholder="যেমন: তানভীর আহমেদ"
                     className="w-full bg-[#0F0C1A] border border-[#D4AF37]/40 focus:border-[#D4AF37] rounded-xl px-4 py-2.5 text-sm text-[#F6EFE0] outline-none transition"
                   />
-                  {errors.fullName && <p className="text-xs text-rose-400 mt-1">{errors.fullName}</p>}
+                  {errors.fullName && <p className="text-xs text-[#A52C54] mt-1">{errors.fullName}</p>}
                 </div>
 
                 <div>
@@ -179,7 +179,7 @@ export default function RegistrationModal({ isOpen, onClose, onTicketCreated }: 
                     placeholder="যেমন: @GB_Tanveer"
                     className="w-full bg-[#0F0C1A] border border-[#D4AF37]/40 focus:border-[#D4AF37] rounded-xl px-4 py-2.5 text-sm text-[#F6EFE0] outline-none transition"
                   />
-                  {errors.starMakerId && <p className="text-xs text-rose-400 mt-1">{errors.starMakerId}</p>}
+                  {errors.starMakerId && <p className="text-xs text-[#A52C54] mt-1">{errors.starMakerId}</p>}
                 </div>
 
                 <div>
@@ -194,7 +194,7 @@ export default function RegistrationModal({ isOpen, onClose, onTicketCreated }: 
                     placeholder="017xxxxxxxx"
                     className="w-full bg-[#0F0C1A] border border-[#D4AF37]/40 focus:border-[#D4AF37] rounded-xl px-4 py-2.5 text-sm text-[#F6EFE0] outline-none transition font-mono"
                   />
-                  {errors.phone && <p className="text-xs text-rose-400 mt-1">{errors.phone}</p>}
+                  {errors.phone && <p className="text-xs text-[#A52C54] mt-1">{errors.phone}</p>}
                 </div>
 
                 <div>
@@ -324,7 +324,7 @@ export default function RegistrationModal({ isOpen, onClose, onTicketCreated }: 
                     placeholder="যেমন: BK109283746"
                     className="w-full bg-[#0F0C1A] border border-[#D4AF37]/40 focus:border-[#D4AF37] rounded-xl px-4 py-2.5 text-sm text-[#F6EFE0] font-mono outline-none transition"
                   />
-                  {errors.transactionId && <p className="text-xs text-rose-400 mt-1">{errors.transactionId}</p>}
+                  {errors.transactionId && <p className="text-xs text-[#A52C54] mt-1">{errors.transactionId}</p>}
                 </div>
               </div>
 

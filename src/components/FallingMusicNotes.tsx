@@ -11,7 +11,7 @@ export default function FallingMusicNotes() {
     if (!ctx) return;
 
     const noteChars = ['♪', '♫', '♬'];
-    const noteColors = ['#2dd4bf', '#f472b6', '#f59e0b', '#ef4444', '#a78bfa', '#D4AF37'];
+    const noteColors = ['#D4AF37', '#F0D78C', '#D4AF37', '#F0D78C', '#D4AF37', '#F0D78C'];
 
     // Umbrella image data
     const umbrellaImg = new Image();
