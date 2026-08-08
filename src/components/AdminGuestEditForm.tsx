@@ -1,0 +1,310 @@
+import { ChangeEvent, FormEvent, useMemo, useState } from 'react';
+import { Ticket } from '../types';
+import { EVENT_DETAILS } from '../data/eventData';
+import { findDuplicateTransactionId } from '../utils/guestExport';
+import { saveHonorableGuest } from '../utils/guestStorage';
+import { compressPhotoFile, validatePhotoFile } from '../utils/photoUpload';
+import HonorableGuestCard from './HonorableGuestCard';
+import { Search, Save, Camera, User, Users, Phone, Sparkles, CheckCircle2 } from 'lucide-react';
+
+interface AdminGuestEditFormProps {
+  guests: Ticket[];
+  onGuestUpdated: () => void;
+}
+
+export default function AdminGuestEditForm({ guests, onGuestUpdated }: AdminGuestEditFormProps) {
+  const [query, setQuery] = useState('');
+  const [selected, setSelected] = useState<Ticket | null>(null);
+  const [saved, setSaved] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return guests;
+    return guests.filter(
+      (g) =>
+        g.ticketId.toLowerCase().includes(q) ||
+        g.fullName.toLowerCase().includes(q) ||
+        g.familyName.toLowerCase().includes(q) ||
+        g.phone.includes(q) ||
+        g.transactionId.toLowerCase().includes(q)
+    );
+  }, [guests, query]);
+
+  const selectGuest = (ticket: Ticket) => {
+    setSelected({ ...ticket });
+    setSaved(false);
+    setErrors({});
+  };
+
+  const updateField = <K extends keyof Ticket>(key: K, value: Ticket[K]) => {
+    if (!selected) return;
+    setSelected({ ...selected, [key]: value });
+    setSaved(false);
+  };
+
+  const handlePhotoChange = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !selected) return;
+    const validationError = validatePhotoFile(file);
+    if (validationError) {
+      setErrors((prev) => ({ ...prev, photo: validationError }));
+      return;
+    }
+    try {
+      const compressed = await compressPhotoFile(file);
+      updateField('photoUrl', compressed);
+      setErrors((prev) => {
+        const next = { ...prev };
+        delete next.photo;
+        return next;
+      });
+    } catch {
+      setErrors((prev) => ({ ...prev, photo: 'ছবি আপলোড করতে সমস্যা হয়েছে' }));
+    }
+  };
+
+  const handleSave = (e: FormEvent) => {
+    e.preventDefault();
+    if (!selected) return;
+
+    const newErrors: Record<string, string> = {};
+    if (!selected.fullName.trim()) newErrors.fullName = 'নাম প্রয়োজন';
+    if (!selected.familyName.trim()) newErrors.familyName = 'Family Name প্রয়োজন';
+    if (!selected.phone.trim() || selected.phone.length < 11) newErrors.phone = 'সঠিক মোবাইল দিন';
+    if (!selected.transactionId.trim()) newErrors.transactionId = 'TrxID প্রয়োজন';
+
+    const duplicate = findDuplicateTransactionId(
+      guests.filter((g) => g.ticketId !== selected.ticketId),
+      selected.transactionId
+    );
+    if (duplicate) {
+      newErrors.transactionId = `TrxID অন্য card-এ আছে (${duplicate.ticketId})`;
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
+    const adultCount = Math.max(1, selected.adultCount);
+    const updated: Ticket = {
+      ...selected,
+      fullName: selected.fullName.trim(),
+      familyName: selected.familyName.trim(),
+      starMakerId: selected.starMakerId?.trim() || undefined,
+      phone: selected.phone.trim(),
+      email: selected.email?.trim() || undefined,
+      transactionId: selected.transactionId.trim(),
+      songRequest: selected.songRequest?.trim() || undefined,
+      adultCount,
+      totalAmount: adultCount * EVENT_DETAILS.feeAdult,
+      seatNumbers:
+        selected.seatNumbers.length >= adultCount
+          ? selected.seatNumbers.slice(0, adultCount)
+          : [
+              ...selected.seatNumbers,
+              ...Array.from({ length: adultCount - selected.seatNumbers.length }, (_, i) =>
+                `VIP-${100 + i + selected.seatNumbers.length}`
+              ),
+            ],
+    };
+
+    saveHonorableGuest(updated);
+    setSelected(updated);
+    setSaved(true);
+    onGuestUpdated();
+  };
+
+  return (
+    <div className="space-y-4 font-body">
+      <p className="text-xs text-[#B3A6C9] bg-[#0F0C1A] border border-[#D4AF37]/30 rounded-xl p-3">
+        যেকোনো Guest Card-এর সব তথ্য এখান থেকে Edit করুন — নাম, Family, StarMaker ID, Mobile, ছবি, TrxID, Payment ইত্যাদি।
+      </p>
+
+      <div className="relative">
+        <Search className="absolute left-3 top-3 w-4 h-4 text-[#B3A6C9]" />
+        <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Card খুঁজুন — Ticket ID, নাম, TrxID, ফোন..."
+          className="w-full bg-[#0F0C1A] border border-[#D4AF37]/40 rounded-xl pl-10 pr-4 py-2.5 text-sm text-[#F6EFE0] outline-none"
+        />
+      </div>
+
+      {filtered.length > 0 && !selected && (
+        <div className="max-h-40 overflow-y-auto rounded-xl border border-[#D4AF37]/25 divide-y divide-[#D4AF37]/10">
+          {filtered.map((g) => (
+            <button
+              key={g.ticketId}
+              type="button"
+              onClick={() => selectGuest(g)}
+              className="w-full text-left px-3 py-2.5 hover:bg-[#0F0C1A] transition cursor-pointer"
+            >
+              <span className="text-[#F0D78C] font-mono text-xs">{g.ticketId}</span>
+              <span className="text-[#F6EFE0] font-semibold text-sm ml-2">{g.fullName}</span>
+              <span className="text-[#B3A6C9] text-xs ml-2">— {g.familyName}</span>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {selected && (
+        <form onSubmit={handleSave} className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-bold text-[#F0D78C]">Card Edit — {selected.ticketId}</p>
+              <button
+                type="button"
+                onClick={() => setSelected(null)}
+                className="text-xs text-[#B3A6C9] hover:text-[#F6EFE0] cursor-pointer"
+              >
+                ← অন্য card
+              </button>
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-[#F6EFE0] mb-1 flex items-center gap-1">
+                <User className="w-3.5 h-3.5 text-[#D4AF37]" /> Name *
+              </label>
+              <input
+                value={selected.fullName}
+                onChange={(e) => updateField('fullName', e.target.value)}
+                className="w-full bg-[#0F0C1A] border border-[#D4AF37]/40 rounded-xl px-3 py-2 text-sm text-[#F6EFE0] outline-none"
+              />
+              {errors.fullName && <p className="text-xs text-[#A52C54] mt-1">{errors.fullName}</p>}
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-[#F6EFE0] mb-1 flex items-center gap-1">
+                <Users className="w-3.5 h-3.5 text-[#D4AF37]" /> StarMaker Family Name *
+              </label>
+              <input
+                value={selected.familyName}
+                onChange={(e) => updateField('familyName', e.target.value)}
+                className="w-full bg-[#0F0C1A] border border-[#D4AF37]/40 rounded-xl px-3 py-2 text-sm text-[#F6EFE0] outline-none"
+              />
+              {errors.familyName && <p className="text-xs text-[#A52C54] mt-1">{errors.familyName}</p>}
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-[#F6EFE0] mb-1 flex items-center gap-1">
+                <Sparkles className="w-3.5 h-3.5 text-[#D4AF37]" /> StarMaker ID No
+              </label>
+              <input
+                value={selected.starMakerId ?? ''}
+                onChange={(e) => updateField('starMakerId', e.target.value || undefined)}
+                className="w-full bg-[#0F0C1A] border border-[#D4AF37]/40 rounded-xl px-3 py-2 text-sm text-[#F6EFE0] outline-none"
+              />
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-[#F6EFE0] mb-1 flex items-center gap-1">
+                <Phone className="w-3.5 h-3.5 text-[#D4AF37]" /> Mobile No *
+              </label>
+              <input
+                value={selected.phone}
+                onChange={(e) => updateField('phone', e.target.value)}
+                className="w-full bg-[#0F0C1A] border border-[#D4AF37]/40 rounded-xl px-3 py-2 text-sm text-[#F6EFE0] font-mono outline-none"
+              />
+              {errors.phone && <p className="text-xs text-[#A52C54] mt-1">{errors.phone}</p>}
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-[#F6EFE0] mb-1">Email</label>
+              <input
+                value={selected.email ?? ''}
+                onChange={(e) => updateField('email', e.target.value || undefined)}
+                className="w-full bg-[#0F0C1A] border border-[#D4AF37]/40 rounded-xl px-3 py-2 text-sm text-[#F6EFE0] outline-none"
+              />
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-[#F6EFE0] mb-1">Transaction ID (TrxID) *</label>
+              <input
+                value={selected.transactionId}
+                onChange={(e) => updateField('transactionId', e.target.value)}
+                className="w-full bg-[#0F0C1A] border border-[#D4AF37]/40 rounded-xl px-3 py-2 text-sm text-[#F6EFE0] font-mono outline-none"
+              />
+              {errors.transactionId && <p className="text-xs text-[#A52C54] mt-1">{errors.transactionId}</p>}
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs font-semibold text-[#F6EFE0] mb-1">Payment</label>
+                <select
+                  value={selected.paymentMethod}
+                  onChange={(e) => updateField('paymentMethod', e.target.value as Ticket['paymentMethod'])}
+                  className="w-full bg-[#0F0C1A] border border-[#D4AF37]/40 rounded-xl px-3 py-2 text-sm text-[#F6EFE0] outline-none"
+                >
+                  {(['bKash', 'Nagad', 'Rocket', 'Bank Transfer'] as const).map((m) => (
+                    <option key={m} value={m}>{m}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-[#F6EFE0] mb-1">Adult Count</label>
+                <input
+                  type="number"
+                  min={1}
+                  value={selected.adultCount}
+                  onChange={(e) => updateField('adultCount', Math.max(1, Number(e.target.value) || 1))}
+                  className="w-full bg-[#0F0C1A] border border-[#D4AF37]/40 rounded-xl px-3 py-2 text-sm text-[#F6EFE0] outline-none"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-[#F6EFE0] mb-1">গানের অনুরোধ</label>
+              <input
+                value={selected.songRequest ?? ''}
+                onChange={(e) => updateField('songRequest', e.target.value || undefined)}
+                className="w-full bg-[#0F0C1A] border border-[#D4AF37]/40 rounded-xl px-3 py-2 text-sm text-[#F6EFE0] outline-none"
+              />
+            </div>
+
+            <div className="bg-[#0F0C1A] border border-[#D4AF37]/30 rounded-xl p-3">
+              <label className="text-xs font-semibold text-[#F6EFE0] mb-2 flex items-center gap-1">
+                <Camera className="w-3.5 h-3.5 text-[#D4AF37]" /> ছবি (Sommani Card-এ ব্যবহৃত হবে)
+              </label>
+              <div className="flex items-center gap-3">
+                {selected.photoUrl ? (
+                  <img src={selected.photoUrl} alt="" className="w-16 h-20 object-cover rounded-lg border border-[#D4AF37]/40" />
+                ) : null}
+                <label className="cursor-pointer px-3 py-2 bg-[#1C1730] border border-[#D4AF37]/40 rounded-lg text-xs text-[#F0D78C] font-semibold">
+                  ছবি বদলান
+                  <input type="file" accept="image/*" onChange={handlePhotoChange} className="hidden" />
+                </label>
+              </div>
+              {errors.photo && <p className="text-xs text-[#A52C54] mt-1">{errors.photo}</p>}
+            </div>
+
+            <button
+              type="submit"
+              className="w-full py-3 gold-gradient-btn text-[#0F0C1A] font-extrabold rounded-xl flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <Save className="w-4 h-4" />
+              Card আপডেট সংরক্ষণ করুন
+            </button>
+
+            {saved && (
+              <p className="text-xs text-[#F0D78C] flex items-center gap-1 justify-center">
+                <CheckCircle2 className="w-4 h-4" />
+                Card সফলভাবে আপডেট হয়েছে!
+              </p>
+            )}
+          </div>
+
+          <div className="lg:sticky lg:top-0 lg:self-start">
+            <p className="text-xs text-[#B3A6C9] mb-2 text-center">Live Preview</p>
+            <HonorableGuestCard ticket={selected} />
+          </div>
+        </form>
+      )}
+
+      {!selected && filtered.length === 0 && (
+        <p className="text-center text-sm text-[#B3A6C9] py-6">কোনো card পাওয়া যায়নি</p>
+      )}
+    </div>
+  );
+}
