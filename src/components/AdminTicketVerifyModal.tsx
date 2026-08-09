@@ -7,7 +7,6 @@ import AdminGuestEditForm from './AdminGuestEditForm';
 import AdminAssignPanel from './AdminAssignPanel';
 import AdminLoginGate from './AdminLoginGate';
 import { getAdminPanelUrl, ADMIN_PANEL_PIN } from '../config/adminConfig';
-import { GUEST_UPDATED_EVENT } from '../utils/guestStorage';
 import { isAdminSessionActive } from '../utils/adminStorage';
 import { X, Search, ShieldCheck, CheckCircle2, User, Phone, Sparkles, AlertCircle, Camera, CameraOff, Upload, QrCode, RefreshCw, UserPlus, List, Pencil, Crown, Link2, Copy, Check } from 'lucide-react';
 
@@ -15,10 +14,9 @@ interface AdminTicketVerifyModalProps {
   isOpen: boolean;
   onClose: () => void;
   registeredTickets: Ticket[];
-  onGuestsUpdated?: () => void;
 }
 
-export default function AdminTicketVerifyModal({ isOpen, onClose, registeredTickets, onGuestsUpdated }: AdminTicketVerifyModalProps) {
+export default function AdminTicketVerifyModal({ isOpen, onClose, registeredTickets }: AdminTicketVerifyModalProps) {
   const [panelTab, setPanelTab] = useState<'verify' | 'create' | 'list' | 'edit' | 'assign'>('verify');
   const [isAuthenticated, setIsAuthenticated] = useState(() => isAdminSessionActive());
   const [linkCopied, setLinkCopied] = useState(false);
@@ -174,13 +172,6 @@ export default function AdminTicketVerifyModal({ isOpen, onClose, registeredTick
     setSearchError('');
   };
 
-  const handleGuestCreated = (_ticket: Ticket, updatedGuests?: Ticket[]) => {
-    if (updatedGuests) {
-      window.dispatchEvent(new CustomEvent(GUEST_UPDATED_EVENT, { detail: updatedGuests }));
-    }
-    onGuestsUpdated?.();
-  };
-
   const handleCopyAdminLink = () => {
     navigator.clipboard.writeText(getAdminPanelUrl());
     setLinkCopied(true);
@@ -302,13 +293,13 @@ export default function AdminTicketVerifyModal({ isOpen, onClose, registeredTick
         </div>
 
         {panelTab === 'create' && (
-          <AdminManualGuestForm existingGuests={registeredTickets} onGuestCreated={handleGuestCreated} />
+          <AdminManualGuestForm existingGuests={registeredTickets} onGuestCreated={() => {}} />
         )}
 
         {panelTab === 'list' && <AdminGuestList guests={registeredTickets} />}
 
         {panelTab === 'edit' && (
-          <AdminGuestEditForm guests={registeredTickets} onGuestUpdated={() => onGuestsUpdated?.()} />
+          <AdminGuestEditForm guests={registeredTickets} onGuestUpdated={() => {}} />
         )}
 
         {panelTab === 'assign' && <AdminAssignPanel />}

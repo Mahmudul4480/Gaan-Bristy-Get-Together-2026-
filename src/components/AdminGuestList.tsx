@@ -121,7 +121,7 @@ export default function AdminGuestList({ guests }: AdminGuestListProps) {
             >
               <X className="w-5 h-5" />
             </button>
-            <HonorableGuestCard ticket={previewTicket} />
+            <HonorableGuestCard ticket={previewTicket} showQr />
             <p className="text-center text-xs text-[#B3A6C9] mt-3 break-all">
               Card Link: {getGuestCardUrl(previewTicket.ticketId)}
             </p>

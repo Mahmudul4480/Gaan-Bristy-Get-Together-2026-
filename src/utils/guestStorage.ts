@@ -1,19 +1,20 @@
+import {
+  collection,
+  doc,
+  getDoc,
+  onSnapshot,
+  orderBy,
+  query,
+  setDoc,
+} from 'firebase/firestore';
 import { Ticket } from '../types';
-import { deleteGuestPhoto, persistGuestPhoto, readGuestPhoto } from './guestPhotoStorage';
+import { db, isFirebaseConfigured } from '../config/firebase';
 
-export const GUEST_STORAGE_KEY = 'gaan-bristy-honorable-guests-2026';
-export const GUEST_UPDATED_EVENT = 'gb-guests-updated';
+const GUESTS_COLLECTION = 'honorableGuests';
 
-type StoredTicket = Ticket & { hasPhoto?: boolean };
+export { isFirebaseConfigured };
 
-function isQuotaError(error: unknown): boolean {
-  return (
-    error instanceof DOMException &&
-    (error.name === 'QuotaExceededError' || error.code === 22)
-  );
-}
-
-function normalizeGuest(g: Ticket): StoredTicket {
+function normalizeGuest(g: Ticket): Ticket {
   return {
     ...g,
     familyName: g.familyName || 'Gaan Bristy Family',
@@ -21,92 +22,67 @@ function normalizeGuest(g: Ticket): StoredTicket {
   };
 }
 
-function stripPhotoForStorage(ticket: Ticket): StoredTicket {
-  if (ticket.photoUrl) {
-    const { photoUrl: _removed, ...rest } = ticket;
-    return { ...rest, hasPhoto: true };
+function guestDocRef(ticketId: string) {
+  if (!db) throw new Error('Firebase চালু নেই');
+  return doc(db, GUESTS_COLLECTION, ticketId);
+}
+
+/**
+ * Saves (creates or updates) a guest's Honorable Guest Card in Firestore.
+ * Every admin/browser subscribed via `subscribeToHonorableGuests` receives
+ * this update in real time — no manual refresh needed.
+ */
+export async function saveHonorableGuest(ticket: Ticket): Promise<void> {
+  if (!db) {
+    throw new Error('Firebase কনফিগার করা নেই। .env ফাইলে Firebase key যোগ করুন এবং সাইট রিস্টার্ট করুন।');
   }
-  return ticket;
-}
-
-function notifyGuestUpdate(guests: Ticket[]) {
-  window.dispatchEvent(new CustomEvent(GUEST_UPDATED_EVENT, { detail: guests }));
-}
-
-export function loadHonorableGuests(): Ticket[] {
-  try {
-    const raw = localStorage.getItem(GUEST_STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw) as Ticket[];
-    return Array.isArray(parsed) ? parsed.map(normalizeGuest) : [];
-  } catch {
-    return [];
-  }
-}
-
-export async function hydrateGuestPhotos(guests: Ticket[]): Promise<Ticket[]> {
-  return Promise.all(
-    guests.map(async (guest) => {
-      if (guest.photoUrl) return guest;
-      if (guest.hasPhoto) {
-        const photo = await readGuestPhoto(guest.ticketId);
-        return photo ? { ...guest, photoUrl: photo } : guest;
-      }
-      return guest;
-    })
-  );
-}
-
-export async function loadHonorableGuestsWithPhotos(): Promise<Ticket[]> {
-  return hydrateGuestPhotos(loadHonorableGuests());
-}
-
-export async function saveHonorableGuest(ticket: Ticket): Promise<Ticket[]> {
-  const photoUrl = ticket.photoUrl;
-
-  if (photoUrl) {
-    try {
-      await persistGuestPhoto(ticket.ticketId, photoUrl);
-    } catch (error) {
-      console.warn('[Guest storage] Photo save failed:', error);
-    }
-  } else if (!ticket.hasPhoto) {
-    await deleteGuestPhoto(ticket.ticketId);
-  }
-
-  const guests = loadHonorableGuests();
-  const storedTicket = stripPhotoForStorage(ticket);
-  const existingIndex = guests.findIndex((g) => g.ticketId === ticket.ticketId);
-
-  const updatedStored: StoredTicket[] =
-    existingIndex >= 0
-      ? guests.map((g, i) => (i === existingIndex ? storedTicket : stripPhotoForStorage(g)))
-      : [storedTicket, ...guests.map(stripPhotoForStorage)];
 
   try {
-    localStorage.setItem(GUEST_STORAGE_KEY, JSON.stringify(updatedStored));
+    await setDoc(guestDocRef(ticket.ticketId), ticket, { merge: true });
   } catch (error) {
-    if (isQuotaError(error)) {
-      throw new Error('ব্রাউজার স্টোরেজ পূর্ণ — Admin থেকে পুরনো card export করে পরিষ্কার করুন');
-    }
-    throw new Error('Guest card সংরক্ষণ করা যায়নি। আবার চেষ্টা করুন।');
+    console.error('[Guest storage] Firestore save failed:', error);
+    throw new Error('Guest card সংরক্ষণ করা যায়নি। ইন্টারনেট সংযোগ পরীক্ষা করে আবার চেষ্টা করুন।');
+  }
+}
+
+/**
+ * Subscribes to the live Honorable Guest list. Fires immediately with the
+ * current data, then again whenever any device creates/edits a card —
+ * this is what keeps Admin Panel and the public gallery in sync everywhere.
+ */
+export function subscribeToHonorableGuests(
+  onChange: (guests: Ticket[]) => void,
+  onError?: (error: Error) => void
+): () => void {
+  if (!db) {
+    onChange([]);
+    return () => {};
   }
 
-  const updated = await hydrateGuestPhotos(
-    existingIndex >= 0
-      ? guests.map((g, i) => (i === existingIndex ? ticket : g))
-      : [ticket, ...guests]
-  );
+  const guestsQuery = query(collection(db, GUESTS_COLLECTION), orderBy('issueDate', 'desc'));
 
-  notifyGuestUpdate(updated);
-  return updated;
+  return onSnapshot(
+    guestsQuery,
+    (snapshot) => {
+      const guests = snapshot.docs.map((docSnap) => normalizeGuest(docSnap.data() as Ticket));
+      onChange(guests);
+    },
+    (error) => {
+      console.error('[Guest storage] Firestore subscription failed:', error);
+      onError?.(error as Error);
+    }
+  );
 }
 
 export async function getHonorableGuestById(ticketId: string): Promise<Ticket | undefined> {
-  const guest = loadHonorableGuests().find((g) => g.ticketId === ticketId);
-  if (!guest) return undefined;
-  const [hydrated] = await hydrateGuestPhotos([guest]);
-  return hydrated;
+  if (!db) return undefined;
+  try {
+    const snap = await getDoc(guestDocRef(ticketId));
+    return snap.exists() ? normalizeGuest(snap.data() as Ticket) : undefined;
+  } catch (error) {
+    console.error('[Guest storage] Firestore fetch failed:', error);
+    return undefined;
+  }
 }
 
 export function getGuestCardUrl(ticketId: string): string {

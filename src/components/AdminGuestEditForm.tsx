@@ -17,6 +17,7 @@ export default function AdminGuestEditForm({ guests, onGuestUpdated }: AdminGues
   const [selected, setSelected] = useState<Ticket | null>(null);
   const [saved, setSaved] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isSaving, setIsSaving] = useState(false);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -110,6 +111,13 @@ export default function AdminGuestEditForm({ guests, onGuestUpdated }: AdminGues
             ],
     };
 
+    setIsSaving(true);
+    setErrors((prev) => {
+      const next = { ...prev };
+      delete next.submit;
+      return next;
+    });
+
     try {
       await saveHonorableGuest(updated);
       setSelected(updated);
@@ -120,6 +128,8 @@ export default function AdminGuestEditForm({ guests, onGuestUpdated }: AdminGues
         ...prev,
         submit: error instanceof Error ? error.message : 'Card আপডেট করা যায়নি',
       }));
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -288,12 +298,19 @@ export default function AdminGuestEditForm({ guests, onGuestUpdated }: AdminGues
               {errors.photo && <p className="text-xs text-[#A52C54] mt-1">{errors.photo}</p>}
             </div>
 
+            {errors.submit && (
+              <p className="text-xs text-[#A52C54] bg-[#7A1F3D]/30 border border-[#A52C54]/50 rounded-xl px-4 py-2.5">
+                {errors.submit}
+              </p>
+            )}
+
             <button
               type="submit"
-              className="w-full py-3 gold-gradient-btn text-[#0F0C1A] font-extrabold rounded-xl flex items-center justify-center gap-2 cursor-pointer"
+              disabled={isSaving}
+              className="w-full py-3 gold-gradient-btn text-[#0F0C1A] font-extrabold rounded-xl flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
             >
               <Save className="w-4 h-4" />
-              Card আপডেট সংরক্ষণ করুন
+              {isSaving ? 'সংরক্ষণ হচ্ছে...' : 'Card আপডেট সংরক্ষণ করুন'}
             </button>
 
             {saved && (
@@ -308,7 +325,7 @@ export default function AdminGuestEditForm({ guests, onGuestUpdated }: AdminGues
             <p className="text-sm font-bold text-[#F0D78C] mb-3 text-center tracking-wide">
               Live Preview — Honorable Guest Card
             </p>
-            <HonorableGuestCard ticket={selected} />
+            <HonorableGuestCard ticket={selected} showQr />
           </div>
         </form>
       )}

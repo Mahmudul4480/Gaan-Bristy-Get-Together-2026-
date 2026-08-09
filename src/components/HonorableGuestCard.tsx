@@ -1,24 +1,47 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { Ticket } from '../types';
 import { LOGO_URL, EVENT_DETAILS } from '../data/eventData';
 import { getGuestCardUrl } from '../utils/guestStorage';
-import { Download, FileText, Loader2 } from 'lucide-react';
+import { Download, FileText, Loader2, ShieldCheck } from 'lucide-react';
 
 interface HonorableGuestCardProps {
   ticket: Ticket;
   compact?: boolean;
+  showQr?: boolean;
 }
 
 const CARD_NOTES = ['♪', '♫', '♬', '♩'];
+const MIN_QR_SIZE = 168;
+const MAX_QR_SIZE = 260;
 
-export default function HonorableGuestCard({ ticket, compact = false }: HonorableGuestCardProps) {
+export default function HonorableGuestCard({ ticket, compact = false, showQr = false }: HonorableGuestCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
+  const qrWrapRef = useRef<HTMLDivElement>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [qrSize, setQrSize] = useState(MAX_QR_SIZE);
 
   const cardUrl = getGuestCardUrl(ticket.ticketId);
+
+  useEffect(() => {
+    if (compact || !showQr) return;
+    const el = qrWrapRef.current;
+    if (!el) return;
+
+    const updateSize = () => {
+      const availableWidth = el.clientWidth - 32;
+      const nextSize = Math.round(
+        Math.min(MAX_QR_SIZE, Math.max(MIN_QR_SIZE, availableWidth))
+      );
+      setQrSize(nextSize);
+    };
+
+    updateSize();
+    window.addEventListener('resize', updateSize);
+    return () => window.removeEventListener('resize', updateSize);
+  }, [compact, showQr]);
 
   const captureCard = async () => {
     if (!cardRef.current) return null;
@@ -180,15 +203,25 @@ export default function HonorableGuestCard({ ticket, compact = false }: Honorabl
           <p className="text-xs text-[#B3A6C9] mt-1">{EVENT_DETAILS.venueNameBengali}</p>
           <p className="text-[10px] font-mono text-[#F0D78C] mt-2">{ticket.ticketId}</p>
 
-          {/* QR — permanent card link (enlarged) */}
-          <div className="mt-5 flex flex-col items-center">
-            <div className="bg-[#FFF9E6] p-3 sm:p-4 rounded-2xl shadow-lg border-2 border-[#D4AF37]/50">
-              <QRCodeSVG value={cardUrl} size={156} level="H" bgColor="#FFF9E6" fgColor="#1a0a14" />
+          {/* QR — only shown to the registered guest themselves & Admin (not public gallery) */}
+          {showQr ? (
+            <div ref={qrWrapRef} className="mt-5 flex flex-col items-center w-full">
+              <div className="bg-[#FFF9E6] p-4 sm:p-5 rounded-2xl shadow-lg border-2 border-[#D4AF37]/50 inline-flex">
+                <QRCodeSVG value={cardUrl} size={qrSize} level="H" bgColor="#FFF9E6" fgColor="#1a0a14" />
+              </div>
+              <p className="text-[11px] sm:text-xs text-[#F0D78C] font-bold mt-3 font-mono tracking-wide">
+                gaanbristy.site
+              </p>
+              <p className="text-[11px] sm:text-xs text-[#B3A6C9] mt-1 max-w-[280px] leading-relaxed">
+                QR স্ক্যান করলে সাথে সাথে ওয়েবসাইটে এই কার্ড স্থায়ীভাবে খুলবে
+              </p>
             </div>
-            <p className="text-[11px] sm:text-xs text-[#B3A6C9] mt-3 max-w-[260px] leading-relaxed">
-              QR স্ক্যান করলে ওয়েবসাইটে এই কার্ড স্থায়ীভাবে খুলবে
-            </p>
-          </div>
+          ) : (
+            <div className="inline-flex items-center gap-1.5 mt-5 bg-[#0F0C1A]/60 border border-[#D4AF37]/30 text-[#B3A6C9] px-3.5 py-1.5 rounded-full text-[10px] font-semibold">
+              <ShieldCheck className="w-3.5 h-3.5 text-[#D4AF37]" />
+              Verified Honorable Guest
+            </div>
+          )}
 
           <p className="text-[10px] text-[#B3A6C9] mt-4 italic">
             Organized by Gaan Bristy Family

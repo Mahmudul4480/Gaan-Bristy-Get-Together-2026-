@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import Header from './components/Header';
 import Hero from './components/Hero';
 import EventDetails from './components/EventDetails';
@@ -14,7 +14,7 @@ import AdminTicketVerifyModal from './components/AdminTicketVerifyModal';
 import AgencyFooter from './components/AgencyFooter';
 import FallingMusicNotes from './components/FallingMusicNotes';
 import { Ticket } from './types';
-import { loadHonorableGuestsWithPhotos, GUEST_STORAGE_KEY, GUEST_UPDATED_EVENT } from './utils/guestStorage';
+import { subscribeToHonorableGuests, isFirebaseConfigured } from './utils/guestStorage';
 import { isAdminUrlMatch } from './utils/adminStorage';
 import { MessageSquare, Ticket as TicketIcon } from 'lucide-react';
 
@@ -30,38 +30,19 @@ export default function App() {
   const [selectedGuestId, setSelectedGuestId] = useState<string | null>(() => getGuestIdFromUrl());
   const [activeSection] = useState('hero');
 
-  const refreshGuests = useCallback(async () => {
-    const guests = await loadHonorableGuestsWithPhotos();
-    setHonorableGuests(guests);
+  // Live sync across every browser/device — Firestore pushes updates instantly
+  // whenever any admin or guest creates/edits a Honorable Guest Card.
+  useEffect(() => {
+    if (!isFirebaseConfigured) {
+      console.warn('[Gaan Bristy] Firebase কনফিগার করা নেই — .env ফাইল চেক করুন।');
+      return;
+    }
+    const unsubscribe = subscribeToHonorableGuests(
+      (guests) => setHonorableGuests(guests),
+      (error) => console.error('[Gaan Bristy] Guest sync error:', error)
+    );
+    return unsubscribe;
   }, []);
-
-  useEffect(() => {
-    void refreshGuests();
-  }, [refreshGuests]);
-
-  useEffect(() => {
-    const onGuestsUpdated = (event: Event) => {
-      const detail = (event as CustomEvent<Ticket[]>).detail;
-      if (Array.isArray(detail)) {
-        setHonorableGuests(detail);
-      } else {
-        void refreshGuests();
-      }
-    };
-
-    const onStorage = (event: StorageEvent) => {
-      if (event.key === GUEST_STORAGE_KEY) {
-        void refreshGuests();
-      }
-    };
-
-    window.addEventListener(GUEST_UPDATED_EVENT, onGuestsUpdated);
-    window.addEventListener('storage', onStorage);
-    return () => {
-      window.removeEventListener(GUEST_UPDATED_EVENT, onGuestsUpdated);
-      window.removeEventListener('storage', onStorage);
-    };
-  }, [refreshGuests]);
 
   useEffect(() => {
     const guestId = getGuestIdFromUrl();
@@ -89,12 +70,7 @@ export default function App() {
     window.history.replaceState({}, '', url.toString());
   };
 
-  const handleTicketCreated = (newTicket: Ticket, updatedGuests?: Ticket[]) => {
-    if (updatedGuests) {
-      setHonorableGuests(updatedGuests);
-    } else {
-      void refreshGuests();
-    }
+  const handleTicketCreated = (newTicket: Ticket) => {
     setSelectedGuestId(newTicket.ticketId);
     const url = new URL(window.location.href);
     url.searchParams.set('guest', newTicket.ticketId);
@@ -173,7 +149,6 @@ export default function App() {
         isOpen={isAdminVerifyOpen}
         onClose={() => setIsAdminVerifyOpen(false)}
         registeredTickets={honorableGuests}
-        onGuestsUpdated={refreshGuests}
       />
     </div>
   );

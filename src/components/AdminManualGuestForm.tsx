@@ -19,7 +19,7 @@ import {
 
 interface AdminManualGuestFormProps {
   existingGuests: Ticket[];
-  onGuestCreated: (ticket: Ticket, updatedGuests?: Ticket[]) => void;
+  onGuestCreated: (ticket: Ticket) => void;
 }
 
 const emptyForm = () => ({
@@ -40,6 +40,7 @@ export default function AdminManualGuestForm({ existingGuests, onGuestCreated }:
   const [form, setForm] = useState(emptyForm());
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [createdTicket, setCreatedTicket] = useState<Ticket | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const totalAmount = form.adultCount * EVENT_DETAILS.feeAdult;
 
@@ -103,15 +104,24 @@ export default function AdminManualGuestForm({ existingGuests, onGuestCreated }:
       createdByAdmin: true,
     });
 
+    setIsSubmitting(true);
+    setErrors((prev) => {
+      const next = { ...prev };
+      delete next.submit;
+      return next;
+    });
+
     try {
-      const updatedGuests = await saveHonorableGuest(ticket);
+      await saveHonorableGuest(ticket);
       setCreatedTicket(ticket);
-      onGuestCreated(ticket, updatedGuests);
+      onGuestCreated(ticket);
     } catch (error) {
       setErrors((prev) => ({
         ...prev,
         submit: error instanceof Error ? error.message : 'Card সংরক্ষণ করা যায়নি',
       }));
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -122,7 +132,7 @@ export default function AdminManualGuestForm({ existingGuests, onGuestCreated }:
           <CheckCircle2 className="w-5 h-5" />
           Admin manual card তৈরি হয়েছে — {createdTicket.ticketId}
         </div>
-        <HonorableGuestCard ticket={createdTicket} />
+        <HonorableGuestCard ticket={createdTicket} showQr />
         <div className="flex flex-wrap gap-3">
           <button
             type="button"
@@ -243,12 +253,19 @@ export default function AdminManualGuestForm({ existingGuests, onGuestCreated }:
         <span className="font-bold text-[#F0D78C]">মোট: {totalAmount}/-</span>
       </div>
 
+      {errors.submit && (
+        <p className="text-xs text-[#A52C54] bg-[#7A1F3D]/30 border border-[#A52C54]/50 rounded-xl px-4 py-2.5">
+          {errors.submit}
+        </p>
+      )}
+
       <button
         type="submit"
-        className="w-full py-3 gold-gradient-btn text-[#0F0C1A] font-extrabold rounded-xl flex items-center justify-center gap-2 cursor-pointer"
+        disabled={isSubmitting}
+        className="w-full py-3 gold-gradient-btn text-[#0F0C1A] font-extrabold rounded-xl flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
       >
         <Save className="w-5 h-5" />
-        Manual Card তৈরি করুন
+        {isSubmitting ? 'সংরক্ষণ হচ্ছে...' : 'Manual Card তৈরি করুন'}
       </button>
     </form>
   );

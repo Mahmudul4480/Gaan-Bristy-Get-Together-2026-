@@ -24,7 +24,7 @@ import {
 interface RegistrationModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onTicketCreated?: (ticket: Ticket, updatedGuests?: Ticket[]) => void;
+  onTicketCreated?: (ticket: Ticket) => void;
 }
 
 export default function RegistrationModal({ isOpen, onClose, onTicketCreated }: RegistrationModalProps) {
@@ -121,7 +121,7 @@ export default function RegistrationModal({ isOpen, onClose, onTicketCreated }: 
     });
 
     try {
-      const updatedGuests = await saveHonorableGuest(newTicket);
+      await saveHonorableGuest(newTicket);
       void notifyAdminPaymentComplete(newTicket);
 
       confetti({
@@ -132,7 +132,7 @@ export default function RegistrationModal({ isOpen, onClose, onTicketCreated }: 
       });
 
       setCreatedTicket(newTicket);
-      onTicketCreated?.(newTicket, updatedGuests);
+      onTicketCreated?.(newTicket);
     } catch (error) {
       setErrors((prev) => ({
         ...prev,
@@ -168,7 +168,7 @@ export default function RegistrationModal({ isOpen, onClose, onTicketCreated }: 
               </p>
             </div>
 
-            <HonorableGuestCard ticket={createdTicket} />
+            <HonorableGuestCard ticket={createdTicket} showQr />
 
             <div className="text-center mt-6 flex flex-wrap items-center justify-center gap-4">
               <button

@@ -1,0 +1,42 @@
+rules_version = '2';
+
+// Firestore Security Rules for Gaan Bristy Get Together 2026
+// ------------------------------------------------------------
+// Paste this into: Firebase Console > Build > Firestore Database > Rules tab > Publish.
+//
+// Collection `honorableGuests/{ticketId}` stores every registered guest's
+// Honorable Guest Card (name, photo, QR target, etc). It must stay publicly
+// READABLE (that's the whole point — scanning a guest's QR code, from any
+// device, anywhere, with no login, must show their card). Writes are
+// loosely validated below since this app has no user authentication system;
+// this is NOT bulletproof against a determined attacker hitting the API
+// directly, but it blocks casual abuse and malformed data.
+//
+// For stronger protection later, consider:
+//   1. Firebase App Check (blocks non-browser / bot traffic to Firestore).
+//   2. Firebase Auth for the Admin Panel, then restrict `update`/`delete`
+//      to `request.auth != null` admin accounts only.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /honorableGuests/{ticketId} {
+      allow read: if true;
+
+      allow create: if request.resource.data.ticketId == ticketId
+        && request.resource.data.fullName is string
+        && request.resource.data.fullName.size() > 0
+        && request.resource.data.familyName is string
+        && request.resource.data.phone is string
+        && request.resource.data.transactionId is string
+        && request.resource.data.status is string
+        && request.resource.data.issueDate is string;
+
+      allow update: if request.resource.data.ticketId == ticketId;
+
+      allow delete: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
