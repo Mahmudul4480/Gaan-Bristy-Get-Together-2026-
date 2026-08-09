@@ -159,8 +159,10 @@ export default function AdminGuestEditForm({ guests, onGuestUpdated }: AdminGues
       {selected && (
         <form onSubmit={handleSave} className="grid grid-cols-1 lg:grid-cols-2 gap-5">
           <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-bold text-[#F0D78C]">Card Edit — {selected.ticketId}</p>
+            <div className="flex items-center justify-between border-b border-[#D4AF37]/25 pb-2 mb-1">
+              <p className="text-base font-extrabold text-[#F0D78C] font-serif">
+                Card Edit — {selected.ticketId}
+              </p>
               <button
                 type="button"
                 onClick={() => setSelected(null)}
@@ -303,7 +305,9 @@ export default function AdminGuestEditForm({ guests, onGuestUpdated }: AdminGues
           </div>
 
           <div className="lg:sticky lg:top-0 lg:self-start">
-            <p className="text-xs text-[#B3A6C9] mb-2 text-center">Live Preview</p>
+            <p className="text-sm font-bold text-[#F0D78C] mb-3 text-center tracking-wide">
+              Live Preview — Honorable Guest Card
+            </p>
             <HonorableGuestCard ticket={selected} />
           </div>
         </form>
