@@ -7,6 +7,7 @@ import AdminGuestEditForm from './AdminGuestEditForm';
 import AdminAssignPanel from './AdminAssignPanel';
 import AdminLoginGate from './AdminLoginGate';
 import { getAdminPanelUrl, ADMIN_PANEL_PIN } from '../config/adminConfig';
+import { GUEST_UPDATED_EVENT } from '../utils/guestStorage';
 import { isAdminSessionActive } from '../utils/adminStorage';
 import { X, Search, ShieldCheck, CheckCircle2, User, Phone, Sparkles, AlertCircle, Camera, CameraOff, Upload, QrCode, RefreshCw, UserPlus, List, Pencil, Crown, Link2, Copy, Check } from 'lucide-react';
 
@@ -173,7 +174,10 @@ export default function AdminTicketVerifyModal({ isOpen, onClose, registeredTick
     setSearchError('');
   };
 
-  const handleGuestCreated = () => {
+  const handleGuestCreated = (_ticket: Ticket, updatedGuests?: Ticket[]) => {
+    if (updatedGuests) {
+      window.dispatchEvent(new CustomEvent(GUEST_UPDATED_EVENT, { detail: updatedGuests }));
+    }
     onGuestsUpdated?.();
   };
 

@@ -12,9 +12,9 @@ export default function SocialShareWidget({ className = '' }: SocialShareWidgetP
   const currentUrl = typeof window !== 'undefined' ? window.location.href : 'https://gaanbristy.com';
   const shareTitle = 'Gaan Bristy Grand Get-Together 2026: Melody at Gulshan Club';
   const shareSummary = `🎉 স্টারমেকার মিউজিক ফ্যামিলি "গান বৃষ্টি"-র জাকজমকপূর্ণ মিলনমেলা!
-📅 তারিখ: ২০ সেপ্টেম্বর ২০২৬, সন্ধ্যা ৭:০০ টা
+📅 তারিখ: ১৯ সেপ্টেম্বর ২০২৬, সন্ধ্যা ৬.০০ টা
 📍 ভেন্যু: গুলশান ক্লাব, ঢাকা
-রেজিস্ট্রেশন করুন ও টিকিট নিন:`;
+রেজিস্ট্রেশন করুন:`;
 
   const encodedUrl = encodeURIComponent(currentUrl);
   const encodedSummary = encodeURIComponent(`${shareSummary}\n${currentUrl}`);

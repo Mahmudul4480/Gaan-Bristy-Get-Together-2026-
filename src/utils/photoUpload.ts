@@ -1,11 +1,11 @@
-const MAX_PHOTO_BYTES = 2 * 1024 * 1024;
+const MAX_PHOTO_BYTES = 3 * 1024 * 1024;
 
 export function validatePhotoFile(file: File): string | null {
   if (!file.type.startsWith('image/')) {
     return 'শুধুমাত্র ছবি (JPG, PNG, WEBP) আপলোড করা যাবে';
   }
   if (file.size > MAX_PHOTO_BYTES) {
-    return 'ছবির সাইজ সর্বোচ্চ ২ MB হতে হবে';
+    return 'ছবির সাইজ সর্বোচ্চ ৩ MB হতে হবে';
   }
   return null;
 }

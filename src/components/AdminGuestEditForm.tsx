@@ -64,7 +64,7 @@ export default function AdminGuestEditForm({ guests, onGuestUpdated }: AdminGues
     }
   };
 
-  const handleSave = (e: FormEvent) => {
+  const handleSave = async (e: FormEvent) => {
     e.preventDefault();
     if (!selected) return;
 
@@ -110,10 +110,17 @@ export default function AdminGuestEditForm({ guests, onGuestUpdated }: AdminGues
             ],
     };
 
-    saveHonorableGuest(updated);
-    setSelected(updated);
-    setSaved(true);
-    onGuestUpdated();
+    try {
+      await saveHonorableGuest(updated);
+      setSelected(updated);
+      setSaved(true);
+      onGuestUpdated();
+    } catch (error) {
+      setErrors((prev) => ({
+        ...prev,
+        submit: error instanceof Error ? error.message : 'Card আপডেট করা যায়নি',
+      }));
+    }
   };
 
   return (

@@ -16,7 +16,7 @@ export default function VenueSection() {
             Venue Location
           </h2>
           <p className="text-[#B3A6C9] text-sm mt-1 font-body">
-            ঢাকার প্রাণকেন্দ্র গুলশান-১ এ অবস্থিত ঐতিহাসিক ও স্বনামধন্য গুলশান ক্লাব
+            ঢাকার প্রাণকেন্দ্র গুলশান-১ এ অবস্থিত স্বনামধন্য গুলশান ক্লাব
           </p>
           <div className="w-24 h-1 bg-gradient-to-r from-[#D4AF37] to-[#7A1F3D] mx-auto my-4 rounded-full"></div>
         </div>

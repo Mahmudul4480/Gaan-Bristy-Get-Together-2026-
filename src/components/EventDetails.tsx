@@ -17,9 +17,9 @@ export default function EventDetails({ onOpenRegister }: EventDetailsProps) {
         <div className="text-center max-w-4xl mx-auto mb-12">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#7A1F3D] border border-[#D4AF37]/50 text-[#F0D78C] text-xs font-bold mb-3 shadow-md">
             <Sparkles className="w-3.5 h-3.5 text-[#D4AF37]" />
-            <span>ইভেন্টের বিবরণ ও টিকিট ফি</span>
+            <span>ইভেন্টের বিবরণ ও রেজিস্ট্রেশন ফি</span>
           </div>
-          <h2 className="text-lg sm:text-2xl md:text-3xl lg:text-4xl font-extrabold font-serif text-[#F6EFE0] tracking-tight whitespace-nowrap overflow-hidden text-ellipsis drop-shadow-md">
+          <h2 className="text-base sm:text-2xl md:text-3xl lg:text-4xl font-extrabold font-serif text-[#F6EFE0] tracking-tight leading-snug px-1 drop-shadow-md">
             Gaan Bristy Grand Get-Together 2026: Melody at Gulshan Club
           </h2>
           <div className="w-24 h-1 bg-gradient-to-r from-[#D4AF37] to-[#F0D78C] mx-auto my-4 rounded-full"></div>
@@ -122,7 +122,7 @@ export default function EventDetails({ onOpenRegister }: EventDetailsProps) {
               onClick={onOpenRegister}
               className="w-full py-4 bg-gradient-to-r from-[#F0D78C] to-[#D4AF37] text-[#0F0C1A] font-extrabold rounded-full transition shadow-[0_8px_24px_rgba(212,175,55,0.3)] hover:shadow-[0_12px_32px_rgba(212,175,55,0.5)] text-base cursor-pointer"
             >
-              <span>রেজিস্ট্রেশন করুন ও টিকিট বুক করুন</span>
+              <span>রেজিস্ট্রেশন করুন</span>
             </button>
           </div>
 
@@ -134,18 +134,20 @@ export default function EventDetails({ onOpenRegister }: EventDetailsProps) {
                 <span>জরুরি নোটিশ (Urgent Notice)</span>
               </div>
 
-              {/* Big Wine-to-Gold Brand Gradient Highlight Box */}
-              <div className="my-4 p-5 bg-gradient-to-r from-[#7A1F3D] to-[#D4AF37] border border-[#F0D78C] rounded-2xl text-center shadow-[0_4px_20px_rgba(212,175,55,0.25)]">
-                <p className="text-xs uppercase text-[#F6EFE0] font-extrabold tracking-widest mb-1">
+              {/* Limited seats highlight */}
+              <div className="my-4 p-5 bg-gradient-to-br from-[#7A1F3D] via-[#4a1528] to-[#0F0C1A] border-2 border-[#F0D78C]/70 rounded-2xl text-center shadow-[0_8px_36px_rgba(212,175,55,0.35)]">
+                <p className="text-xs uppercase text-[#F0D78C] font-extrabold tracking-widest mb-2">
                   সর্বোচ্চ ধারণক্ষমতা
                 </p>
-                <h3 className="text-3xl sm:text-4xl md:text-5xl font-black text-[#0F0C1A] font-serif tracking-tight drop-shadow-md">
-                  সীমিত ১৫০ আসন
+                <h3 className="text-2xl sm:text-3xl md:text-4xl font-black font-serif tracking-tight flex items-center justify-center gap-2 flex-wrap">
+                  <span className="text-[#FFF6D6] drop-shadow-[0_2px_8px_rgba(0,0,0,0.45)]">সীমিত</span>
+                  <span className="urgent-seat-number-pop">১৫০</span>
+                  <span className="text-[#FFF6D6] drop-shadow-[0_2px_8px_rgba(0,0,0,0.45)]">আসন</span>
                 </h3>
               </div>
 
               <p className="text-xs sm:text-sm text-[#B3A6C9] leading-relaxed mb-6 font-body">
-                গুলশান ক্লাবের হল ধারণক্ষমতা ও ডিসিপ্লিন নিশ্চিতকরণে নির্ধারিত আসন সংখ্যার অতিরিক্ত কোনো টিকিট ইস্যু করা হবে না। ১৫ সেপ্টেম্বর ২০২৬ তারিখের পূর্বে রেজিস্ট্রেশন সম্পন্ন করার অনুরোধ রইলো।
+                গুলশান ক্লাবের হল ধারণক্ষমতা ও ডিসিপ্লিন নিশ্চিতকরণে নির্ধারিত আসন সংখ্যার অতিরিক্ত কোনো রেজিস্ট্রেশন গ্রহণ করা হবে না। ১৫ সেপ্টেম্বর ২০২৬ তারিখের পূর্বে রেজিস্ট্রেশন সম্পন্ন করার অনুরোধ রইলো।
               </p>
 
               <div className="space-y-3 pt-4 border-t border-[#D4AF37]/20 text-xs text-[#F6EFE0]">
@@ -170,7 +172,7 @@ export default function EventDetails({ onOpenRegister }: EventDetailsProps) {
                 className="w-full py-4 bg-gradient-to-r from-[#F0D78C] to-[#D4AF37] text-[#0F0C1A] font-extrabold rounded-full transition shadow-[0_8px_24px_rgba(212,175,55,0.3)] hover:shadow-[0_12px_32px_rgba(212,175,55,0.5)] text-sm flex items-center justify-center gap-2 cursor-pointer"
               >
                 <Ticket className="w-4 h-4 text-[#0F0C1A]" />
-                <span>অবশিষ্ট আসন দ্রুত বুকিং করুন</span>
+                <span>অবশিষ্ট আসনে রেজিস্ট্রেশন করুন</span>
               </button>
             </div>
           </div>

@@ -40,7 +40,7 @@ export default function HonorableGuestSection({
             Get Together Guest Gallery
           </h2>
           <p className="text-[#B3A6C9] mt-3 max-w-2xl mx-auto text-sm sm:text-base">
-            টিকিট বুকিং সম্পন্ন অতিথিদের কার্ড এখানে স্থায়ীভাবে সংরক্ষিত থাকবে। QR স্ক্যান করলে সরাসরি
+            রেজিস্ট্রেশন সম্পন্ন অতিথিদের কার্ড এখানে স্থায়ীভাবে সংরক্ষিত থাকবে। QR স্ক্যান করলে সরাসরি
             ওই অতিথির কার্ডে নিয়ে যাবে।
           </p>
         </div>
@@ -71,7 +71,7 @@ export default function HonorableGuestSection({
             <Search className="w-10 h-10 text-[#D4AF37]/50 mx-auto mb-3" />
             <p className="text-[#F6EFE0] font-bold">এখনও কোনো Honorable Guest যোগ হয়নি</p>
             <p className="text-sm text-[#B3A6C9] mt-2">
-              টিকিট বুকিং ও পেমেন্ট সম্পন্ন করলে আপনার কার্ড এখানে দেখা যাবে।
+              রেজিস্ট্রেশন ও পেমেন্ট সম্পন্ন করলে আপনার কার্ড এখানে দেখা যাবে।
             </p>
           </div>
         ) : (

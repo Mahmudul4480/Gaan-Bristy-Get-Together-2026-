@@ -15,12 +15,12 @@ export default function Hero({ onOpenRegister, onExploreSchedule }: HeroProps) {
   const percentageFilled = Math.round((EVENT_DETAILS.reservedSeatsCount / EVENT_DETAILS.totalSeats) * 100);
 
   return (
-    <section id="hero" className="relative overflow-hidden bg-[#0F0C1A] text-[#F6EFE0] pt-8 pb-16 md:pt-12 md:pb-20 border-b border-[#D4AF37]/20 midnight-bg-glow">
+    <section id="hero" className="hero-with-falling relative overflow-hidden bg-[#0F0C1A] text-[#F6EFE0] pt-6 pb-14 sm:pt-8 sm:pb-16 md:pt-12 md:pb-20 border-b border-[#D4AF37]/20 midnight-bg-glow">
 
-      <div className="relative max-w-4xl mx-auto px-4 sm:px-6 z-10">
+      <div className="relative max-w-4xl mx-auto px-3 sm:px-6 z-10">
         
         {/* INVITATION CARD FRAME WITH THIN GOLD DOUBLE-LINE BORDER & CORNER DIAMONDS */}
-        <div className="relative bg-[#1C1730]/90 border border-[#D4AF37]/60 rounded-3xl p-6 sm:p-10 md:p-12 shadow-[0_0_50px_rgba(212,175,55,0.15)] backdrop-blur-md">
+        <div className="hero-invitation-card relative bg-[#1C1730]/90 border border-[#D4AF37]/60 rounded-2xl sm:rounded-3xl p-5 sm:p-10 md:p-12 shadow-[0_0_50px_rgba(212,175,55,0.15)] backdrop-blur-md">
           
           {/* Umbrella Icons attached at both top ends ("dui mathay") of the Get Together 2026 Card */}
           <div className="absolute -top-6 -left-4 sm:-top-8 sm:-left-6 z-20 w-14 h-14 sm:w-20 sm:h-20 umbrella-spin-slow">
@@ -46,10 +46,11 @@ export default function Hero({ onOpenRegister, onExploreSchedule }: HeroProps) {
             <div className="w-full flex justify-center">
               <div className="flex items-center justify-center gap-2 bg-[#7A1F3D] border border-[#D4AF37] text-[#F0D78C] px-6 py-2.5 rounded-full shadow-[0_0_20px_rgba(122,31,61,0.5)] w-full max-w-2xl">
                 <AlertTriangle className="w-5 h-5 text-[#F0D78C] animate-bounce shrink-0" />
-                <span className="text-sm sm:text-base font-black tracking-wider font-serif text-center">
+                <span className="text-xs sm:text-sm md:text-base font-black tracking-wide font-serif text-center leading-snug">
                   ONLY{' '}
                   <span className="seat-number-pop">{EVENT_DETAILS.totalSeats}</span>
-                  {' '}SEATS RESERVED ({remainingSeats} SEATS LEFT)
+                  {' '}SEATS RESERVED
+                  <span className="hidden sm:inline"> ({remainingSeats} SEATS LEFT)</span>
                 </span>
               </div>
             </div>
@@ -172,7 +173,7 @@ export default function Hero({ onOpenRegister, onExploreSchedule }: HeroProps) {
                 id="hero-book-ticket-btn"
                 className="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-[#F0D78C] to-[#D4AF37] text-[#0F0C1A] font-black text-base sm:text-lg rounded-full shadow-[0_8px_24px_rgba(212,175,55,0.35)] hover:shadow-[0_12px_32px_rgba(212,175,55,0.5)] transform hover:scale-105 transition duration-200 flex items-center justify-center gap-2 cursor-pointer"
               >
-                <span>রেজিস্ট্রেশন করুন ও টিকিট বুক করুন</span>
+                <span>রেজিস্ট্রেশন করুন</span>
                 <ArrowRight className="w-5 h-5 text-[#0F0C1A]" />
               </button>
 

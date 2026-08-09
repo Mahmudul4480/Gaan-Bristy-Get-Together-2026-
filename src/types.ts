@@ -36,6 +36,7 @@ export interface Ticket {
   seatNumbers: string[];
   songRequest?: string;
   createdByAdmin?: boolean;
+  hasPhoto?: boolean;
 }
 
 export interface AppointedAdmin {

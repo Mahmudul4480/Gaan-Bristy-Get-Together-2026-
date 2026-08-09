@@ -1,6 +1,17 @@
 import { useEffect, useRef } from 'react';
 import { FALLING_GB_URL, FALLING_UMBRELLA_URL } from '../data/eventData';
 
+const MOBILE_BREAKPOINT = 768;
+
+function isMobileViewport() {
+  return window.innerWidth < MOBILE_BREAKPOINT;
+}
+
+function getCanvasHeight(viewportHeight: number, mobile: boolean) {
+  if (!mobile) return viewportHeight;
+  return Math.min(viewportHeight * 0.62, 560);
+}
+
 export default function FallingMusicNotes() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -37,54 +48,73 @@ export default function FallingMusicNotes() {
 
     let drops: NoteDrop[] = [];
     let animationFrameId = 0;
+    let mobile = isMobileViewport();
 
-    const resize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+    const pickType = (): 'note' | 'umbrella' | 'gb' => {
+      const r = Math.random();
+      if (r > 0.72) return 'umbrella';
+      if (r > 0.44) return 'gb';
+      return 'note';
     };
 
-    const makeDrop = (): NoteDrop => {
-      const r = Math.random();
-      let type: 'note' | 'umbrella' | 'gb' = 'note';
-      if (r > 0.94) type = 'umbrella';
-      else if (r > 0.88) type = 'gb';
+    const makeDrop = (forceType?: 'note' | 'umbrella' | 'gb'): NoteDrop => {
+      const type = forceType ?? pickType();
+      const canvasHeight = getCanvasHeight(window.innerHeight, mobile);
 
       const base: NoteDrop = {
         x: Math.random() * canvas.width,
-        y: Math.random() * -canvas.height,
-        speed: 0.8 + Math.random() * 2.0,
-        drift: (Math.random() - 0.5) * 0.6,
+        y: mobile
+          ? Math.random() * -canvasHeight * 0.85
+          : Math.random() * -canvas.height,
+        speed: 0.9 + Math.random() * 2.2,
+        drift: (Math.random() - 0.5) * (mobile ? 0.45 : 0.6),
         rot: (Math.random() - 0.5) * 0.6,
-        spin: (Math.random() - 0.5) * 0.01,
+        spin: (Math.random() - 0.5) * 0.012,
         type,
         alpha: 1,
       };
 
       if (type === 'note') {
-        base.size = 16 + Math.random() * 20;
+        base.size = mobile ? 14 + Math.random() * 16 : 16 + Math.random() * 20;
         base.char = noteChars[Math.floor(Math.random() * noteChars.length)];
         base.color = noteColors[Math.floor(Math.random() * noteColors.length)];
-        base.alpha = 0.5 + Math.random() * 0.5;
+        base.alpha = 0.55 + Math.random() * 0.45;
       } else if (type === 'umbrella') {
-        base.w = 52 + Math.random() * 36;
-        base.alpha = 0.55 + Math.random() * 0.35;
-        base.speed *= 0.8;
+        base.w = mobile ? 44 + Math.random() * 28 : 56 + Math.random() * 40;
+        base.alpha = 0.65 + Math.random() * 0.3;
+        base.speed *= 0.85;
       } else {
-        base.w = 42 + Math.random() * 28;
-        base.alpha = 0.55 + Math.random() * 0.35;
-        base.speed *= 0.8;
+        base.w = mobile ? 36 + Math.random() * 22 : 46 + Math.random() * 30;
+        base.alpha = 0.65 + Math.random() * 0.3;
+        base.speed *= 0.85;
       }
 
       return base;
     };
 
+    const resize = () => {
+      mobile = isMobileViewport();
+      canvas.width = window.innerWidth;
+      canvas.height = getCanvasHeight(window.innerHeight, mobile);
+    };
+
     const init = () => {
       resize();
       drops = [];
-      const count = Math.max(36, Math.floor(canvas.width / 32));
-      for (let i = 0; i < count; i++) {
-        drops.push(makeDrop());
-      }
+
+      const count = mobile
+        ? Math.max(42, Math.floor(canvas.width / 18))
+        : Math.max(58, Math.floor(canvas.width / 26));
+
+      const umbrellaCount = Math.max(mobile ? 10 : 14, Math.round(count * 0.28));
+      const gbCount = Math.max(mobile ? 10 : 14, Math.round(count * 0.28));
+      const noteCount = Math.max(0, count - umbrellaCount - gbCount);
+
+      for (let i = 0; i < noteCount; i++) drops.push(makeDrop('note'));
+      for (let i = 0; i < umbrellaCount; i++) drops.push(makeDrop('umbrella'));
+      for (let i = 0; i < gbCount; i++) drops.push(makeDrop('gb'));
+
+      drops.sort(() => Math.random() - 0.5);
     };
 
     const draw = () => {
@@ -113,8 +143,8 @@ export default function FallingMusicNotes() {
         d.x += d.drift;
         d.rot += d.spin;
 
-        if (d.y > canvas.height + 40) {
-          Object.assign(d, makeDrop());
+        if (d.y > canvas.height + 48) {
+          Object.assign(d, makeDrop(d.type));
         }
       });
 
@@ -136,7 +166,8 @@ export default function FallingMusicNotes() {
     <canvas
       ref={canvasRef}
       id="notes-canvas"
-      className="fixed inset-0 pointer-events-none z-[1] w-full h-full"
+      className="notes-canvas fixed pointer-events-none w-full"
+      aria-hidden="true"
     />
   );
 }

@@ -19,7 +19,7 @@ import {
 
 interface AdminManualGuestFormProps {
   existingGuests: Ticket[];
-  onGuestCreated: (ticket: Ticket) => void;
+  onGuestCreated: (ticket: Ticket, updatedGuests?: Ticket[]) => void;
 }
 
 const emptyForm = () => ({
@@ -70,7 +70,7 @@ export default function AdminManualGuestForm({ existingGuests, onGuestCreated }:
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const newErrors: Record<string, string> = {};
 
@@ -103,9 +103,16 @@ export default function AdminManualGuestForm({ existingGuests, onGuestCreated }:
       createdByAdmin: true,
     });
 
-    saveHonorableGuest(ticket);
-    setCreatedTicket(ticket);
-    onGuestCreated(ticket);
+    try {
+      const updatedGuests = await saveHonorableGuest(ticket);
+      setCreatedTicket(ticket);
+      onGuestCreated(ticket, updatedGuests);
+    } catch (error) {
+      setErrors((prev) => ({
+        ...prev,
+        submit: error instanceof Error ? error.message : 'Card সংরক্ষণ করা যায়নি',
+      }));
+    }
   };
 
   if (createdTicket) {
@@ -199,7 +206,7 @@ export default function AdminManualGuestForm({ existingGuests, onGuestCreated }:
 
       <div className="bg-[#0F0C1A] border border-[#D4AF37]/30 rounded-xl p-3">
         <label className="text-xs font-semibold text-[#F6EFE0] mb-2 flex items-center gap-1">
-          <Camera className="w-3.5 h-3.5 text-[#D4AF37]" /> ছবি (২ MB, ঐচ্ছিক)
+          <Camera className="w-3.5 h-3.5 text-[#D4AF37]" /> ছবি (৩ MB, ঐচ্ছিক)
         </label>
         <div className="flex items-center gap-3">
           {form.photoPreview ? (

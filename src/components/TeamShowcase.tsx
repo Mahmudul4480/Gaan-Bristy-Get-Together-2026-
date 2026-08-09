@@ -128,7 +128,7 @@ export default function TeamShowcase() {
                 <div className="text-center sm:text-left space-y-2">
                   <div className="inline-flex items-center gap-1 text-xs text-[#F0D78C] font-bold">
                     <Star className="w-3.5 h-3.5 fill-[#F0D78C]" />
-                    <span>Gaan Bristy Family Leader</span>
+                    <span>Captain</span>
                   </div>
                   <h3 className="text-2xl font-black font-serif text-[#F0D78C]">{captain.name}</h3>
                   <div className="pt-0.5 pb-1 flex items-center justify-center sm:justify-start">
@@ -137,7 +137,9 @@ export default function TeamShowcase() {
                       <span>ID: {captain.starMakerId}</span>
                     </span>
                   </div>
+                  {captain.bio && (
                   <p className="text-sm text-[#B3A6C9] leading-relaxed font-body">{captain.bio}</p>
+                  )}
                   
                   {captain.phone && (
                     <div className="pt-2 flex items-center justify-center sm:justify-start gap-1.5 text-xs text-[#B3A6C9]">

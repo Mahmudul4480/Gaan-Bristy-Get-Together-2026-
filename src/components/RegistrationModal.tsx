@@ -24,7 +24,7 @@ import {
 interface RegistrationModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onTicketCreated?: (ticket: Ticket) => void;
+  onTicketCreated?: (ticket: Ticket, updatedGuests?: Ticket[]) => void;
 }
 
 export default function RegistrationModal({ isOpen, onClose, onTicketCreated }: RegistrationModalProps) {
@@ -42,6 +42,7 @@ export default function RegistrationModal({ isOpen, onClose, onTicketCreated }: 
 
   const [createdTicket, setCreatedTicket] = useState<Ticket | null>(null);
   const [isCopied, setIsCopied] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   if (!isOpen) return null;
@@ -78,7 +79,7 @@ export default function RegistrationModal({ isOpen, onClose, onTicketCreated }: 
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const newErrors: Record<string, string> = {};
 
@@ -112,18 +113,34 @@ export default function RegistrationModal({ isOpen, onClose, onTicketCreated }: 
       songRequest: songRequest.trim() || undefined,
     };
 
-    saveHonorableGuest(newTicket);
-    void notifyAdminPaymentComplete(newTicket);
-
-    confetti({
-      particleCount: 120,
-      spread: 70,
-      origin: { y: 0.6 },
-      colors: ['#D4AF37', '#F0D78C', '#7A1F3D', '#F6EFE0'],
+    setIsSubmitting(true);
+    setErrors((prev) => {
+      const next = { ...prev };
+      delete next.submit;
+      return next;
     });
 
-    setCreatedTicket(newTicket);
-    onTicketCreated?.(newTicket);
+    try {
+      const updatedGuests = await saveHonorableGuest(newTicket);
+      void notifyAdminPaymentComplete(newTicket);
+
+      confetti({
+        particleCount: 120,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: ['#D4AF37', '#F0D78C', '#7A1F3D', '#F6EFE0'],
+      });
+
+      setCreatedTicket(newTicket);
+      onTicketCreated?.(newTicket, updatedGuests);
+    } catch (error) {
+      setErrors((prev) => ({
+        ...prev,
+        submit: error instanceof Error ? error.message : 'রেজিস্ট্রেশন সংরক্ষণ করা যায়নি',
+      }));
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -185,7 +202,7 @@ export default function RegistrationModal({ isOpen, onClose, onTicketCreated }: 
                 className="w-20 h-20 sm:w-24 sm:h-24 object-contain mx-auto drop-shadow-[0_0_18px_rgba(212,175,55,0.35)]"
               />
               <h2 className="mt-2 text-xl sm:text-2xl font-black font-serif text-[#F6EFE0]">
-                অনলাইন টিকিট রেজিস্ট্রেশন
+                অনলাইন রেজিস্ট্রেশন
               </h2>
               <p className="text-[11px] sm:text-xs text-[#B3A6C9] font-mono mt-0.5">
                 Gaan Bristy Get Together 2026 • Gulshan Club
@@ -270,7 +287,7 @@ export default function RegistrationModal({ isOpen, onClose, onTicketCreated }: 
               <div className="bg-[#0F0C1A]/80 border border-[#D4AF37]/45 rounded-2xl p-4">
                 <label className="block text-xs font-semibold text-[#F6EFE0] mb-1 flex items-center gap-1.5">
                   <Camera className="w-3.5 h-3.5 text-[#D4AF37]" />
-                  ছবি আপলোড (ঐচ্ছিক, সর্বোচ্চ ২ MB)
+                  ছবি আপলোড (ঐচ্ছিক, সর্বোচ্চ ৩ MB)
                 </label>
                 <p className="text-xs text-[#F0D78C] font-semibold mb-1 font-bangla leading-relaxed">
                   এই ছবি সম্মান কার্ড (Honorable Guest Card)-এর জন্য ব্যবহৃত হবে।
@@ -299,7 +316,7 @@ export default function RegistrationModal({ isOpen, onClose, onTicketCreated }: 
               </div>
 
               <div className="bg-[#0F0C1A]/70 border border-[#D4AF37]/30 rounded-2xl p-4 space-y-3">
-                <h3 className="text-sm font-bold text-[#F6EFE0] font-serif">টিকিট সংখ্যা</h3>
+                <h3 className="text-sm font-bold text-[#F6EFE0] font-serif">রেজিস্ট্রেশন সংখ্যা</h3>
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-semibold text-[#F6EFE0]">Adult (প্রাপ্তবয়স্ক)</p>
@@ -382,13 +399,22 @@ export default function RegistrationModal({ isOpen, onClose, onTicketCreated }: 
               </div>
 
               <div className="flex flex-col sm:flex-row gap-3 pt-1 pb-1">
+                {errors.submit && (
+                  <p className="w-full text-xs text-[#A52C54] bg-[#7A1F3D]/30 border border-[#A52C54]/50 rounded-xl px-4 py-2.5">
+                    {errors.submit}
+                  </p>
+                )}
                 <button type="button" onClick={onClose} className="sm:w-auto px-6 py-3.5 bg-[#0F0C1A] border-2 border-[#D4AF37]/50 hover:border-[#D4AF37] text-[#F0D78C] font-bold text-sm rounded-full flex items-center justify-center gap-2 cursor-pointer">
                   <ArrowLeft className="w-5 h-5" />
                   <span>ফিরে যান</span>
                 </button>
-                <button type="submit" className="flex-1 py-3.5 bg-gradient-to-r from-[#F0D78C] to-[#D4AF37] text-[#0F0C1A] font-extrabold text-sm sm:text-base rounded-full shadow-[0_8px_24px_rgba(212,175,55,0.3)] flex items-center justify-center gap-2.5 cursor-pointer">
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="flex-1 py-3.5 bg-gradient-to-r from-[#F0D78C] to-[#D4AF37] text-[#0F0C1A] font-extrabold text-sm sm:text-base rounded-full shadow-[0_8px_24px_rgba(212,175,55,0.3)] flex items-center justify-center gap-2.5 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+                >
                   <TicketIcon className="w-5 h-5" />
-                  <span>বুকিং কনফার্ম করুন (টাকা {totalAmount}/-)</span>
+                  <span>{isSubmitting ? 'সংরক্ষণ হচ্ছে...' : `রেজিস্ট্রেশন কনফার্ম করুন (টাকা ${totalAmount}/-)`}</span>
                 </button>
               </div>
             </form>

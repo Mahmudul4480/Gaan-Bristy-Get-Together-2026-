@@ -12,8 +12,8 @@ export const EVENT_DETAILS = {
   tagline: "গান গাও প্রাণ খুলে",
   taglineEnglish: "Sing a Song, Open the Soul",
   dateBengali: "১৯ সেপ্টেম্বর, ২০২৬",
-  timeBengali: "সন্ধ্যা ৭:০০ টা",
-  dateISO: "2026-09-19T19:00:00",
+  timeBengali: "সন্ধ্যা ৬.০০ টা",
+  dateISO: "2026-09-19T18:00:00",
   registrationDeadlineISO: "2026-09-15T23:59:59",
   registrationDeadlineBengali: "১৫ সেপ্টেম্বর, ২০২৬",
   venueNameBengali: "গুলশান ক্লাব, ঢাকা",
@@ -41,42 +41,42 @@ export const EVENT_DETAILS = {
 
 export const SCHEDULE_DATA: ScheduleItem[] = [
   {
-    time: "০৭:০০ PM – ০৭:৩০ PM",
+    time: "০৬:০০ PM – ০৬:৩০ PM",
     title: "Red Carpet Welcome",
     titleBengali: "লাল গালিচায় অভ্যর্থনা ও নেটওয়ার্কিং",
     description: "অতিথিদের শুভ আগমন, ওয়েলকাম ড্রিংকস গ্রহণ এবং স্টারমেকার ফ্যামিলি মেম্বারদের সাথে কুশল বিনিময়।",
     iconName: "Sparkles"
   },
   {
-    time: "০৭:৩০ PM – ০৮:০০ PM",
+    time: "০৬:৩০ PM – ০৭:০০ PM",
     title: "Opening Ceremony & Welcome Speech",
     titleBengali: "উদ্বোধনী সুর ও শুভেচ্ছা বক্তব্য",
     description: "ফ্যামিলি ক্যাপ্টেন ও বিশিষ্ট গুণী অতিথিদের স্বাগত বক্তব্য এবং জাকজমকপূর্ণ কেক কাটার উৎসব।",
     iconName: "Mic"
   },
   {
-    time: "০৮:০০ PM – ০৯:১৫ PM",
+    time: "০৭:০০ PM – ০৮:১৫ PM",
     title: "StarMaker Unplugged Session",
     titleBengali: "লাইভ আনপ্লাগড মেলোডি",
     description: "স্টারমেকারের সেরা কণ্ঠশিল্পীদের মোহময় লাইভ পারফরম্যান্স এবং অ্যাকোস্টিক মিউজিক এনভায়রনমেন্ট।",
     iconName: "Music"
   },
   {
-    time: "০৯:১৫ PM – ১০:১৫ PM",
+    time: "০৮:১৫ PM – ০৯:১৫ PM",
     title: "Royal Buffet Dinner",
     titleBengali: "রয়্যাল বুফে ডিনার",
     description: "গুলশান ক্লাবের ঐতিহ্যবাহী ও সুস্বাদু খাবারের সাথে ব্যাকগ্রাউন্ডে মনমুগ্ধকর আবহ সঙ্গীত।",
     iconName: "Utensils"
   },
   {
-    time: "১০:১৫ PM – ১০:৪৫ PM",
+    time: "০৯:১৫ PM – ০৯:৪৫ PM",
     title: "Awards & Recognition",
     titleBengali: "গুণীজন সম্মাননা ও উপহার বিতরণ",
     description: "স্টারমেকার ফ্যামিলির সক্রিয় সদস্য ও বিশিষ্ট অতিথিদের বিশেষ ক্রেস্ট ও সম্মাননা প্রদান।",
     iconName: "Award"
   },
   {
-    time: "১০:৪৫ PM – ১১:০০ PM",
+    time: "০৯:৪৫ PM – ১০:০০ PM",
     title: "Photo Session & Closing",
     titleBengali: "ফটো সেশন ও বিদায়ী সুর",
     description: "স্মরণীয় মুহূর্তগুলো গ্র্যান্ড ফ্রেমে বন্দী করা এবং আগামী দিনের প্রত্যাশায় ধন্যবাদ জ্ঞাপন।",
@@ -95,12 +95,12 @@ export const TEAM_MEMBERS: TeamMember[] = [
     phone: "01761870650",
     image: "https://i.postimg.cc/jqNyrcR8/Captain-OF-GB.jpg",
     imageClass: "scale-[1.3] object-top",
-    bio: "গান বৃষ্টি ফ্যামিলির প্রতিষ্ঠাতা ও প্রধান উদ্যোক্তা।"
+    bio: ""
   },
   // Co-Captains (6 members)
   {
     id: "co-1",
-    name: "Tasin Chowdhury",
+    name: "Dr. Tasin Chowdhury",
     role: "Co-Captain",
     roleBengali: "কো-ক্যাপ্টেন",
     starMakerId: "13316847052",
@@ -124,8 +124,8 @@ export const TEAM_MEMBERS: TeamMember[] = [
     role: "Co-Captain",
     roleBengali: "কো-ক্যাপ্টেন",
     starMakerId: "13386969727",
-    image: "https://i.postimg.cc/N0RLnsqM/Brand-person-using-logo-2K-202608061733.jpg",
-    imageClass: "scale-[1.55] object-top",
+    image: "https://i.postimg.cc/pXf3drWt/Enhancing-and-combining-photos-f-202608081312.jpg",
+    imageClass: "object-cover object-center",
     bio: "কো-ক্যাপ্টেন ৩ — মেম্বারশিপ ও নেটওয়ার্কিং।"
   },
   {
@@ -144,8 +144,8 @@ export const TEAM_MEMBERS: TeamMember[] = [
     role: "Co-Captain",
     roleBengali: "কো-ক্যাপ্টেন",
     starMakerId: "62011290458",
-    image: "https://i.postimg.cc/LsjhW9KF/Adding-logo-to-image-2K-202608061733-(1).jpg",
-    imageClass: "scale-[1.3] object-top",
+    image: "https://i.postimg.cc/VLq2NvYh/Enhancing-and-combining-photos-f-202608081311.jpg",
+    imageClass: "object-cover object-center",
     bio: "কো-ক্যাপ্টেন ৫ — ওয়েলকাম ও স্টেজ কো-অর্ডিনেশন।"
   },
   {
@@ -205,8 +205,8 @@ export const TEAM_MEMBERS: TeamMember[] = [
     role: "Admin",
     roleBengali: "এডমিন ০৫",
     starMakerId: "62065764957",
-    image: "https://i.postimg.cc/8PNHvXyy/Adding-logo-to-brand-image-202608071041-(1).jpg",
-    imageClass: "scale-[1.5] object-top",
+    image: "https://i.postimg.cc/yYm2Nx1C/Combining-photos-for-branding-image-202608081254.jpg",
+    imageClass: "object-cover object-center",
     bio: "এডমিন — গেস্ট রিলেশনশিপ ও হেল্পডেস্ক।"
   },
   {
@@ -235,8 +235,8 @@ export const TEAM_MEMBERS: TeamMember[] = [
     role: "Admin",
     roleBengali: "এডমিন ০৮",
     starMakerId: "13383761434",
-    image: "https://i.postimg.cc/J4MqXY6w/Adding-logo-to-brand-image-202608071031.jpg",
-    imageClass: "scale-[1.5] object-top",
+    image: "https://i.postimg.cc/VLq2NvfQ/Enhance-and-combine-photos-2K-202608081254.jpg",
+    imageClass: "object-cover object-center",
     bio: "এডমিন — সিকিউরিটি ও ভেন্যু প্রোটোকল।"
   },
   {
@@ -276,8 +276,8 @@ export const TEAM_MEMBERS: TeamMember[] = [
     role: "Super Active Member",
     roleBengali: "সুপার অ্যাক্টিভ মেম্বার",
     starMakerId: "62082749219",
-    image: "https://i.postimg.cc/NFBGcCTS/Adding-logo-to-brand-image-202608071226.jpg",
-    imageClass: "scale-[1.3] object-center",
+    image: "https://i.postimg.cc/vm3PVxj1/Enhancing-and-combining-photos-f-202608082004.jpg",
+    imageClass: "object-cover object-center",
     bio: "গান বৃষ্টি ফ্যামিলির সম্মানিত ও পরম সক্রিয় সদস্য।"
   },
   {
@@ -286,8 +286,8 @@ export const TEAM_MEMBERS: TeamMember[] = [
     role: "Super Active Member",
     roleBengali: "সুপার অ্যাক্টিভ মেম্বার",
     starMakerId: "100104176037",
-    image: "https://i.postimg.cc/QCTMSrXc/Adding-logo-to-brand-image-202608071208.jpg",
-    imageClass: "scale-[1.3] object-center",
+    image: "https://i.postimg.cc/nLHRrGdv/Enhancing-photo-for-branding-image-202608082039.jpg",
+    imageClass: "object-cover object-center",
     bio: "গান বৃষ্টি ফ্যামিলির নিবেদিতপ্রাণ ও নিয়মিত সদস্য।"
   },
   {
@@ -296,8 +296,8 @@ export const TEAM_MEMBERS: TeamMember[] = [
     role: "Super Active Member",
     roleBengali: "সুপার অ্যাক্টিভ মেম্বার",
     starMakerId: "13385444884",
-    image: "https://i.postimg.cc/x8nj2pH7/Adding-logo-to-brand-image-202608071226-(1).jpg",
-    imageClass: "scale-[1.3] object-center",
+    image: "https://i.postimg.cc/jjsg248P/Whats-App-Image-2026-08-08-at-20-03-51.jpg",
+    imageClass: "object-cover object-center",
     bio: "গান বৃষ্টি ফ্যামিলির পরম অনুরাগী সদস্য।"
   },
   {
@@ -316,8 +316,8 @@ export const TEAM_MEMBERS: TeamMember[] = [
     role: "Super Active Member",
     roleBengali: "সুপার অ্যাক্টিভ মেম্বার",
     starMakerId: "62037165034",
-    image: "https://images.unsplash.com/photo-1444464666168-49d633b86797?auto=format&fit=crop&q=80&w=600",
-    imageClass: "scale-[1.2] object-center",
+    image: "https://i.postimg.cc/YSbXWLVh/Enhancing-and-combining-branding-2K-202608082001-(1).jpg",
+    imageClass: "object-cover object-center",
     bio: "গান বৃষ্টি ফ্যামিলির প্রিয় সুরপাখি ও সদস্য।"
   },
   {
@@ -380,16 +380,6 @@ export const TEAM_MEMBERS: TeamMember[] = [
     imageClass: "scale-[1.3] object-center",
     bio: "গান বৃষ্টি ফ্যামিলির নিবেদিতপ্রাণ ও সক্রিয় সদস্য।"
   },
-  {
-    id: "super-12",
-    name: "Shihab",
-    role: "Super Active Member",
-    roleBengali: "সুপার অ্যাক্টিভ মেম্বার",
-    starMakerId: "13387309175",
-    image: "https://i.postimg.cc/y6wYXzjP/Adding-logo-to-brand-image-202608071542.jpg",
-    imageClass: "scale-[1.3] object-center",
-    bio: "গান বৃষ্টি ফ্যামিলির নিবেদিতপ্রাণ ও সক্রিয় সদস্য।"
-  }
 ];
 
 export const GALLERY_PHOTOS: GalleryPhoto[] = [

@@ -59,7 +59,7 @@ export default function ETicketCard({ ticket }: ETicketCardProps) {
   };
 
   const handleShareWhatsApp = () => {
-    const text = `🎉 আমার "Gaan Bristy Grand Get-Together 2026" ইভেন্টের টিকিট কনফার্ম হয়েছে!\n\n🎟️ টিকিট আইডি: ${ticket.ticketId}\n👤 নাম: ${ticket.fullName}\n📍 ভেন্যু: গুলশান ক্লাব, ঢাকা\n📅 তারিখ: ১৯ সেপ্টেম্বর ২০২৬ (সন্ধ্যা ৭:০০)\n\nঅন্যদের সাথে শেয়ার করুন: ${window.location.href}`;
+    const text = `🎉 আমার "Gaan Bristy Grand Get-Together 2026" ইভেন্টের রেজিস্ট্রেশন কনফার্ম হয়েছে!\n\n🎟️ রেজিস্ট্রেশন আইডি: ${ticket.ticketId}\n👤 নাম: ${ticket.fullName}\n📍 ভেন্যু: গুলশান ক্লাব, ঢাকা\n📅 তারিখ: ১৯ সেপ্টেম্বর ২০২৬ (সন্ধ্যা ৬.০০)\n\nঅন্যদের সাথে শেয়ার করুন: ${window.location.href}`;
     const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
     window.open(url, '_blank');
   };
