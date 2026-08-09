@@ -50,6 +50,22 @@ export default function HonorableGuestCard({ ticket, compact = false, showQr = f
       useCORS: true,
       allowTaint: true,
       backgroundColor: '#1a0a14',
+      onclone: (clonedDoc) => {
+        // html2canvas can't render `background-clip: text` gradients — it draws
+        // the gradient box but not the clipped/transparent text, leaving a
+        // solid block behind invisible text. Swap to a plain solid gold color
+        // in the cloned DOM used only for the screenshot.
+        clonedDoc.querySelectorAll<HTMLElement>('.royal-title-effect').forEach((el) => {
+          el.style.setProperty('background', 'none');
+          el.style.setProperty('background-image', 'none');
+          el.style.setProperty('-webkit-background-clip', 'unset');
+          el.style.setProperty('background-clip', 'unset');
+          el.style.setProperty('-webkit-text-fill-color', '#F0D78C');
+          el.style.setProperty('color', '#F0D78C');
+          el.style.setProperty('filter', 'none');
+          el.style.setProperty('animation', 'none');
+        });
+      },
     });
   };
 
