@@ -200,7 +200,18 @@ export default function HonorableGuestCard({ ticket, compact = false, showQr = f
 
           <p className="text-base sm:text-lg font-bold text-[#F6EFE0]">{ticket.fullName}</p>
           {ticket.starMakerId && (
-            <p className="text-xs text-[#F0D78C] mt-1">{ticket.starMakerId}</p>
+            <>
+              <div className="flex items-center justify-center gap-2 mt-2 text-[#D4AF37]">
+                <div className="h-px w-8 bg-gradient-to-r from-transparent to-[#D4AF37]" />
+                <span className="text-[9px] uppercase tracking-widest text-[#B3A6C9] whitespace-nowrap">
+                  Starmaker ID No
+                </span>
+                <div className="h-px w-8 bg-gradient-to-l from-transparent to-[#D4AF37]" />
+              </div>
+              <p className="text-xs sm:text-sm text-[#F0D78C] font-mono font-bold mt-1">
+                {ticket.starMakerId}
+              </p>
+            </>
           )}
 
           <div className="inline-flex items-center gap-2 mt-4 bg-[#7A1F3D]/80 border border-[#D4AF37]/50 text-[#F0D78C] px-4 py-1.5 rounded-full text-[10px] sm:text-xs font-black uppercase tracking-wide">

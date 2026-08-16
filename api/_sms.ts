@@ -1,0 +1,79 @@
+// Shared server-side logic for sending confirmation SMS via Alpha SMS (sms.net.bd).
+// Used by both the Vercel serverless function (api/send-sms.ts) and the local
+// Vite dev-server middleware (vite.config.ts) so behaviour is identical in
+// production and local development.
+//
+// SMS_API_KEY / SMS_SENDER_ID must be set as plain (non VITE_-prefixed) env
+// vars so they stay server-only and are never bundled into client JS.
+
+const ALPHA_SMS_ENDPOINT = 'https://api.sms.net.bd/sendsms';
+
+export const REGISTRATION_SMS_MESSAGE =
+  '"Gaan Bristy Grand Get-Together 2026: Melody at Gulshan Club" এ রেজিস্ট্রেশনের জন্য আপনাকে ধন্যবাদ।';
+
+export interface SendSmsResult {
+  success: boolean;
+  error?: string;
+}
+
+function normalizeBangladeshiPhone(rawPhone: string): string | null {
+  const digits = rawPhone.replace(/\D/g, '');
+  if (/^01\d{9}$/.test(digits)) return digits; // 01XXXXXXXXX
+  if (/^8801\d{9}$/.test(digits)) return digits; // 8801XXXXXXXXX
+  return null;
+}
+
+interface AlphaSmsResponse {
+  error?: number | string;
+  msg?: string;
+  message?: string;
+}
+
+export async function sendConfirmationSms(phone: string, message: string): Promise<SendSmsResult> {
+  const apiKey = process.env.SMS_API_KEY;
+  if (!apiKey) {
+    console.warn('[send-sms] SMS_API_KEY is not configured on the server.');
+    return { success: false, error: 'SMS সার্ভিস কনফিগার করা নেই (SMS_API_KEY নেই)।' };
+  }
+
+  const normalizedPhone = normalizeBangladeshiPhone(phone);
+  if (!normalizedPhone) {
+    return { success: false, error: 'সঠিক বাংলাদেশী মোবাইল নম্বর প্রয়োজন (01XXXXXXXXX)।' };
+  }
+
+  const params = new URLSearchParams({
+    api_key: apiKey,
+    msg: message,
+    to: normalizedPhone,
+  });
+
+  const senderId = process.env.SMS_SENDER_ID;
+  if (senderId) params.set('sender_id', senderId);
+
+  try {
+    const response = await fetch(ALPHA_SMS_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: params.toString(),
+    });
+
+    const data = (await response.json().catch(() => null)) as AlphaSmsResponse | null;
+    const errorCode = data?.error;
+    const isSuccess = response.ok && (errorCode === 0 || errorCode === '0');
+
+    if (isSuccess) {
+      return { success: true };
+    }
+
+    return {
+      success: false,
+      error: data?.msg || data?.message || `SMS পাঠানো যায়নি (HTTP ${response.status})`,
+    };
+  } catch (error) {
+    console.error('[send-sms] Alpha SMS request failed:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'SMS পাঠাতে অপ্রত্যাশিত সমস্যা হয়েছে',
+    };
+  }
+}

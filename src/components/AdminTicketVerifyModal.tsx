@@ -5,10 +5,11 @@ import AdminManualGuestForm from './AdminManualGuestForm';
 import AdminGuestList from './AdminGuestList';
 import AdminGuestEditForm from './AdminGuestEditForm';
 import AdminAssignPanel from './AdminAssignPanel';
+import AdminGalleryManager from './AdminGalleryManager';
 import AdminLoginGate from './AdminLoginGate';
 import { getAdminPanelUrl, ADMIN_PANEL_PIN } from '../config/adminConfig';
 import { isAdminSessionActive } from '../utils/adminStorage';
-import { X, Search, ShieldCheck, CheckCircle2, User, Phone, Sparkles, AlertCircle, Camera, CameraOff, Upload, QrCode, RefreshCw, UserPlus, List, Pencil, Crown, Link2, Copy, Check } from 'lucide-react';
+import { X, Search, ShieldCheck, CheckCircle2, User, Phone, Sparkles, AlertCircle, Camera, CameraOff, Upload, QrCode, RefreshCw, UserPlus, List, Pencil, Crown, Link2, Copy, Check, ImagePlus } from 'lucide-react';
 
 interface AdminTicketVerifyModalProps {
   isOpen: boolean;
@@ -17,7 +18,7 @@ interface AdminTicketVerifyModalProps {
 }
 
 export default function AdminTicketVerifyModal({ isOpen, onClose, registeredTickets }: AdminTicketVerifyModalProps) {
-  const [panelTab, setPanelTab] = useState<'verify' | 'create' | 'list' | 'edit' | 'assign'>('verify');
+  const [panelTab, setPanelTab] = useState<'verify' | 'create' | 'list' | 'edit' | 'assign' | 'gallery'>('verify');
   const [isAuthenticated, setIsAuthenticated] = useState(() => isAdminSessionActive());
   const [linkCopied, setLinkCopied] = useState(false);
   const [activeTab, setActiveTab] = useState<'camera' | 'manual'>('camera');
@@ -166,7 +167,7 @@ export default function AdminTicketVerifyModal({ isOpen, onClose, registeredTick
     onClose();
   };
 
-  const switchPanelTab = (tab: 'verify' | 'create' | 'list' | 'edit' | 'assign') => {
+  const switchPanelTab = (tab: 'verify' | 'create' | 'list' | 'edit' | 'assign' | 'gallery') => {
     if (tab !== 'verify') stopCameraScanner();
     setPanelTab(tab);
     setSearchError('');
@@ -193,36 +194,39 @@ export default function AdminTicketVerifyModal({ isOpen, onClose, registeredTick
   if (!isOpen) return null;
 
   const adminLink = getAdminPanelUrl();
-  const widePanel = panelTab === 'list' || panelTab === 'edit';
+  const widePanel = panelTab === 'list' || panelTab === 'edit' || panelTab === 'gallery';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0F0C1A]/90 backdrop-blur-md overflow-y-auto">
-      <div className={`relative w-full bg-[#1C1730] border-2 border-[#D4AF37] rounded-3xl p-6 sm:p-8 shadow-2xl text-[#F6EFE0] my-8 ${widePanel ? 'max-w-5xl' : panelTab === 'assign' ? 'max-w-3xl' : 'max-w-xl'}`}>
-        
-        {/* Close Button */}
-        <button
-          onClick={handleModalClose}
-          className="absolute top-5 right-5 p-2 rounded-full bg-[#0F0C1A] text-[#B3A6C9] hover:text-[#F6EFE0] border border-[#D4AF37]/30 hover:border-[#D4AF37] transition cursor-pointer"
-        >
-          <X className="w-5 h-5" />
-        </button>
+    <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center p-2 sm:p-4 bg-[#0F0C1A]/90 backdrop-blur-md overflow-y-auto">
+      <div className={`relative w-full bg-[#1C1730] border-2 border-[#D4AF37] rounded-3xl shadow-2xl text-[#F6EFE0] my-2 sm:my-8 max-h-[min(96dvh,920px)] flex flex-col overflow-hidden ${widePanel ? 'max-w-5xl' : panelTab === 'assign' ? 'max-w-3xl' : 'max-w-xl'}`}>
 
-        {/* Modal Header */}
-        <div className="flex items-center gap-3 mb-6">
-          <div className="p-3 bg-[#7A1F3D]/60 text-[#F0D78C] rounded-2xl border border-[#D4AF37]/40">
-            <ShieldCheck className="w-6 h-6 text-[#D4AF37]" />
-          </div>
-          <div>
-            <h2 className="text-xl font-bold font-serif text-[#F0D78C] flex items-center gap-2">
-              <span>Admin Panel — Gaan Bristy 2026</span>
-              <span className="bg-[#7A1F3D] text-[#F0D78C] text-[10px] font-mono px-2 py-0.5 rounded border border-[#D4AF37]/40">Admin</span>
-            </h2>
-            <p className="text-xs text-[#B3A6C9] font-body">
-              গেট ভেরিফাই, Card Edit, Admin নিয়োগ ও Guest List
-            </p>
+        {/* Header — logo/title + close button (always visible, never scrolls away) */}
+        <div className="shrink-0 relative px-6 sm:px-8 pt-6 sm:pt-8 pb-4">
+          <button
+            onClick={handleModalClose}
+            className="absolute top-5 right-5 p-2 rounded-full bg-[#0F0C1A] text-[#B3A6C9] hover:text-[#F6EFE0] border border-[#D4AF37]/30 hover:border-[#D4AF37] transition cursor-pointer"
+          >
+            <X className="w-5 h-5" />
+          </button>
+
+          <div className="flex items-center gap-3">
+            <div className="p-3 bg-[#7A1F3D]/60 text-[#F0D78C] rounded-2xl border border-[#D4AF37]/40">
+              <ShieldCheck className="w-6 h-6 text-[#D4AF37]" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold font-serif text-[#F0D78C] flex items-center gap-2">
+                <span>Admin Panel — Gaan Bristy 2026</span>
+                <span className="bg-[#7A1F3D] text-[#F0D78C] text-[10px] font-mono px-2 py-0.5 rounded border border-[#D4AF37]/40">Admin</span>
+              </h2>
+              <p className="text-xs text-[#B3A6C9] font-body">
+                গেট ভেরিফাই, Card Edit, Admin নিয়োগ ও Guest List
+              </p>
+            </div>
           </div>
         </div>
 
+        {/* Scrollable body */}
+        <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-6 sm:px-8 pb-6 sm:pb-8">
         {!isAuthenticated ? (
           <AdminLoginGate onAuthenticated={() => setIsAuthenticated(true)} />
         ) : (
@@ -253,43 +257,52 @@ export default function AdminTicketVerifyModal({ isOpen, onClose, registeredTick
           </p>
         </div>
 
-        {/* Main Admin Tabs */}
-        <div className="flex flex-wrap bg-[#0F0C1A] p-1.5 rounded-2xl border border-[#D4AF37]/30 mb-6 font-body gap-1">
-          <button
-            onClick={() => switchPanelTab('verify')}
-            className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${panelTab === 'verify' ? 'gold-gradient-btn text-[#0F0C1A] shadow-md' : 'text-[#B3A6C9] hover:text-[#F6EFE0]'}`}
-          >
-            <ShieldCheck className="w-4 h-4" />
-            <span>গেট ভেরিফাই</span>
-          </button>
-          <button
-            onClick={() => switchPanelTab('create')}
-            className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${panelTab === 'create' ? 'gold-gradient-btn text-[#0F0C1A] shadow-md' : 'text-[#B3A6C9] hover:text-[#F6EFE0]'}`}
-          >
-            <UserPlus className="w-4 h-4" />
-            <span>Manual Card</span>
-          </button>
-          <button
-            onClick={() => switchPanelTab('edit')}
-            className={`flex-1 min-w-[7rem] py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${panelTab === 'edit' ? 'gold-gradient-btn text-[#0F0C1A] shadow-md' : 'text-[#B3A6C9] hover:text-[#F6EFE0]'}`}
-          >
-            <Pencil className="w-4 h-4" />
-            <span>Card Edit</span>
-          </button>
-          <button
-            onClick={() => switchPanelTab('assign')}
-            className={`flex-1 min-w-[7rem] py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${panelTab === 'assign' ? 'gold-gradient-btn text-[#0F0C1A] shadow-md' : 'text-[#B3A6C9] hover:text-[#F6EFE0]'}`}
-          >
-            <Crown className="w-4 h-4" />
-            <span>Admin নিয়োগ</span>
-          </button>
-          <button
-            onClick={() => switchPanelTab('list')}
-            className={`flex-1 min-w-[7rem] py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${panelTab === 'list' ? 'gold-gradient-btn text-[#0F0C1A] shadow-md' : 'text-[#B3A6C9] hover:text-[#F6EFE0]'}`}
-          >
-            <List className="w-4 h-4" />
-            <span>সব Card List</span>
-          </button>
+        {/* Main Admin Tabs — sticky so you can always jump back, even scrolled deep in a form */}
+        <div className="sticky -top-px z-20 bg-[#1C1730] pt-1 pb-3 -mx-6 sm:-mx-8 px-6 sm:px-8">
+          <div className="flex flex-wrap bg-[#0F0C1A] p-1.5 rounded-2xl border border-[#D4AF37]/30 font-body gap-1">
+            <button
+              onClick={() => switchPanelTab('verify')}
+              className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${panelTab === 'verify' ? 'gold-gradient-btn text-[#0F0C1A] shadow-md' : 'text-[#B3A6C9] hover:text-[#F6EFE0]'}`}
+            >
+              <ShieldCheck className="w-4 h-4" />
+              <span>গেট ভেরিফাই</span>
+            </button>
+            <button
+              onClick={() => switchPanelTab('create')}
+              className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${panelTab === 'create' ? 'gold-gradient-btn text-[#0F0C1A] shadow-md' : 'text-[#B3A6C9] hover:text-[#F6EFE0]'}`}
+            >
+              <UserPlus className="w-4 h-4" />
+              <span>Manual Card</span>
+            </button>
+            <button
+              onClick={() => switchPanelTab('edit')}
+              className={`flex-1 min-w-[7rem] py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${panelTab === 'edit' ? 'gold-gradient-btn text-[#0F0C1A] shadow-md' : 'text-[#B3A6C9] hover:text-[#F6EFE0]'}`}
+            >
+              <Pencil className="w-4 h-4" />
+              <span>Card Edit</span>
+            </button>
+            <button
+              onClick={() => switchPanelTab('assign')}
+              className={`flex-1 min-w-[7rem] py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${panelTab === 'assign' ? 'gold-gradient-btn text-[#0F0C1A] shadow-md' : 'text-[#B3A6C9] hover:text-[#F6EFE0]'}`}
+            >
+              <Crown className="w-4 h-4" />
+              <span>Admin নিয়োগ</span>
+            </button>
+            <button
+              onClick={() => switchPanelTab('list')}
+              className={`flex-1 min-w-[7rem] py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${panelTab === 'list' ? 'gold-gradient-btn text-[#0F0C1A] shadow-md' : 'text-[#B3A6C9] hover:text-[#F6EFE0]'}`}
+            >
+              <List className="w-4 h-4" />
+              <span>সব Card List</span>
+            </button>
+            <button
+              onClick={() => switchPanelTab('gallery')}
+              className={`flex-1 min-w-[7rem] py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${panelTab === 'gallery' ? 'gold-gradient-btn text-[#0F0C1A] shadow-md' : 'text-[#B3A6C9] hover:text-[#F6EFE0]'}`}
+            >
+              <ImagePlus className="w-4 h-4" />
+              <span>গ্যালারি</span>
+            </button>
+          </div>
         </div>
 
         {panelTab === 'create' && (
@@ -303,6 +316,8 @@ export default function AdminTicketVerifyModal({ isOpen, onClose, registeredTick
         )}
 
         {panelTab === 'assign' && <AdminAssignPanel />}
+
+        {panelTab === 'gallery' && <AdminGalleryManager />}
 
         {panelTab === 'verify' && (
           <>
@@ -537,6 +552,7 @@ export default function AdminTicketVerifyModal({ isOpen, onClose, registeredTick
 
           </>
         )}
+        </div>
 
       </div>
     </div>

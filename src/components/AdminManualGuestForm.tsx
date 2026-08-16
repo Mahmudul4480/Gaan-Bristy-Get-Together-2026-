@@ -4,6 +4,7 @@ import { EVENT_DETAILS } from '../data/eventData';
 import { buildGuestTicket } from '../utils/createGuestTicket';
 import { findDuplicateTransactionId } from '../utils/guestExport';
 import { saveHonorableGuest } from '../utils/guestStorage';
+import { sendRegistrationConfirmationSms } from '../utils/sendConfirmationSms';
 import { compressPhotoFile, validatePhotoFile } from '../utils/photoUpload';
 import HonorableGuestCard from './HonorableGuestCard';
 import {
@@ -15,6 +16,9 @@ import {
   CheckCircle2,
   RotateCcw,
   Save,
+  MessageSquare,
+  Loader2,
+  AlertTriangle,
 } from 'lucide-react';
 
 interface AdminManualGuestFormProps {
@@ -41,6 +45,8 @@ export default function AdminManualGuestForm({ existingGuests, onGuestCreated }:
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [createdTicket, setCreatedTicket] = useState<Ticket | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [smsState, setSmsState] = useState<'idle' | 'sending' | 'sent' | 'failed'>('idle');
+  const [smsError, setSmsError] = useState('');
 
   const totalAmount = form.adultCount * EVENT_DETAILS.feeAdult;
 
@@ -48,6 +54,8 @@ export default function AdminManualGuestForm({ existingGuests, onGuestCreated }:
     setForm(emptyForm());
     setErrors({});
     setCreatedTicket(null);
+    setSmsState('idle');
+    setSmsError('');
   };
 
   const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -115,6 +123,16 @@ export default function AdminManualGuestForm({ existingGuests, onGuestCreated }:
       await saveHonorableGuest(ticket);
       setCreatedTicket(ticket);
       onGuestCreated(ticket);
+
+      setSmsState('sending');
+      sendRegistrationConfirmationSms(ticket.phone).then((result) => {
+        if (result.success) {
+          setSmsState('sent');
+        } else {
+          setSmsState('failed');
+          setSmsError(result.error || 'কনফার্মেশন SMS পাঠানো যায়নি');
+        }
+      });
     } catch (error) {
       setErrors((prev) => ({
         ...prev,
@@ -133,6 +151,26 @@ export default function AdminManualGuestForm({ existingGuests, onGuestCreated }:
           Admin manual card তৈরি হয়েছে — {createdTicket.ticketId}
         </div>
         <HonorableGuestCard ticket={createdTicket} showQr />
+
+        {smsState === 'sending' && (
+          <p className="inline-flex items-center gap-2 text-xs text-[#B3A6C9] bg-[#0F0C1A] border border-[#D4AF37]/30 rounded-full px-4 py-2">
+            <Loader2 className="w-3.5 h-3.5 animate-spin text-[#D4AF37]" />
+            কনফার্মেশন SMS পাঠানো হচ্ছে {createdTicket.phone} নম্বরে...
+          </p>
+        )}
+        {smsState === 'sent' && (
+          <p className="inline-flex items-center gap-2 text-xs text-[#F0D78C] bg-[#7A1F3D]/30 border border-[#D4AF37]/40 rounded-full px-4 py-2">
+            <MessageSquare className="w-3.5 h-3.5" />
+            কনফার্মেশন SMS ডেলিগেটের {createdTicket.phone} নম্বরে পাঠানো হয়েছে
+          </p>
+        )}
+        {smsState === 'failed' && (
+          <p className="inline-flex items-center gap-2 text-xs text-[#F6EFE0] bg-[#7A1F3D]/40 border border-[#A52C54]/50 rounded-full px-4 py-2">
+            <AlertTriangle className="w-3.5 h-3.5 text-[#F0D78C]" />
+            কনফার্মেশন SMS পাঠানো যায়নি: {smsError}
+          </p>
+        )}
+
         <div className="flex flex-wrap gap-3">
           <button
             type="button"

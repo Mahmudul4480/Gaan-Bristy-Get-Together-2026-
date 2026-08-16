@@ -51,6 +51,8 @@ export interface GalleryPhoto {
   title: string;
   url: string;
   category: 'Previous Events' | 'Family Meeting' | 'Performance';
+  storagePath?: string;
+  createdAt?: string;
 }
 
 export interface GuestbookEntry {

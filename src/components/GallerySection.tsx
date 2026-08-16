@@ -1,13 +1,24 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { GALLERY_PHOTOS } from '../data/eventData';
 import { GalleryPhoto } from '../types';
+import { subscribeToGalleryPhotos } from '../utils/galleryStorage';
 import { Image as ImageIcon, X, ZoomIn } from 'lucide-react';
 
 export default function GallerySection() {
   const [selectedCategory, setSelectedCategory] = useState<'All' | 'Previous Events' | 'Family Meeting' | 'Performance'>('All');
   const [activePhoto, setActivePhoto] = useState<GalleryPhoto | null>(null);
+  const [uploadedPhotos, setUploadedPhotos] = useState<GalleryPhoto[]>([]);
 
-  const filteredPhotos = GALLERY_PHOTOS.filter(photo => {
+  // Live sync — any photo an admin uploads via the Admin Panel appears here
+  // instantly for everyone, on top of the site's built-in showcase photos.
+  useEffect(() => {
+    const unsubscribe = subscribeToGalleryPhotos((photos) => setUploadedPhotos(photos));
+    return unsubscribe;
+  }, []);
+
+  const allPhotos = [...uploadedPhotos, ...GALLERY_PHOTOS];
+
+  const filteredPhotos = allPhotos.filter(photo => {
     if (selectedCategory === 'All') return true;
     return photo.category === selectedCategory;
   });

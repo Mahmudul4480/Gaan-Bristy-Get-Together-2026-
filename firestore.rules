@@ -35,6 +35,21 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // Memories Gallery — photos uploaded from the Admin Panel (see
+    // src/components/AdminGalleryManager.tsx). Must stay publicly readable
+    // since it powers the public gallery section on the homepage.
+    match /galleryPhotos/{photoId} {
+      allow read: if true;
+
+      allow create: if request.resource.data.title is string
+        && request.resource.data.url is string
+        && request.resource.data.category in ['Previous Events', 'Family Meeting', 'Performance']
+        && request.resource.data.createdAt is string;
+
+      allow update: if false;
+      allow delete: if true;
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }

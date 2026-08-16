@@ -1,0 +1,27 @@
+rules_version = '2';
+
+// Firebase Storage Security Rules for Gaan Bristy Get Together 2026
+// -------------------------------------------------------------------
+// Paste this into: Firebase Console > Build > Storage > Rules tab > Publish.
+//
+// Path `gallery/**` holds photos uploaded via the Admin Panel's "গ্যালারি"
+// tab (see src/utils/galleryStorage.ts). It must stay publicly READABLE so
+// the "Memories Gallery" section on the homepage can display them to every
+// visitor. Writes are limited to image files under 8MB. Like firestore.rules,
+// this has no real authentication behind it (the app has no user auth
+// system) — acceptable for a low-stakes community event site, but consider
+// Firebase Auth + App Check if stronger protection is needed later.
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /gallery/{fileName} {
+      allow read: if true;
+      allow write: if request.resource.size < 8 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+      allow delete: if true;
+    }
+
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
