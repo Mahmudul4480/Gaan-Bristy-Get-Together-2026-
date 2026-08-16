@@ -17,6 +17,31 @@ const GALLERY_STORAGE_FOLDER = 'gallery';
 
 export const isGalleryStorageReady = Boolean(db && storage);
 
+interface FirebaseErrorLike {
+  code?: string;
+  message?: string;
+}
+
+function describeUploadError(error: unknown): string {
+  const code = (error as FirebaseErrorLike)?.code || '';
+  const rawMessage = (error as FirebaseErrorLike)?.message || String(error);
+
+  if (code.includes('storage/unauthorized') || code.includes('storage/unauthenticated')) {
+    return 'Firebase Storage Rules Publish করা হয়নি। Firebase Console → Storage → Rules ট্যাবে storage.rules-এর কনটেন্ট Publish করুন।';
+  }
+  if (code === 'storage/unknown' || code === 'storage/bucket-not-found' || code === 'storage/project-not-found') {
+    return 'Firebase Storage এখনও চালু করা হয়নি। Firebase Console → Build → Storage → "Get Started" চেপে চালু করুন, তারপর আবার চেষ্টা করুন।';
+  }
+  if (code === 'permission-denied' || code.includes('permission-denied')) {
+    return 'Firestore Rules Publish করা হয়নি। Firebase Console → Firestore Database → Rules ট্যাবে firestore.rules-এর সর্বশেষ কনটেন্ট Publish করুন।';
+  }
+  if (code === 'storage/quota-exceeded') {
+    return 'Firebase Storage-এর ফ্রি কোটা শেষ হয়ে গেছে।';
+  }
+
+  return `ছবি আপলোড করা যায়নি — ${rawMessage || 'অজানা সমস্যা'}${code ? ` (${code})` : ''}`;
+}
+
 /**
  * Uploads a photo to Firebase Storage + creates its Firestore record.
  * Every browser subscribed via `subscribeToGalleryPhotos` (the public gallery,
@@ -59,7 +84,7 @@ export async function uploadGalleryPhoto(
     return { id: docRef.id, title: finalTitle, url, category, storagePath };
   } catch (error) {
     console.error('[Gallery storage] Upload failed:', error);
-    throw new Error('ছবি আপলোড করা যায়নি। ইন্টারনেট সংযোগ পরীক্ষা করে আবার চেষ্টা করুন।');
+    throw new Error(describeUploadError(error));
   }
 }
 
@@ -102,6 +127,6 @@ export async function deleteGalleryPhoto(photo: GalleryPhoto): Promise<void> {
     }
   } catch (error) {
     console.error('[Gallery storage] Delete failed:', error);
-    throw new Error('ছবি ডিলিট করা যায়নি।');
+    throw new Error(describeUploadError(error));
   }
 }
