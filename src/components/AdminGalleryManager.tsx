@@ -2,7 +2,7 @@ import { ChangeEvent, useEffect, useState } from 'react';
 import { GalleryPhoto } from '../types';
 import { deleteGalleryPhoto, subscribeToGalleryPhotos, uploadGalleryPhoto } from '../utils/galleryStorage';
 import { validatePhotoFile } from '../utils/photoUpload';
-import { ImagePlus, Loader2, Trash2, Upload, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { ImagePlus, Loader2, Trash2, Upload, CheckCircle2, AlertTriangle, ZoomIn, X } from 'lucide-react';
 
 const CATEGORIES: GalleryPhoto['category'][] = ['Previous Events', 'Family Meeting', 'Performance'];
 const CATEGORY_LABELS: Record<GalleryPhoto['category'], string> = {
@@ -21,6 +21,7 @@ export default function AdminGalleryManager() {
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [zoomedPhoto, setZoomedPhoto] = useState<GalleryPhoto | null>(null);
 
   useEffect(() => {
     const unsubscribe = subscribeToGalleryPhotos(
@@ -174,16 +175,23 @@ export default function AdminGalleryManager() {
             {photos.map((photo) => (
               <div
                 key={photo.id}
-                className="relative group rounded-xl overflow-hidden border border-[#D4AF37]/30 bg-[#0F0C1A]"
+                className="relative group rounded-xl overflow-hidden border border-[#D4AF37]/30 bg-[#0F0C1A] cursor-pointer"
+                onClick={() => setZoomedPhoto(photo)}
               >
-                <img src={photo.url} alt={photo.title} className="w-full h-28 object-cover" />
+                <img src={photo.url} alt={photo.title} className="w-full h-28 object-cover transition group-hover:scale-105" />
+                <div className="absolute inset-0 bg-[#0F0C1A]/0 group-hover:bg-[#0F0C1A]/30 transition flex items-center justify-center">
+                  <ZoomIn className="w-5 h-5 text-[#F0D78C] opacity-0 group-hover:opacity-100 transition" />
+                </div>
                 <div className="absolute inset-x-0 bottom-0 bg-[#0F0C1A]/85 px-2 py-1">
                   <p className="text-[10px] text-[#F0D78C] font-bold truncate">{photo.title}</p>
                   <p className="text-[9px] text-[#B3A6C9] truncate">{CATEGORY_LABELS[photo.category]}</p>
                 </div>
                 <button
                   type="button"
-                  onClick={() => handleDelete(photo)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDelete(photo);
+                  }}
                   disabled={deletingId === photo.id}
                   className="absolute top-1.5 right-1.5 p-1.5 rounded-full bg-[#0F0C1A]/85 text-[#F6EFE0] border border-[#A52C54]/50 hover:bg-[#A52C54] transition cursor-pointer disabled:opacity-60"
                   title="ডিলিট করুন"
@@ -199,6 +207,33 @@ export default function AdminGalleryManager() {
           </div>
         )}
       </div>
+
+      {zoomedPhoto && (
+        <div
+          className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-4"
+          onClick={() => setZoomedPhoto(null)}
+        >
+          <button
+            type="button"
+            onClick={() => setZoomedPhoto(null)}
+            className="absolute top-4 right-4 p-2 rounded-full bg-[#0F0C1A]/85 text-[#F6EFE0] border border-[#D4AF37]/40 hover:bg-[#A52C54] transition cursor-pointer"
+            title="বন্ধ করুন"
+          >
+            <X className="w-5 h-5" />
+          </button>
+          <div className="max-w-4xl w-full" onClick={(e) => e.stopPropagation()}>
+            <img
+              src={zoomedPhoto.url}
+              alt={zoomedPhoto.title}
+              className="w-full max-h-[80vh] object-contain rounded-2xl border border-[#D4AF37]/40"
+            />
+            <div className="mt-3 text-center">
+              <p className="text-sm text-[#F0D78C] font-bold">{zoomedPhoto.title}</p>
+              <p className="text-xs text-[#B3A6C9]">{CATEGORY_LABELS[zoomedPhoto.category]}</p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
