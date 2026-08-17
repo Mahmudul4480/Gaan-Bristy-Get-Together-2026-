@@ -13,6 +13,38 @@ function looksLikeHtml(text: string): boolean {
   return trimmed.startsWith('<!doctype') || trimmed.startsWith('<html') || trimmed.includes('<div id="root"');
 }
 
+function readApiError(data: unknown, rawText: string, status: number): string {
+  if (data && typeof data === 'object') {
+    const payload = data as { error?: unknown; message?: unknown };
+    if (typeof payload.error === 'string' && payload.error.trim()) {
+      return payload.error;
+    }
+    if (payload.error && typeof payload.error === 'object') {
+      const nested = payload.error as { message?: unknown; code?: unknown };
+      const code = typeof nested.code === 'string' ? nested.code : '';
+      if (code === 'FUNCTION_INVOCATION_FAILED' || String(nested.message || '').includes('FUNCTION_INVOCATION')) {
+        return 'SMS সার্ভার ক্র্যাশ করেছে। রেজিস্ট্রেশন সেভ হয়েছে — SMS পরে আবার যাবে।';
+      }
+      if (typeof nested.message === 'string' && nested.message.trim()) {
+        return nested.message;
+      }
+    }
+    if (typeof payload.message === 'string' && payload.message.trim()) {
+      return payload.message;
+    }
+  }
+
+  if (looksLikeHtml(rawText) || status === 404) {
+    return 'লাইভ সাইটে SMS API রুট পাওয়া যায়নি। Redeploy করুন এবং Vercel-এ SMS_API_KEY সেট আছে কিনা দেখুন।';
+  }
+
+  if (/FUNCTION_INVOCATION_FAILED/i.test(rawText)) {
+    return 'SMS সার্ভার ক্র্যাশ করেছে। রেজিস্ট্রেশন সেভ হয়েছে — SMS পরে আবার যাবে।';
+  }
+
+  return rawText.trim().slice(0, 180) || `SMS পাঠানো যায়নি (HTTP ${status})`;
+}
+
 /**
  * Calls the server-side /api/send-sms endpoint (Vercel serverless function in
  * production, Vite dev middleware locally) to send the registration
@@ -34,34 +66,20 @@ export async function sendRegistrationConfirmationSms(
     });
 
     const text = await response.text();
-    let data: ConfirmationSmsResult | null = null;
+    let data: unknown = null;
     try {
-      data = text ? (JSON.parse(text) as ConfirmationSmsResult) : null;
+      data = text ? JSON.parse(text) : null;
     } catch {
       data = null;
     }
 
-    if (response.ok && data?.success) {
+    if (response.ok && data && typeof data === 'object' && (data as ConfirmationSmsResult).success) {
       return { success: true };
-    }
-
-    if (!data) {
-      if (looksLikeHtml(text) || response.status === 404) {
-        return {
-          success: false,
-          error:
-            'লাইভ সাইটে SMS API রুট পাওয়া যায়নি। Redeploy করুন এবং Vercel-এ SMS_API_KEY (Production + Preview) সেট আছে কিনা দেখুন।',
-        };
-      }
-      return {
-        success: false,
-        error: text.trim().slice(0, 180) || `SMS পাঠানো যায়নি (HTTP ${response.status})`,
-      };
     }
 
     return {
       success: false,
-      error: data.error || `SMS পাঠানো যায়নি (HTTP ${response.status})`,
+      error: readApiError(data, text, response.status),
     };
   } catch (error) {
     console.warn('[Confirmation SMS] Request failed:', error);
@@ -71,3 +89,4 @@ export async function sendRegistrationConfirmationSms(
     };
   }
 }
+
