@@ -31,7 +31,7 @@ export interface Ticket {
   totalAmount: number;
   paymentMethod: 'bKash' | 'Nagad' | 'Rocket' | 'Bank Transfer';
   transactionId: string;
-  status: 'Confirmed' | 'Pending';
+  status: 'Confirmed' | 'Pending' | 'Rejected';
   issueDate: string;
   seatNumbers: string[];
   songRequest?: string;

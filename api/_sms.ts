@@ -11,6 +11,42 @@ const ALPHA_SMS_ENDPOINT = 'https://api.sms.net.bd/sendsms';
 export const REGISTRATION_SMS_MESSAGE =
   '"Gaan Bristy Grand Get-Together 2026: Melody at Gulshan Club" এ রেজিস্ট্রেশনের জন্য আপনাকে ধন্যবাদ।';
 
+export const PENDING_SMS_MESSAGE =
+  '"Gaan Bristy Grand Get-Together 2026" এ রেজিস্ট্রেশন জমা হয়েছে। পেমেন্ট যাচাইয়ের পর আপনার Honorable Guest Card পাঠানো হবে।';
+
+export type SmsKind = 'pending' | 'approved';
+
+export interface SendSmsRequestBody {
+  phone?: string;
+  type?: string;
+  cardUrl?: string;
+}
+
+export function resolveSmsMessage(type: SmsKind, cardUrl?: string): string {
+  if (type === 'approved') {
+    const url = cardUrl?.trim();
+    return url ? `${REGISTRATION_SMS_MESSAGE} আপনার কার্ড: ${url}` : REGISTRATION_SMS_MESSAGE;
+  }
+  return PENDING_SMS_MESSAGE;
+}
+
+export function parseSendSmsRequest(body: SendSmsRequestBody | undefined): {
+  phone?: string;
+  message?: string;
+  error?: string;
+} {
+  const phone = body?.phone?.trim();
+  if (!phone) {
+    return { error: 'phone প্রয়োজন' };
+  }
+
+  const type: SmsKind = body?.type === 'approved' ? 'approved' : 'pending';
+  const rawUrl = body?.cardUrl?.trim();
+  const cardUrl = rawUrl && /^https?:\/\//i.test(rawUrl) ? rawUrl : undefined;
+
+  return { phone, message: resolveSmsMessage(type, cardUrl) };
+}
+
 export interface SendSmsResult {
   success: boolean;
   error?: string;

@@ -1,37 +1,128 @@
 import { useMemo, useState } from 'react';
 import { Ticket } from '../types';
 import { downloadGuestsCsv, downloadGuestsJson } from '../utils/guestExport';
-import { getGuestCardUrl } from '../utils/guestStorage';
+import { getGuestCardUrl, saveHonorableGuest } from '../utils/guestStorage';
+import { sendRegistrationConfirmationSms } from '../utils/sendConfirmationSms';
+import { getGuestCardWhatsAppUrl } from '../utils/whatsappShare';
 import HonorableGuestCard from './HonorableGuestCard';
-import { FileSpreadsheet, FileJson, Search, Eye, X } from 'lucide-react';
+import {
+  FileSpreadsheet,
+  FileJson,
+  Search,
+  Eye,
+  X,
+  CheckCircle2,
+  XCircle,
+  MessageCircle,
+  Loader2,
+  AlertTriangle,
+} from 'lucide-react';
 
 interface AdminGuestListProps {
   guests: Ticket[];
 }
 
+type StatusFilter = 'all' | 'Pending' | 'Confirmed' | 'Rejected';
+type RowActionState = 'idle' | 'saving' | 'sms-sending' | 'sms-sent' | 'sms-failed';
+
+const STATUS_LABEL: Record<Ticket['status'], string> = {
+  Pending: 'Pending',
+  Confirmed: 'Approved',
+  Rejected: 'Rejected',
+};
+
+function statusRank(status: Ticket['status']): number {
+  if (status === 'Pending') return 0;
+  if (status === 'Confirmed') return 1;
+  return 2;
+}
+
 export default function AdminGuestList({ guests }: AdminGuestListProps) {
   const [query, setQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [previewTicket, setPreviewTicket] = useState<Ticket | null>(null);
+  const [rowState, setRowState] = useState<Record<string, RowActionState>>({});
+  const [rowError, setRowError] = useState<Record<string, string>>({});
+
+  const pendingCount = guests.filter((g) => g.status === 'Pending').length;
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return guests;
-    return guests.filter(
-      (g) =>
-        g.ticketId.toLowerCase().includes(q) ||
-        g.fullName.toLowerCase().includes(q) ||
-        g.familyName.toLowerCase().includes(q) ||
-        g.phone.includes(q) ||
-        g.transactionId.toLowerCase().includes(q) ||
-        (g.starMakerId && g.starMakerId.toLowerCase().includes(q))
-    );
-  }, [guests, query]);
+    return guests
+      .filter((g) => (statusFilter === 'all' ? true : g.status === statusFilter))
+      .filter((g) => {
+        if (!q) return true;
+        return (
+          g.ticketId.toLowerCase().includes(q) ||
+          g.fullName.toLowerCase().includes(q) ||
+          g.familyName.toLowerCase().includes(q) ||
+          g.phone.includes(q) ||
+          g.transactionId.toLowerCase().includes(q) ||
+          (g.starMakerId && g.starMakerId.toLowerCase().includes(q))
+        );
+      })
+      .sort((a, b) => statusRank(a.status) - statusRank(b.status));
+  }, [guests, query, statusFilter]);
+
+  const setStateFor = (ticketId: string, state: RowActionState, error?: string) => {
+    setRowState((prev) => ({ ...prev, [ticketId]: state }));
+    setRowError((prev) => {
+      const next = { ...prev };
+      if (error) next[ticketId] = error;
+      else delete next[ticketId];
+      return next;
+    });
+  };
+
+  const handleApprove = async (guest: Ticket) => {
+    setStateFor(guest.ticketId, 'saving');
+    const approved: Ticket = { ...guest, status: 'Confirmed' };
+    try {
+      await saveHonorableGuest(approved);
+      setStateFor(guest.ticketId, 'sms-sending');
+      const sms = await sendRegistrationConfirmationSms(guest.phone, {
+        type: 'approved',
+        cardUrl: getGuestCardUrl(guest.ticketId),
+      });
+      if (sms.success) {
+        setStateFor(guest.ticketId, 'sms-sent');
+      } else {
+        setStateFor(guest.ticketId, 'sms-failed', sms.error || 'SMS পাঠানো যায়নি');
+      }
+    } catch (error) {
+      setStateFor(
+        guest.ticketId,
+        'idle',
+        error instanceof Error ? error.message : 'অ্যাপ্রুভ করা যায়নি'
+      );
+    }
+  };
+
+  const handleReject = async (guest: Ticket) => {
+    setStateFor(guest.ticketId, 'saving');
+    try {
+      await saveHonorableGuest({ ...guest, status: 'Rejected' });
+      setStateFor(guest.ticketId, 'idle');
+    } catch (error) {
+      setStateFor(
+        guest.ticketId,
+        'idle',
+        error instanceof Error ? error.message : 'রিজেক্ট করা যায়নি'
+      );
+    }
+  };
 
   return (
     <div className="space-y-4 font-body">
       <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
         <p className="text-sm text-[#B3A6C9]">
-          মোট <span className="text-[#F0D78C] font-bold">{guests.length}</span> টি Honorable Guest Card
+          মোট <span className="text-[#F0D78C] font-bold">{guests.length}</span> টি রেজিস্ট্রেশন
+          {pendingCount > 0 && (
+            <>
+              {' '}
+              · <span className="text-[#F0D78C] font-bold">{pendingCount}</span> টি Pending Approval
+            </>
+          )}
         </p>
         <div className="flex flex-wrap gap-2">
           <button
@@ -55,6 +146,29 @@ export default function AdminGuestList({ guests }: AdminGuestListProps) {
         </div>
       </div>
 
+      <div className="flex flex-wrap gap-2">
+        {([
+          { id: 'all', label: 'সব' },
+          { id: 'Pending', label: 'Pending' },
+          { id: 'Confirmed', label: 'Approved' },
+          { id: 'Rejected', label: 'Rejected' },
+        ] as const).map((item) => (
+          <button
+            key={item.id}
+            type="button"
+            onClick={() => setStatusFilter(item.id)}
+            className={`px-3 py-1.5 rounded-full text-[11px] font-bold cursor-pointer border ${
+              statusFilter === item.id
+                ? 'bg-[#7A1F3D] text-[#F0D78C] border-[#D4AF37]'
+                : 'bg-[#0F0C1A] text-[#B3A6C9] border-[#D4AF37]/30'
+            }`}
+          >
+            {item.label}
+            {item.id === 'Pending' && pendingCount > 0 ? ` (${pendingCount})` : ''}
+          </button>
+        ))}
+      </div>
+
       <div className="relative">
         <Search className="absolute left-3 top-3 w-4 h-4 text-[#B3A6C9]" />
         <input
@@ -69,43 +183,120 @@ export default function AdminGuestList({ guests }: AdminGuestListProps) {
         <p className="text-center text-sm text-[#B3A6C9] py-8">কোনো card পাওয়া যায়নি</p>
       ) : (
         <div className="overflow-x-auto rounded-xl border border-[#D4AF37]/30">
-          <table className="w-full text-left text-xs min-w-[720px]">
+          <table className="w-full text-left text-xs min-w-[980px]">
             <thead className="bg-[#0F0C1A] text-[#B3A6C9] uppercase tracking-wide">
               <tr>
                 <th className="px-3 py-2">Ticket ID</th>
                 <th className="px-3 py-2">নাম</th>
-                <th className="px-3 py-2">Family</th>
                 <th className="px-3 py-2">TrxID</th>
+                <th className="px-3 py-2">পেমেন্ট</th>
                 <th className="px-3 py-2">ফোন</th>
-                <th className="px-3 py-2">উৎস</th>
+                <th className="px-3 py-2">স্ট্যাটাস</th>
                 <th className="px-3 py-2">Action</th>
               </tr>
             </thead>
             <tbody>
-              {filtered.map((g) => (
-                <tr key={g.ticketId} className="border-t border-[#D4AF37]/15 hover:bg-[#0F0C1A]/50">
-                  <td className="px-3 py-2 font-mono text-[#F0D78C]">{g.ticketId}</td>
-                  <td className="px-3 py-2 text-[#F6EFE0] font-semibold">{g.fullName}</td>
-                  <td className="px-3 py-2 text-[#B3A6C9]">{g.familyName}</td>
-                  <td className="px-3 py-2 font-mono text-[#F6EFE0]">{g.transactionId}</td>
-                  <td className="px-3 py-2 font-mono">{g.phone}</td>
-                  <td className="px-3 py-2">
-                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${g.createdByAdmin ? 'bg-[#7A1F3D] text-[#F0D78C]' : 'bg-[#1C1730] text-[#B3A6C9]'}`}>
-                      {g.createdByAdmin ? 'Admin' : 'Online'}
-                    </span>
-                  </td>
-                  <td className="px-3 py-2">
-                    <button
-                      type="button"
-                      onClick={() => setPreviewTicket(g)}
-                      className="inline-flex items-center gap-1 text-[#D4AF37] hover:text-[#F0D78C] font-bold cursor-pointer"
-                    >
-                      <Eye className="w-3.5 h-3.5" />
-                      Card
-                    </button>
-                  </td>
-                </tr>
-              ))}
+              {filtered.map((g) => {
+                const action = rowState[g.ticketId] || 'idle';
+                const busy = action === 'saving' || action === 'sms-sending';
+                const whatsappUrl = g.status === 'Confirmed' ? getGuestCardWhatsAppUrl(g.phone, g.ticketId, g.fullName) : null;
+
+                return (
+                  <tr key={g.ticketId} className="border-t border-[#D4AF37]/15 hover:bg-[#0F0C1A]/50 align-top">
+                    <td className="px-3 py-2 font-mono text-[#F0D78C]">{g.ticketId}</td>
+                    <td className="px-3 py-2">
+                      <p className="text-[#F6EFE0] font-semibold">{g.fullName}</p>
+                      <p className="text-[10px] text-[#B3A6C9]">{g.familyName}</p>
+                    </td>
+                    <td className="px-3 py-2 font-mono text-[#F6EFE0]">{g.transactionId}</td>
+                    <td className="px-3 py-2 text-[#B3A6C9]">
+                      {g.paymentMethod}
+                      <span className="block text-[#F0D78C] font-bold">{g.totalAmount}/-</span>
+                    </td>
+                    <td className="px-3 py-2 font-mono">{g.phone}</td>
+                    <td className="px-3 py-2">
+                      <span
+                        className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                          g.status === 'Pending'
+                            ? 'bg-[#7A1F3D] text-[#F0D78C]'
+                            : g.status === 'Confirmed'
+                              ? 'bg-[#1C1730] text-[#F0D78C] border border-[#D4AF37]/50'
+                              : 'bg-[#0F0C1A] text-[#B3A6C9] border border-[#A52C54]/40'
+                        }`}
+                      >
+                        {STATUS_LABEL[g.status]}
+                      </span>
+                      {g.createdByAdmin && (
+                        <span className="block mt-1 text-[9px] text-[#B3A6C9]">Admin</span>
+                      )}
+                    </td>
+                    <td className="px-3 py-2">
+                      <div className="flex flex-wrap gap-1.5">
+                        {g.status === 'Pending' && (
+                          <>
+                            <button
+                              type="button"
+                              disabled={busy}
+                              onClick={() => handleApprove(g)}
+                              className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-[#7A1F3D] border border-[#D4AF37]/50 text-[#F0D78C] font-bold cursor-pointer disabled:opacity-50"
+                            >
+                              {action === 'saving' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
+                              অ্যাপ্রুভ
+                            </button>
+                            <button
+                              type="button"
+                              disabled={busy}
+                              onClick={() => handleReject(g)}
+                              className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-[#0F0C1A] border border-[#A52C54]/50 text-[#F6EFE0] font-bold cursor-pointer disabled:opacity-50"
+                            >
+                              <XCircle className="w-3.5 h-3.5" />
+                              রিজেক্ট
+                            </button>
+                          </>
+                        )}
+                        {g.status === 'Confirmed' && (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => setPreviewTicket(g)}
+                              className="inline-flex items-center gap-1 text-[#D4AF37] hover:text-[#F0D78C] font-bold cursor-pointer"
+                            >
+                              <Eye className="w-3.5 h-3.5" />
+                              Card
+                            </button>
+                            {whatsappUrl && (
+                              <a
+                                href={whatsappUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-[#128C7E] text-white font-bold"
+                              >
+                                <MessageCircle className="w-3.5 h-3.5" />
+                                WhatsApp
+                              </a>
+                            )}
+                          </>
+                        )}
+                      </div>
+                      {action === 'sms-sending' && (
+                        <p className="mt-1 text-[10px] text-[#B3A6C9] flex items-center gap-1">
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                          কার্ড লিংক SMS পাঠানো হচ্ছে...
+                        </p>
+                      )}
+                      {action === 'sms-sent' && (
+                        <p className="mt-1 text-[10px] text-[#F0D78C]">SMS-এ কার্ড লিংক পাঠানো হয়েছে</p>
+                      )}
+                      {(action === 'sms-failed' || rowError[g.ticketId]) && (
+                        <p className="mt-1 text-[10px] text-[#F6EFE0] flex items-center gap-1">
+                          <AlertTriangle className="w-3 h-3 text-[#F0D78C]" />
+                          {rowError[g.ticketId] || 'SMS যায়নি — WhatsApp থেকে পাঠান'}
+                        </p>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

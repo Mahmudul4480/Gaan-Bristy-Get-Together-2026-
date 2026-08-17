@@ -19,7 +19,12 @@ function normalizeGuest(g: Ticket): Ticket {
     ...g,
     familyName: g.familyName || 'Gaan Bristy Family',
     kidCount: g.kidCount ?? 0,
+    status: g.status === 'Pending' || g.status === 'Rejected' ? g.status : 'Confirmed',
   };
+}
+
+export function isConfirmedGuest(ticket: Ticket): boolean {
+  return ticket.status === 'Confirmed';
 }
 
 function guestDocRef(ticketId: string) {

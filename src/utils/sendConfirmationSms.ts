@@ -3,17 +3,29 @@ export interface ConfirmationSmsResult {
   error?: string;
 }
 
+export interface SendConfirmationSmsOptions {
+  type?: 'pending' | 'approved';
+  cardUrl?: string;
+}
+
 /**
  * Calls the server-side /api/send-sms endpoint (Vercel serverless function in
  * production, Vite dev middleware locally) to send the registration
  * confirmation SMS via Alpha SMS. The SMS API key never reaches the browser.
  */
-export async function sendRegistrationConfirmationSms(phone: string): Promise<ConfirmationSmsResult> {
+export async function sendRegistrationConfirmationSms(
+  phone: string,
+  options?: SendConfirmationSmsOptions
+): Promise<ConfirmationSmsResult> {
   try {
     const response = await fetch('/api/send-sms', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ phone }),
+      body: JSON.stringify({
+        phone,
+        type: options?.type || 'pending',
+        cardUrl: options?.cardUrl,
+      }),
     });
 
     const data = (await response.json().catch(() => null)) as ConfirmationSmsResult | null;

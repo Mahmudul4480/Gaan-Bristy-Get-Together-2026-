@@ -4,7 +4,7 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 import type { Plugin } from 'vite';
 import {defineConfig} from 'vite';
-import { sendConfirmationSms, REGISTRATION_SMS_MESSAGE } from './api/_sms';
+import { parseSendSmsRequest, sendConfirmationSms } from './api/_sms';
 
 // Mirrors api/send-sms.ts (the Vercel serverless function) so the SMS
 // confirmation flow also works with plain `npm run dev` locally, without
@@ -28,12 +28,13 @@ function smsDevApiPlugin(): Plugin {
           void (async () => {
             try {
               const body = raw ? JSON.parse(raw) : {};
-              if (!body.phone) {
+              const parsed = parseSendSmsRequest(body);
+              if (parsed.error || !parsed.phone || !parsed.message) {
                 res.statusCode = 400;
-                res.end(JSON.stringify({ success: false, error: 'phone প্রয়োজন' }));
+                res.end(JSON.stringify({ success: false, error: parsed.error || 'phone প্রয়োজন' }));
                 return;
               }
-              const result = await sendConfirmationSms(body.phone, REGISTRATION_SMS_MESSAGE);
+              const result = await sendConfirmationSms(parsed.phone, parsed.message);
               res.setHeader('Content-Type', 'application/json');
               res.statusCode = result.success ? 200 : 502;
               res.end(JSON.stringify(result));

@@ -1,15 +1,13 @@
 import React, { useState } from 'react';
-import confetti from 'canvas-confetti';
 import { Ticket } from '../types';
 import { EVENT_DETAILS, LOGO_URL } from '../data/eventData';
 import { saveHonorableGuest } from '../utils/guestStorage';
 import { notifyAdminPaymentComplete } from '../utils/notifyAdminPayment';
 import { sendRegistrationConfirmationSms } from '../utils/sendConfirmationSms';
+import { findDuplicateTransactionId } from '../utils/guestExport';
 import { compressPhotoFile, validatePhotoFile } from '../utils/photoUpload';
-import HonorableGuestCard from './HonorableGuestCard';
 import {
   X,
-  CheckCircle2,
   Ticket as TicketIcon,
   User,
   Phone,
@@ -23,15 +21,16 @@ import {
   MessageSquare,
   Loader2,
   AlertTriangle,
+  Clock,
 } from 'lucide-react';
 
 interface RegistrationModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onTicketCreated?: (ticket: Ticket) => void;
+  existingGuests: Ticket[];
 }
 
-export default function RegistrationModal({ isOpen, onClose, onTicketCreated }: RegistrationModalProps) {
+export default function RegistrationModal({ isOpen, onClose, existingGuests }: RegistrationModalProps) {
   const [fullName, setFullName] = useState('');
   const [familyName, setFamilyName] = useState('');
   const [starMakerId, setStarMakerId] = useState('');
@@ -94,6 +93,11 @@ export default function RegistrationModal({ isOpen, onClose, onTicketCreated }: 
     if (!phone.trim() || phone.length < 11) newErrors.phone = 'সঠিক ১১ ডিজিটের মোবাইল নম্বর দিন';
     if (!transactionId.trim()) newErrors.transactionId = 'পেমেন্ট ট্রানজেকশন আইডি প্রদান করুন';
 
+    const duplicate = findDuplicateTransactionId(existingGuests, transactionId);
+    if (duplicate) {
+      newErrors.transactionId = `এই TrxID ইতিমধ্যে ব্যবহার হয়েছে (${duplicate.ticketId})`;
+    }
+
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
@@ -113,7 +117,7 @@ export default function RegistrationModal({ isOpen, onClose, onTicketCreated }: 
       totalAmount,
       paymentMethod,
       transactionId: transactionId.trim(),
-      status: 'Confirmed',
+      status: 'Pending',
       issueDate: new Date().toISOString(),
       seatNumbers: Array.from({ length: adultCount }, (_, i) => `VIP-${100 + randomCode + i}`),
       songRequest: songRequest.trim() || undefined,
@@ -130,18 +134,10 @@ export default function RegistrationModal({ isOpen, onClose, onTicketCreated }: 
       await saveHonorableGuest(newTicket);
       void notifyAdminPaymentComplete(newTicket);
 
-      confetti({
-        particleCount: 120,
-        spread: 70,
-        origin: { y: 0.6 },
-        colors: ['#D4AF37', '#F0D78C', '#7A1F3D', '#F6EFE0'],
-      });
-
       setCreatedTicket(newTicket);
-      onTicketCreated?.(newTicket);
 
       setSmsState('sending');
-      sendRegistrationConfirmationSms(newTicket.phone).then((result) => {
+      sendRegistrationConfirmationSms(newTicket.phone, { type: 'pending' }).then((result) => {
         if (result.success) {
           setSmsState('sent');
         } else {
@@ -174,17 +170,39 @@ export default function RegistrationModal({ isOpen, onClose, onTicketCreated }: 
           <div className="overflow-y-auto p-5 sm:p-8">
             <div className="text-center mb-6">
               <div className="inline-flex items-center gap-2 p-3 bg-[#7A1F3D] text-[#F0D78C] rounded-full border border-[#D4AF37] mb-3 shadow-[0_0_20px_rgba(212,175,55,0.3)]">
-                <CheckCircle2 className="w-6 h-6 text-[#F0D78C]" />
+                <Clock className="w-6 h-6 text-[#F0D78C]" />
               </div>
               <h2 className="text-2xl sm:text-3xl font-extrabold text-[#F6EFE0] font-serif">
-                অভিনন্দন! Honorable Guest Card তৈরি হয়েছে
+                রেজিস্ট্রেশন জমা হয়েছে
               </h2>
-              <p className="text-sm text-[#B3A6C9] mt-1 font-body">
-                আপনার কার্ড ওয়েবসাইটে স্থায়ীভাবে সংরক্ষিত। QR স্ক্যান করলে সরাসরি এখানে আসবেন।
+              <p className="text-sm text-[#B3A6C9] mt-2 font-body leading-relaxed">
+                Super Admin আপনার Transaction ID যাচাই করছেন। অ্যাপ্রুভ হলে Honorable Guest Card
+                আপনার WhatsApp ও SMS-এ পাঠানো হবে।
               </p>
             </div>
 
-            <HonorableGuestCard ticket={createdTicket} showQr />
+            <div className="bg-[#0F0C1A]/80 border border-[#D4AF37]/40 rounded-2xl p-4 space-y-2 text-sm">
+              <div className="flex justify-between gap-3">
+                <span className="text-[#B3A6C9]">Ticket ID</span>
+                <span className="font-mono text-[#F0D78C] font-bold">{createdTicket.ticketId}</span>
+              </div>
+              <div className="flex justify-between gap-3">
+                <span className="text-[#B3A6C9]">নাম</span>
+                <span className="text-[#F6EFE0] font-semibold">{createdTicket.fullName}</span>
+              </div>
+              <div className="flex justify-between gap-3">
+                <span className="text-[#B3A6C9]">TrxID</span>
+                <span className="font-mono text-[#F6EFE0]">{createdTicket.transactionId}</span>
+              </div>
+              <div className="flex justify-between gap-3">
+                <span className="text-[#B3A6C9]">মোট</span>
+                <span className="text-[#F0D78C] font-bold">{createdTicket.totalAmount}/-</span>
+              </div>
+              <p className="text-[11px] text-[#F0D78C] pt-2 border-t border-[#D4AF37]/20 flex items-center gap-1.5">
+                <Clock className="w-3.5 h-3.5" />
+                স্ট্যাটাস: Pending Approval
+              </p>
+            </div>
 
             <div className="text-center mt-5">
               {smsState === 'sending' && (
@@ -196,7 +214,7 @@ export default function RegistrationModal({ isOpen, onClose, onTicketCreated }: 
               {smsState === 'sent' && (
                 <p className="inline-flex items-center gap-2 text-xs text-[#F0D78C] bg-[#7A1F3D]/30 border border-[#D4AF37]/40 rounded-full px-4 py-2">
                   <MessageSquare className="w-3.5 h-3.5" />
-                  কনফার্মেশন SMS আপনার {createdTicket.phone} নম্বরে পাঠানো হয়েছে
+                  রেজিস্ট্রেশন জমার SMS আপনার {createdTicket.phone} নম্বরে পাঠানো হয়েছে
                 </p>
               )}
               {smsState === 'failed' && (
@@ -207,19 +225,7 @@ export default function RegistrationModal({ isOpen, onClose, onTicketCreated }: 
               )}
             </div>
 
-            <div className="text-center mt-4 flex flex-wrap items-center justify-center gap-4">
-              <button
-                type="button"
-                onClick={() => {
-                  onClose();
-                  setTimeout(() => {
-                    document.getElementById('honorable-guests')?.scrollIntoView({ behavior: 'smooth' });
-                  }, 300);
-                }}
-                className="px-6 py-3 bg-[#7A1F3D] border-2 border-[#D4AF37] text-[#F0D78C] hover:text-[#F6EFE0] rounded-full text-sm font-extrabold transition shadow-md cursor-pointer"
-              >
-                Honorable Guest Section-এ দেখুন
-              </button>
+            <div className="text-center mt-4">
               <button
                 type="button"
                 onClick={onClose}
@@ -409,7 +415,9 @@ export default function RegistrationModal({ isOpen, onClose, onTicketCreated }: 
                     className="w-full bg-[#0F0C1A] border border-[#D4AF37]/40 focus:border-[#D4AF37] rounded-xl px-4 py-2.5 text-sm text-[#F6EFE0] font-mono outline-none transition"
                   />
                   {errors.transactionId && <p className="text-xs text-[#A52C54] mt-1">{errors.transactionId}</p>}
-                  <p className="text-[10px] text-[#B3A6C9] mt-1">TrxID দিলে কার্ডে barcode সহ Honorable Guest Card তৈরি হবে</p>
+                  <p className="text-[10px] text-[#B3A6C9] mt-1">
+                    সঠিক TrxID দিন। Super Admin যাচাই করে অ্যাপ্রুভ করলে তবেই কার্ড তৈরি হবে।
+                  </p>
                 </div>
               </div>
 

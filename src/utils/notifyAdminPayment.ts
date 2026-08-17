@@ -1,10 +1,9 @@
-import { SUPER_ADMIN_EMAIL } from '../config/adminConfig';
+import { SUPER_ADMIN_EMAIL, getAdminPanelUrl } from '../config/adminConfig';
 import { Ticket } from '../types';
-import { getGuestCardUrl } from './guestStorage';
 
-function buildPaymentEmailBody(ticket: Ticket, cardUrl: string): string {
+function buildPaymentEmailBody(ticket: Ticket, adminUrl: string): string {
   const lines = [
-    'নতুন অনলাইন পেমেন্ট ও Honorable Guest Card তৈরি হয়েছে।',
+    'নতুন অনলাইন রেজিস্ট্রেশন — পেমেন্ট যাচাই করে অ্যাপ্রুভ করুন।',
     '',
     `Ticket ID: ${ticket.ticketId}`,
     `নাম: ${ticket.fullName}`,
@@ -18,8 +17,9 @@ function buildPaymentEmailBody(ticket: Ticket, cardUrl: string): string {
     `Adult সংখ্যা: ${ticket.adultCount}`,
     `মোট টাকা: ${ticket.totalAmount}/-`,
     `গানের অনুরোধ: ${ticket.songRequest || '—'}`,
+    `স্ট্যাটাস: ${ticket.status}`,
     '',
-    `Guest Card লিংক: ${cardUrl}`,
+    `Admin Panel: ${adminUrl}`,
     `সময়: ${new Date(ticket.issueDate).toLocaleString('bn-BD', { timeZone: 'Asia/Dhaka' })}`,
   ];
   return lines.join('\n');
@@ -30,8 +30,8 @@ function buildPaymentEmailBody(ticket: Ticket, cardUrl: string): string {
  * FormSubmit.co ব্যবহার করে — প্রথমবার chotan4480@gmail.com এ activation লিংক আসবে।
  */
 export async function notifyAdminPaymentComplete(ticket: Ticket): Promise<void> {
-  const cardUrl = getGuestCardUrl(ticket.ticketId);
-  const subject = `[Gaan Bristy 2026] নতুন পেমেন্ট — ${ticket.fullName} (${ticket.ticketId})`;
+  const adminUrl = getAdminPanelUrl();
+  const subject = `[Gaan Bristy 2026] পেমেন্ট যাচাই করুন — ${ticket.fullName} (${ticket.ticketId})`;
 
   const payload = {
     _subject: subject,
@@ -47,8 +47,9 @@ export async function notifyAdminPaymentComplete(ticket: Ticket): Promise<void> 
     transaction_id: ticket.transactionId,
     total_amount: `${ticket.totalAmount}/-`,
     adult_count: String(ticket.adultCount),
-    guest_card_url: cardUrl,
-    message: buildPaymentEmailBody(ticket, cardUrl),
+    status: ticket.status,
+    admin_panel_url: adminUrl,
+    message: buildPaymentEmailBody(ticket, adminUrl),
   };
 
   const webhookUrl =

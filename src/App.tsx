@@ -70,14 +70,6 @@ export default function App() {
     window.history.replaceState({}, '', url.toString());
   };
 
-  const handleTicketCreated = (newTicket: Ticket) => {
-    setSelectedGuestId(newTicket.ticketId);
-    const url = new URL(window.location.href);
-    url.searchParams.set('guest', newTicket.ticketId);
-    url.hash = 'honorable-guests';
-    window.history.replaceState({}, '', url.toString());
-  };
-
   const handleExploreSchedule = () => {
     document.getElementById('schedule')?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -140,7 +132,7 @@ export default function App() {
       <RegistrationModal
         isOpen={isRegisterOpen}
         onClose={() => setIsRegisterOpen(false)}
-        onTicketCreated={handleTicketCreated}
+        existingGuests={honorableGuests}
       />
 
       <CanvaGuideModal isOpen={isCanvaGuideOpen} onClose={() => setIsCanvaGuideOpen(false)} />

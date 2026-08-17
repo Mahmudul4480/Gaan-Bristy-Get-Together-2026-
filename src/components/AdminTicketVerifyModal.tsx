@@ -59,6 +59,16 @@ export default function AdminTicketVerifyModal({ isOpen, onClose, registeredTick
            (t.starMakerId && t.starMakerId.toLowerCase() === codeToSearch.toLowerCase())
     );
 
+    if (found && found.status !== 'Confirmed') {
+      setSearchedTicket(null);
+      setSearchError(
+        found.status === 'Pending'
+          ? `পেমেন্ট এখনও অ্যাপ্রুভ হয়নি: ${found.ticketId}`
+          : `এই রেজিস্ট্রেশন রিজেক্ট করা হয়েছে: ${found.ticketId}`
+      );
+      return;
+    }
+
     if (found) {
       setSearchedTicket(found);
       setSearchQuery(found.ticketId);
@@ -294,6 +304,11 @@ export default function AdminTicketVerifyModal({ isOpen, onClose, registeredTick
             >
               <List className="w-4 h-4" />
               <span>সব Card List</span>
+              {registeredTickets.filter((t) => t.status === 'Pending').length > 0 && (
+                <span className="min-w-[1.15rem] h-5 px-1.5 rounded-full bg-[#A52C54] text-[#F6EFE0] text-[10px] font-black leading-5">
+                  {registeredTickets.filter((t) => t.status === 'Pending').length}
+                </span>
+              )}
             </button>
             <button
               onClick={() => switchPanelTab('gallery')}

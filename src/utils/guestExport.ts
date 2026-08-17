@@ -21,6 +21,7 @@ export function downloadGuestsCsv(guests: Ticket[]): void {
     'Adult Count',
     'Total Amount',
     'Issue Date',
+    'Status',
     'Created By Admin',
     'Card URL',
   ];
@@ -38,6 +39,7 @@ export function downloadGuestsCsv(guests: Ticket[]): void {
       String(g.adultCount),
       String(g.totalAmount),
       g.issueDate,
+      g.status,
       g.createdByAdmin ? 'Yes' : 'No',
       getGuestCardUrl(g.ticketId),
     ]

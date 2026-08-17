@@ -3,7 +3,7 @@ import { Ticket } from '../types';
 import { EVENT_DETAILS } from '../data/eventData';
 import { buildGuestTicket } from '../utils/createGuestTicket';
 import { findDuplicateTransactionId } from '../utils/guestExport';
-import { saveHonorableGuest } from '../utils/guestStorage';
+import { saveHonorableGuest, getGuestCardUrl } from '../utils/guestStorage';
 import { sendRegistrationConfirmationSms } from '../utils/sendConfirmationSms';
 import { compressPhotoFile, validatePhotoFile } from '../utils/photoUpload';
 import HonorableGuestCard from './HonorableGuestCard';
@@ -125,7 +125,10 @@ export default function AdminManualGuestForm({ existingGuests, onGuestCreated }:
       onGuestCreated(ticket);
 
       setSmsState('sending');
-      sendRegistrationConfirmationSms(ticket.phone).then((result) => {
+      sendRegistrationConfirmationSms(ticket.phone, {
+        type: 'approved',
+        cardUrl: getGuestCardUrl(ticket.ticketId),
+      }).then((result) => {
         if (result.success) {
           setSmsState('sent');
         } else {
