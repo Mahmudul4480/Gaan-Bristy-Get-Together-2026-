@@ -1,5 +1,5 @@
 import { EVENT_DETAILS } from '../data/eventData';
-import { Ticket, Users, Sparkles, AlertCircle, Utensils, Music, Award, CheckCircle2, Calendar } from 'lucide-react';
+import { Ticket, Users, Sparkles, AlertCircle, Utensils, Music, Award, CheckCircle2, Calendar, Shirt } from 'lucide-react';
 import AddToCalendar from './AddToCalendar';
 import SocialShareWidget from './SocialShareWidget';
 
@@ -114,6 +114,12 @@ export default function EventDetails({ onOpenRegister }: EventDetailsProps) {
                 <li className="flex items-start gap-2.5">
                   <CheckCircle2 className="w-5 h-5 text-[#D4AF37] shrink-0 mt-0.5" />
                   <span>বিশেষ ক্রেস্ট, ফটো সেশন ও ফ্যামিলি মেমেন্টো (Awards & Recognition)</span>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <Shirt className="w-5 h-5 text-[#D4AF37] shrink-0 mt-0.5" />
+                  <span>
+                    Dress Code — Male: Formal (Shirt, Pant, Shoe) · Female: Casual
+                  </span>
                 </li>
               </ul>
             </div>

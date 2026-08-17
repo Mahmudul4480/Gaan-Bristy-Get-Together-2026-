@@ -24,12 +24,33 @@ import {
   AlertTriangle,
   Clock,
   Crop,
+  Shirt,
 } from 'lucide-react';
 
 interface RegistrationModalProps {
   isOpen: boolean;
   onClose: () => void;
   existingGuests: Ticket[];
+}
+
+const REQUIRED_FIELD_ORDER = ['fullName', 'familyName', 'phone', 'transactionId'] as const;
+
+const FIELD_LABELS: Record<(typeof REQUIRED_FIELD_ORDER)[number], string> = {
+  fullName: 'Name (নাম)',
+  familyName: 'StarMaker Family Name',
+  phone: 'Mobile No',
+  transactionId: 'Transaction ID (TrxID)',
+};
+
+function focusInvalidField(fieldKey: string) {
+  const el = document.getElementById(`reg-field-${fieldKey}`);
+  if (!el) return;
+  el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  window.setTimeout(() => {
+    if (el instanceof HTMLInputElement) {
+      el.focus({ preventScroll: true });
+    }
+  }, 280);
 }
 
 export default function RegistrationModal({ isOpen, onClose, existingGuests }: RegistrationModalProps) {
@@ -94,14 +115,32 @@ export default function RegistrationModal({ isOpen, onClose, existingGuests }: R
     }
   };
 
+  const clearFieldError = (key: string) => {
+    setErrors((prev) => {
+      if (!prev[key]) return prev;
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
+  };
+
+  const fieldClass = (key: string, extra = '') =>
+    `w-full bg-[#1C1730] rounded-xl px-4 py-2.5 text-sm text-[#F6EFE0] outline-none transition ${extra} ${
+      errors[key]
+        ? 'border-2 border-[#E85A7A] ring-2 ring-[#E85A7A]/40'
+        : 'border border-[#D4AF37]/40 focus:border-[#D4AF37]'
+    }`;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const newErrors: Record<string, string> = {};
+    const phoneDigits = phone.replace(/\D/g, '');
 
-    if (!fullName.trim()) newErrors.fullName = 'অনুগ্রহ করে আপনার পুরো নাম লিখুন';
-    if (!familyName.trim()) newErrors.familyName = 'StarMaker Family Name প্রয়োজন';
-    if (!phone.trim() || phone.length < 11) newErrors.phone = 'সঠিক ১১ ডিজিটের মোবাইল নম্বর দিন';
-    if (!transactionId.trim()) newErrors.transactionId = 'পেমেন্ট ট্রানজেকশন আইডি প্রদান করুন';
+    if (!fullName.trim()) newErrors.fullName = 'এই ফিল্ড পূরণ হয়নি — আপনার নাম লিখুন';
+    if (!familyName.trim()) newErrors.familyName = 'এই ফিল্ড পূরণ হয়নি — StarMaker Family Name লিখুন';
+    if (!phone.trim()) newErrors.phone = 'এই ফিল্ড পূরণ হয়নি — Mobile No লিখুন';
+    else if (phoneDigits.length < 11) newErrors.phone = 'সঠিক ১১ ডিজিটের মোবাইল নম্বর দিন';
+    if (!transactionId.trim()) newErrors.transactionId = 'এই ফিল্ড পূরণ হয়নি — Transaction ID (TrxID) লিখুন';
 
     const duplicate = findDuplicateTransactionId(existingGuests, transactionId);
     if (duplicate) {
@@ -110,6 +149,10 @@ export default function RegistrationModal({ isOpen, onClose, existingGuests }: R
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
+      const firstInvalid = REQUIRED_FIELD_ORDER.find((key) => newErrors[key]);
+      if (firstInvalid) {
+        window.requestAnimationFrame(() => focusInvalidField(firstInvalid));
+      }
       return;
     }
 
@@ -260,6 +303,15 @@ export default function RegistrationModal({ isOpen, onClose, existingGuests }: R
               <p className="text-[11px] sm:text-xs text-[#B3A6C9] font-mono mt-0.5">
                 Gaan Bristy Get Together 2026 • Gulshan Club
               </p>
+              <div className="mt-3 mx-auto max-w-md rounded-xl border border-[#F0D78C]/70 bg-[#7A1F3D]/50 px-3 py-2">
+                <p className="inline-flex items-center justify-center gap-1 text-[10px] font-black uppercase tracking-wider text-[#F0D78C]">
+                  <Shirt className="w-3.5 h-3.5" />
+                  Dress Code
+                </p>
+                <p className="text-[11px] text-[#F6EFE0] mt-1 leading-snug">
+                  Male: Formal (Shirt, Pant, Shoe) · Female: Casual
+                </p>
+              </div>
             </div>
 
             {/* Scrollable form body */}
@@ -275,32 +327,52 @@ export default function RegistrationModal({ isOpen, onClose, existingGuests }: R
 
                 <div className="space-y-3">
                   <div>
-                    <label className="block text-xs font-semibold text-[#F6EFE0] mb-1.5">
+                    <label htmlFor="reg-field-fullName" className="block text-xs font-semibold text-[#F6EFE0] mb-1.5">
                       Name (নাম) *
                     </label>
                     <input
+                      id="reg-field-fullName"
                       type="text"
                       value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
+                      onChange={(e) => {
+                        setFullName(e.target.value);
+                        clearFieldError('fullName');
+                      }}
                       placeholder="যেমন: তানভীর আহমেদ"
-                      className="w-full bg-[#1C1730] border border-[#D4AF37]/40 focus:border-[#D4AF37] rounded-xl px-4 py-2.5 text-sm text-[#F6EFE0] outline-none transition"
+                      aria-invalid={Boolean(errors.fullName)}
+                      className={fieldClass('fullName')}
                     />
-                    {errors.fullName && <p className="text-xs text-[#A52C54] mt-1">{errors.fullName}</p>}
+                    {errors.fullName && (
+                      <p className="mt-1.5 text-xs font-bold text-[#FFB4C4] flex items-start gap-1.5">
+                        <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                        {errors.fullName}
+                      </p>
+                    )}
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-[#F6EFE0] mb-1.5 flex items-center gap-1.5">
+                    <label htmlFor="reg-field-familyName" className="block text-xs font-semibold text-[#F6EFE0] mb-1.5 flex items-center gap-1.5">
                       <Users className="w-3.5 h-3.5 text-[#D4AF37]" />
                       StarMaker Family Name *
                     </label>
                     <input
+                      id="reg-field-familyName"
                       type="text"
                       value={familyName}
-                      onChange={(e) => setFamilyName(e.target.value)}
+                      onChange={(e) => {
+                        setFamilyName(e.target.value);
+                        clearFieldError('familyName');
+                      }}
                       placeholder="যেমন: Gaan Bristy Royals"
-                      className="w-full bg-[#1C1730] border border-[#D4AF37]/40 focus:border-[#D4AF37] rounded-xl px-4 py-2.5 text-sm text-[#F6EFE0] outline-none transition"
+                      aria-invalid={Boolean(errors.familyName)}
+                      className={fieldClass('familyName')}
                     />
-                    {errors.familyName && <p className="text-xs text-[#A52C54] mt-1">{errors.familyName}</p>}
+                    {errors.familyName && (
+                      <p className="mt-1.5 text-xs font-bold text-[#FFB4C4] flex items-start gap-1.5">
+                        <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                        {errors.familyName}
+                      </p>
+                    )}
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -319,18 +391,29 @@ export default function RegistrationModal({ isOpen, onClose, existingGuests }: R
                     </div>
 
                     <div>
-                      <label className="block text-xs font-semibold text-[#F6EFE0] mb-1.5 flex items-center gap-1.5">
+                      <label htmlFor="reg-field-phone" className="block text-xs font-semibold text-[#F6EFE0] mb-1.5 flex items-center gap-1.5">
                         <Phone className="w-3.5 h-3.5 text-[#D4AF37]" />
                         Mobile No *
                       </label>
                       <input
+                        id="reg-field-phone"
                         type="tel"
+                        inputMode="numeric"
                         value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
+                        onChange={(e) => {
+                          setPhone(e.target.value);
+                          clearFieldError('phone');
+                        }}
                         placeholder="017xxxxxxxx"
-                        className="w-full bg-[#1C1730] border border-[#D4AF37]/40 focus:border-[#D4AF37] rounded-xl px-4 py-2.5 text-sm text-[#F6EFE0] outline-none transition font-mono"
+                        aria-invalid={Boolean(errors.phone)}
+                        className={fieldClass('phone', 'font-mono')}
                       />
-                      {errors.phone && <p className="text-xs text-[#A52C54] mt-1">{errors.phone}</p>}
+                      {errors.phone && (
+                        <p className="mt-1.5 text-xs font-bold text-[#FFB4C4] flex items-start gap-1.5">
+                          <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                          {errors.phone}
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -428,15 +511,25 @@ export default function RegistrationModal({ isOpen, onClose, existingGuests }: R
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-[#F6EFE0] mb-1">Transaction ID (TrxID) *</label>
+                  <label htmlFor="reg-field-transactionId" className="block text-xs font-semibold text-[#F6EFE0] mb-1">Transaction ID (TrxID) *</label>
                   <input
+                    id="reg-field-transactionId"
                     type="text"
                     value={transactionId}
-                    onChange={(e) => setTransactionId(e.target.value)}
+                    onChange={(e) => {
+                      setTransactionId(e.target.value);
+                      clearFieldError('transactionId');
+                    }}
                     placeholder="যেমন: BK109283746"
-                    className="w-full bg-[#0F0C1A] border border-[#D4AF37]/40 focus:border-[#D4AF37] rounded-xl px-4 py-2.5 text-sm text-[#F6EFE0] font-mono outline-none transition"
+                    aria-invalid={Boolean(errors.transactionId)}
+                    className={fieldClass('transactionId', 'bg-[#0F0C1A] font-mono')}
                   />
-                  {errors.transactionId && <p className="text-xs text-[#A52C54] mt-1">{errors.transactionId}</p>}
+                  {errors.transactionId && (
+                    <p className="mt-1.5 text-xs font-bold text-[#FFB4C4] flex items-start gap-1.5">
+                      <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                      {errors.transactionId}
+                    </p>
+                  )}
                   <p className="text-[10px] text-[#B3A6C9] mt-1">
                     সঠিক TrxID দিন। Super Admin যাচাই করে অ্যাপ্রুভ করলে তবেই কার্ড তৈরি হবে।
                   </p>
@@ -465,12 +558,34 @@ export default function RegistrationModal({ isOpen, onClose, existingGuests }: R
                 />
               </div>
 
-              <div className="flex flex-col sm:flex-row gap-3 pt-1 pb-1">
+              <div className="flex flex-col gap-3 pt-1 pb-1">
+                {REQUIRED_FIELD_ORDER.some((key) => errors[key]) && (
+                  <div className="w-full rounded-xl border-2 border-[#E85A7A] bg-[#7A1F3D]/50 px-4 py-3">
+                    <p className="text-sm font-bold text-[#FFB4C4] flex items-center gap-2">
+                      <AlertTriangle className="w-4 h-4 shrink-0" />
+                      বাধ্যতামূলক ফিল্ড পূরণ হয়নি — তাই রেজিস্ট্রেশন নেওয়া যায়নি
+                    </p>
+                    <ul className="mt-2 space-y-1">
+                      {REQUIRED_FIELD_ORDER.filter((key) => errors[key]).map((key) => (
+                        <li key={key}>
+                          <button
+                            type="button"
+                            onClick={() => focusInvalidField(key)}
+                            className="text-xs font-semibold text-[#F6EFE0] underline underline-offset-2 cursor-pointer"
+                          >
+                            {FIELD_LABELS[key]} — {errors[key]}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
                 {errors.submit && (
-                  <p className="w-full text-xs text-[#A52C54] bg-[#7A1F3D]/30 border border-[#A52C54]/50 rounded-xl px-4 py-2.5">
+                  <p className="w-full text-xs font-bold text-[#FFB4C4] bg-[#7A1F3D]/30 border border-[#A52C54]/50 rounded-xl px-4 py-2.5">
                     {errors.submit}
                   </p>
                 )}
+                <div className="flex flex-col sm:flex-row gap-3">
                 <button type="button" onClick={onClose} className="sm:w-auto px-6 py-3.5 bg-[#0F0C1A] border-2 border-[#D4AF37]/50 hover:border-[#D4AF37] text-[#F0D78C] font-bold text-sm rounded-full flex items-center justify-center gap-2 cursor-pointer">
                   <ArrowLeft className="w-5 h-5" />
                   <span>ফিরে যান</span>
@@ -483,6 +598,7 @@ export default function RegistrationModal({ isOpen, onClose, existingGuests }: R
                   <TicketIcon className="w-5 h-5" />
                   <span>{isSubmitting ? 'সংরক্ষণ হচ্ছে...' : `রেজিস্ট্রেশন কনফার্ম করুন (টাকা ${totalAmount}/-)`}</span>
                 </button>
+                </div>
               </div>
             </form>
             </div>

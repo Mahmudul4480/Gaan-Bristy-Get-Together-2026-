@@ -5,7 +5,7 @@ import { jsPDF } from 'jspdf';
 import { Ticket } from '../types';
 import { LOGO_URL, EVENT_DETAILS } from '../data/eventData';
 import { getGuestCardUrl } from '../utils/guestStorage';
-import { Download, FileText, Loader2, ShieldCheck } from 'lucide-react';
+import { Download, FileText, Loader2, ShieldCheck, Shirt } from 'lucide-react';
 
 interface HonorableGuestCardProps {
   ticket: Ticket;
@@ -16,6 +16,31 @@ interface HonorableGuestCardProps {
 const CARD_NOTES = ['♪', '♫', '♬', '♩'];
 const MIN_QR_SIZE = 168;
 const MAX_QR_SIZE = 260;
+
+function DressCodeHighlight({ compact = false }: { compact?: boolean }) {
+  if (compact) {
+    return (
+      <p className="mt-1 text-[9px] leading-tight text-[#F0D78C] font-bold truncate">
+        Dress: Male Formal · Female Casual
+      </p>
+    );
+  }
+
+  return (
+    <div className="mt-3 mx-auto w-full rounded-xl border-2 border-[#F0D78C] bg-[#7A1F3D] px-3 py-2.5">
+      <p className="inline-flex items-center justify-center gap-1 text-[10px] font-black uppercase tracking-[0.28em] text-[#F0D78C]">
+        <Shirt className="w-3.5 h-3.5" />
+        {EVENT_DETAILS.dressCodeTitle}
+      </p>
+      <p className="mt-1.5 text-[11px] sm:text-xs font-bold text-[#F6EFE0] leading-snug">
+        Male: Formal (Shirt, Pant, Shoe)
+      </p>
+      <p className="text-[11px] sm:text-xs font-bold text-[#F6EFE0] leading-snug">
+        Female: Casual
+      </p>
+    </div>
+  );
+}
 
 export default function HonorableGuestCard({ ticket, compact = false, showQr = false }: HonorableGuestCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
@@ -122,6 +147,7 @@ export default function HonorableGuestCard({ ticket, compact = false, showQr = f
               <p className="font-bold text-[#F0D78C] text-sm truncate">{ticket.familyName}</p>
               <p className="text-xs text-[#F6EFE0] truncate">{ticket.fullName}</p>
               <p className="text-[10px] font-mono text-[#B3A6C9]">{ticket.ticketId}</p>
+              <DressCodeHighlight compact />
             </div>
           </div>
         </div>
@@ -229,6 +255,8 @@ export default function HonorableGuestCard({ ticket, compact = false, showQr = f
           </p>
           <p className="text-xs text-[#B3A6C9] mt-1">{EVENT_DETAILS.venueNameBengali}</p>
           <p className="text-[10px] font-mono text-[#F0D78C] mt-2">{ticket.ticketId}</p>
+
+          <DressCodeHighlight />
 
           {/* QR — only shown to the registered guest themselves & Admin (not public gallery) */}
           {showQr ? (

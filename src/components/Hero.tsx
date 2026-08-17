@@ -1,7 +1,7 @@
 import CountdownTimer from './CountdownTimer';
 import HeroBrandLockup from './HeroBrandLockup';
 import { EVENT_DETAILS } from '../data/eventData';
-import { Calendar, Clock, MapPin, Sparkles, AlertTriangle, ArrowRight, Music, Utensils, Award, Smile } from 'lucide-react';
+import { Calendar, Clock, MapPin, Sparkles, AlertTriangle, ArrowRight, Music, Utensils, Award, Smile, Shirt } from 'lucide-react';
 import AddToCalendar from './AddToCalendar';
 import GaanBristyUmbrella from './GaanBristyUmbrella';
 
@@ -124,6 +124,25 @@ export default function Hero({ onOpenRegister, onExploreSchedule }: HeroProps) {
                     <Award className="w-5 h-5 text-[#D4AF37]" />
                   </div>
                   <span className="text-xs font-bold text-[#F6EFE0]">Awards & Recognition</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Dress Code — highlighted on the invitation card */}
+            <div className="p-4 bg-gradient-to-b from-[#7A1F3D]/90 to-[#0F0C1A]/80 border-2 border-[#F0D78C] rounded-2xl shadow-[0_0_24px_rgba(212,175,55,0.28)]">
+              <p className="inline-flex items-center justify-center gap-1.5 text-[11px] sm:text-xs font-black uppercase tracking-[0.28em] text-[#F0D78C]">
+                <Shirt className="w-4 h-4" />
+                {EVENT_DETAILS.dressCodeTitle}
+              </p>
+              <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-left">
+                <div className="rounded-xl bg-[#0F0C1A]/70 border border-[#D4AF37]/45 px-3.5 py-3">
+                  <p className="text-[10px] uppercase tracking-wider text-[#B3A6C9] font-bold">Male</p>
+                  <p className="text-sm sm:text-base font-black text-[#F6EFE0]">Formal</p>
+                  <p className="text-xs text-[#F0D78C] mt-0.5">Shirt · Pant · Shoe</p>
+                </div>
+                <div className="rounded-xl bg-[#0F0C1A]/70 border border-[#D4AF37]/45 px-3.5 py-3">
+                  <p className="text-[10px] uppercase tracking-wider text-[#B3A6C9] font-bold">Female</p>
+                  <p className="text-sm sm:text-base font-black text-[#F6EFE0]">Casual</p>
                 </div>
               </div>
             </div>

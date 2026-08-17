@@ -37,6 +37,9 @@ export const EVENT_DETAILS = {
   bkashNumber: "01761870650",
   nagadNumber: "01761870650",
   rocketNumber: "01761870650",
+  dressCodeTitle: "Dress Code",
+  dressCodeMale: "Formal (Shirt, Pant, Shoe)",
+  dressCodeFemale: "Casual",
 };
 
 export const SCHEDULE_DATA: ScheduleItem[] = [
