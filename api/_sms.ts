@@ -69,7 +69,13 @@ export async function sendConfirmationSms(phone: string, message: string): Promi
   const apiKey = process.env.SMS_API_KEY;
   if (!apiKey) {
     console.warn('[send-sms] SMS_API_KEY is not configured on the server.');
-    return { success: false, error: 'SMS সার্ভিস কনফিগার করা নেই (SMS_API_KEY নেই)।' };
+    const onVercel = Boolean(process.env.VERCEL);
+    return {
+      success: false,
+      error: onVercel
+        ? 'লাইভ সাইটে SMS_API_KEY নেই। Vercel Dashboard → Project → Settings → Environment Variables-এ SMS_API_KEY যোগ করে Redeploy করুন।'
+        : 'লোকাল .env থেকে SMS_API_KEY লোড হয়নি। npm run dev বন্ধ করে আবার চালু করুন।',
+    };
   }
 
   const normalizedPhone = normalizeBangladeshiPhone(phone);

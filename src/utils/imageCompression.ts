@@ -33,6 +33,32 @@ function canvasToBlob(canvas: HTMLCanvasElement, quality: number): Promise<Blob>
   });
 }
 
+export function loadImageFromSrc(src: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error('ছবিটি সঠিক নয়'));
+    img.src = src;
+  });
+}
+
+export async function compressCanvasToBlob(
+  canvas: HTMLCanvasElement,
+  options: { targetBytes: number; initialQuality?: number; minQuality?: number }
+): Promise<Blob> {
+  const { targetBytes, initialQuality = 0.92, minQuality = 0.62 } = options;
+  let quality = initialQuality;
+  let blob = await canvasToBlob(canvas, quality);
+
+  while (blob.size > targetBytes && quality > minQuality) {
+    quality = Math.max(minQuality, quality - 0.08);
+    blob = await canvasToBlob(canvas, quality);
+    if (quality === minQuality) break;
+  }
+
+  return blob;
+}
+
 /**
  * Resizes + compresses an image, only reducing quality as far as needed to
  * approach `targetBytes` — so a photo that's already small stays crisp at
@@ -56,18 +82,7 @@ export async function smartCompressImage(file: File, options: CompressOptions): 
   ctx.imageSmoothingQuality = 'high';
   ctx.drawImage(img, 0, 0, width, height);
 
-  let quality = initialQuality;
-  let blob = await canvasToBlob(canvas, quality);
-
-  // Step quality down gradually — stop as soon as we're under the target
-  // (or we've hit the quality floor) so we never over-compress.
-  while (blob.size > targetBytes && quality > minQuality) {
-    quality = Math.max(minQuality, quality - 0.08);
-    blob = await canvasToBlob(canvas, quality);
-    if (quality === minQuality) break;
-  }
-
-  return blob;
+  return compressCanvasToBlob(canvas, { targetBytes, initialQuality, minQuality });
 }
 
 export function blobToDataUrl(blob: Blob): Promise<string> {

@@ -1,10 +1,12 @@
-import 'dotenv/config';
+import dotenv from 'dotenv';
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import type { Plugin } from 'vite';
-import {defineConfig} from 'vite';
+import { defineConfig, loadEnv } from 'vite';
 import { parseSendSmsRequest, sendConfirmationSms } from './api/_sms';
+
+dotenv.config({ path: path.resolve(__dirname, '.env') });
 
 // Mirrors api/send-sms.ts (the Vercel serverless function) so the SMS
 // confirmation flow also works with plain `npm run dev` locally, without
@@ -12,7 +14,16 @@ import { parseSendSmsRequest, sendConfirmationSms } from './api/_sms';
 function smsDevApiPlugin(): Plugin {
   return {
     name: 'sms-dev-api',
+    config(_, { mode }) {
+      const env = loadEnv(mode, path.resolve(__dirname), '');
+      if (env.SMS_API_KEY) process.env.SMS_API_KEY = env.SMS_API_KEY;
+      if (env.SMS_SENDER_ID) process.env.SMS_SENDER_ID = env.SMS_SENDER_ID;
+    },
     configureServer(server) {
+      const env = loadEnv(server.config.mode, server.config.root, '');
+      if (env.SMS_API_KEY) process.env.SMS_API_KEY = env.SMS_API_KEY;
+      if (env.SMS_SENDER_ID) process.env.SMS_SENDER_ID = env.SMS_SENDER_ID;
+
       server.middlewares.use('/api/send-sms', (req, res) => {
         if (req.method !== 'POST') {
           res.statusCode = 405;

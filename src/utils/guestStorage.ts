@@ -27,6 +27,35 @@ export function isConfirmedGuest(ticket: Ticket): boolean {
   return ticket.status === 'Confirmed';
 }
 
+interface FirebaseErrorLike {
+  code?: string;
+  message?: string;
+}
+
+function omitUndefined<T extends Record<string, unknown>>(data: T): Record<string, unknown> {
+  return Object.fromEntries(Object.entries(data).filter(([, value]) => value !== undefined));
+}
+
+function describeGuestSaveError(error: unknown): string {
+  const code = (error as FirebaseErrorLike)?.code || '';
+  const rawMessage = (error as FirebaseErrorLike)?.message || (error instanceof Error ? error.message : String(error));
+
+  if (code === 'permission-denied' || code.includes('permission-denied')) {
+    return 'Firestore Rules Publish করা হয়নি অথবা লেখা ব্লক হয়েছে। Firebase Console → Firestore Database → Rules ট্যাবে firestore.rules-এর সর্বশেষ কনটেন্ট Publish করুন।';
+  }
+  if (rawMessage.includes('undefined')) {
+    return 'Guest card-এ খালি ফিল্ড সেভ করা যায়নি। আবার চেষ্টা করুন।';
+  }
+  if (code === 'unavailable' || code.includes('unavailable') || rawMessage.toLowerCase().includes('network')) {
+    return 'ইন্টারনেট সংযোগ নেই অথবা Firebase-এ পৌঁছানো যায়নি। সংযোগ পরীক্ষা করে আবার চেষ্টা করুন।';
+  }
+  if (rawMessage.includes('exceed') || rawMessage.toLowerCase().includes('too large') || code.includes('invalid-argument')) {
+    return `Guest card সংরক্ষণ করা যায়নি — ${rawMessage}`;
+  }
+
+  return `Guest card সংরক্ষণ করা যায়নি — ${rawMessage}${code ? ` (${code})` : ''}`;
+}
+
 function guestDocRef(ticketId: string) {
   if (!db) throw new Error('Firebase চালু নেই');
   return doc(db, GUESTS_COLLECTION, ticketId);
@@ -43,10 +72,11 @@ export async function saveHonorableGuest(ticket: Ticket): Promise<void> {
   }
 
   try {
-    await setDoc(guestDocRef(ticket.ticketId), ticket, { merge: true });
+    // Firestore rejects `undefined` field values — omit optional empties instead.
+    await setDoc(guestDocRef(ticket.ticketId), omitUndefined({ ...ticket }), { merge: true });
   } catch (error) {
     console.error('[Guest storage] Firestore save failed:', error);
-    throw new Error('Guest card সংরক্ষণ করা যায়নি। ইন্টারনেট সংযোগ পরীক্ষা করে আবার চেষ্টা করুন।');
+    throw new Error(describeGuestSaveError(error));
   }
 }
 

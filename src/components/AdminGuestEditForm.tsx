@@ -3,9 +3,10 @@ import { Ticket } from '../types';
 import { EVENT_DETAILS } from '../data/eventData';
 import { findDuplicateTransactionId } from '../utils/guestExport';
 import { saveHonorableGuest } from '../utils/guestStorage';
-import { compressPhotoFile, validatePhotoFile } from '../utils/photoUpload';
+import { validatePhotoFile } from '../utils/photoUpload';
 import HonorableGuestCard from './HonorableGuestCard';
-import { Search, Save, Camera, User, Users, Phone, Sparkles, CheckCircle2 } from 'lucide-react';
+import PhotoCropModal from './PhotoCropModal';
+import { Search, Save, Camera, User, Users, Phone, Sparkles, CheckCircle2, Crop } from 'lucide-react';
 
 interface AdminGuestEditFormProps {
   guests: Ticket[];
@@ -18,6 +19,8 @@ export default function AdminGuestEditForm({ guests, onGuestUpdated }: AdminGues
   const [saved, setSaved] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSaving, setIsSaving] = useState(false);
+  const [cropSrc, setCropSrc] = useState<string | null>(null);
+  const [rawPhotoSrc, setRawPhotoSrc] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -33,6 +36,9 @@ export default function AdminGuestEditForm({ guests, onGuestUpdated }: AdminGues
   }, [guests, query]);
 
   const selectGuest = (ticket: Ticket) => {
+    if (rawPhotoSrc?.startsWith('blob:')) URL.revokeObjectURL(rawPhotoSrc);
+    setRawPhotoSrc(null);
+    setCropSrc(null);
     setSelected({ ...ticket });
     setSaved(false);
     setErrors({});
@@ -44,25 +50,24 @@ export default function AdminGuestEditForm({ guests, onGuestUpdated }: AdminGues
     setSaved(false);
   };
 
-  const handlePhotoChange = async (e: ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    e.target.value = '';
     if (!file || !selected) return;
     const validationError = validatePhotoFile(file);
     if (validationError) {
       setErrors((prev) => ({ ...prev, photo: validationError }));
       return;
     }
-    try {
-      const compressed = await compressPhotoFile(file);
-      updateField('photoUrl', compressed);
-      setErrors((prev) => {
-        const next = { ...prev };
-        delete next.photo;
-        return next;
-      });
-    } catch {
-      setErrors((prev) => ({ ...prev, photo: 'ছবি আপলোড করতে সমস্যা হয়েছে' }));
-    }
+    if (rawPhotoSrc?.startsWith('blob:')) URL.revokeObjectURL(rawPhotoSrc);
+    const url = URL.createObjectURL(file);
+    setRawPhotoSrc(url);
+    setCropSrc(url);
+    setErrors((prev) => {
+      const next = { ...prev };
+      delete next.photo;
+      return next;
+    });
   };
 
   const handleSave = async (e: FormEvent) => {
@@ -288,12 +293,22 @@ export default function AdminGuestEditForm({ guests, onGuestUpdated }: AdminGues
               </label>
               <div className="flex items-center gap-3">
                 {selected.photoUrl ? (
-                  <img src={selected.photoUrl} alt="" className="w-16 h-20 object-cover rounded-lg border border-[#D4AF37]/40" />
+                  <img src={selected.photoUrl} alt="" className="w-16 h-16 object-cover rounded-full border border-[#D4AF37]/40" />
                 ) : null}
                 <label className="cursor-pointer px-3 py-2 bg-[#1C1730] border border-[#D4AF37]/40 rounded-lg text-xs text-[#F0D78C] font-semibold">
                   ছবি বদলান
                   <input type="file" accept="image/*" onChange={handlePhotoChange} className="hidden" />
                 </label>
+                {(rawPhotoSrc || selected.photoUrl) && (
+                  <button
+                    type="button"
+                    onClick={() => setCropSrc(rawPhotoSrc || selected.photoUrl || null)}
+                    className="inline-flex items-center gap-1 px-3 py-2 bg-[#0F0C1A] border border-[#D4AF37]/40 rounded-lg text-xs text-[#F0D78C] font-semibold cursor-pointer"
+                  >
+                    <Crop className="w-3.5 h-3.5" />
+                    সেট করুন
+                  </button>
+                )}
               </div>
               {errors.photo && <p className="text-xs text-[#A52C54] mt-1">{errors.photo}</p>}
             </div>
@@ -332,6 +347,17 @@ export default function AdminGuestEditForm({ guests, onGuestUpdated }: AdminGues
 
       {!selected && filtered.length === 0 && (
         <p className="text-center text-sm text-[#B3A6C9] py-6">কোনো card পাওয়া যায়নি</p>
+      )}
+
+      {cropSrc && selected && (
+        <PhotoCropModal
+          imageSrc={cropSrc}
+          onConfirm={(cropped) => {
+            updateField('photoUrl', cropped);
+            setCropSrc(null);
+          }}
+          onCancel={() => setCropSrc(null)}
+        />
       )}
     </div>
   );

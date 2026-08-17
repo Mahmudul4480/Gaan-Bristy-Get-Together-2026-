@@ -5,7 +5,8 @@ import { saveHonorableGuest } from '../utils/guestStorage';
 import { notifyAdminPaymentComplete } from '../utils/notifyAdminPayment';
 import { sendRegistrationConfirmationSms } from '../utils/sendConfirmationSms';
 import { findDuplicateTransactionId } from '../utils/guestExport';
-import { compressPhotoFile, validatePhotoFile } from '../utils/photoUpload';
+import { validatePhotoFile } from '../utils/photoUpload';
+import PhotoCropModal from './PhotoCropModal';
 import {
   X,
   Ticket as TicketIcon,
@@ -22,6 +23,7 @@ import {
   Loader2,
   AlertTriangle,
   Clock,
+  Crop,
 } from 'lucide-react';
 
 interface RegistrationModalProps {
@@ -38,6 +40,8 @@ export default function RegistrationModal({ isOpen, onClose, existingGuests }: R
   const [email, setEmail] = useState('');
   const [photoUrl, setPhotoUrl] = useState('');
   const [photoPreview, setPhotoPreview] = useState('');
+  const [cropSrc, setCropSrc] = useState<string | null>(null);
+  const [rawPhotoSrc, setRawPhotoSrc] = useState<string | null>(null);
   const [adultCount, setAdultCount] = useState(1);
   const [paymentMethod, setPaymentMethod] = useState<'bKash' | 'Nagad' | 'Rocket' | 'Bank Transfer'>('bKash');
   const [transactionId, setTransactionId] = useState('');
@@ -60,8 +64,9 @@ export default function RegistrationModal({ isOpen, onClose, existingGuests }: R
     setTimeout(() => setIsCopied(false), 2000);
   };
 
-  const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    e.target.value = '';
     if (!file) return;
 
     const validationError = validatePhotoFile(file);
@@ -70,17 +75,22 @@ export default function RegistrationModal({ isOpen, onClose, existingGuests }: R
       return;
     }
 
-    try {
-      const compressed = await compressPhotoFile(file);
-      setPhotoUrl(compressed);
-      setPhotoPreview(compressed);
-      setErrors((prev) => {
-        const next = { ...prev };
-        delete next.photo;
-        return next;
-      });
-    } catch {
-      setErrors((prev) => ({ ...prev, photo: 'ছবি আপলোড করতে সমস্যা হয়েছে' }));
+    if (rawPhotoSrc?.startsWith('blob:')) URL.revokeObjectURL(rawPhotoSrc);
+    const url = URL.createObjectURL(file);
+    setRawPhotoSrc(url);
+    setCropSrc(url);
+    setErrors((prev) => {
+      const next = { ...prev };
+      delete next.photo;
+      return next;
+    });
+  };
+
+  const closeCropper = (revokeRaw = false) => {
+    setCropSrc(null);
+    if (revokeRaw && rawPhotoSrc?.startsWith('blob:')) {
+      URL.revokeObjectURL(rawPhotoSrc);
+      setRawPhotoSrc(null);
     }
   };
 
@@ -336,24 +346,36 @@ export default function RegistrationModal({ isOpen, onClose, existingGuests }: R
                   এই ছবি সম্মান কার্ড (Honorable Guest Card)-এর জন্য ব্যবহৃত হবে।
                 </p>
                 <p className="text-[11px] text-[#B3A6C9] mb-3 font-bangla leading-relaxed">
-                  ভালো কোয়ালিটির ছবি দিন — পরিষ্কার, সামনের দিকে তাকানো, মুখ স্পষ্ট দেখা যায় এমন।
+                  ভালো কোয়ালিটির ছবি দিন। আপলোডের পর মুখ গোল ফ্রেমের মাঝে সেট করতে পারবেন — যাতে চেহারা না কাটে।
                 </p>
                 <div className="flex flex-col sm:flex-row items-center gap-4">
                   {photoPreview ? (
-                    <img src={photoPreview} alt="Preview" className="w-28 h-32 object-cover rounded-xl border-2 border-[#D4AF37]/60 shadow-md" />
+                    <img src={photoPreview} alt="Preview" className="w-28 h-28 object-cover rounded-full border-2 border-[#D4AF37]/60 shadow-md" />
                   ) : (
-                    <div className="w-28 h-32 rounded-xl border-2 border-dashed border-[#D4AF37]/45 bg-[#1C1730] flex flex-col items-center justify-center text-[#B3A6C9] text-[10px] text-center px-2 gap-1">
+                    <div className="w-28 h-28 rounded-full border-2 border-dashed border-[#D4AF37]/45 bg-[#1C1730] flex flex-col items-center justify-center text-[#B3A6C9] text-[10px] text-center px-2 gap-1">
                       <ImageIcon className="w-6 h-6 text-[#D4AF37]/60" />
                       <span>কোনো ছবি নেই</span>
                     </div>
                   )}
-                  <label className="flex-1 w-full cursor-pointer">
-                    <input type="file" accept="image/*" onChange={handlePhotoChange} className="hidden" />
-                    <span className="inline-flex items-center justify-center gap-2 w-full sm:w-auto px-5 py-3 bg-[#7A1F3D]/40 border border-[#D4AF37]/50 hover:border-[#D4AF37] rounded-xl text-sm font-semibold text-[#F0D78C] transition">
-                      <Camera className="w-4 h-4" />
-                      ছবি বেছে নিন
-                    </span>
-                  </label>
+                  <div className="flex-1 w-full flex flex-col sm:flex-row gap-2">
+                    <label className="flex-1 w-full cursor-pointer">
+                      <input type="file" accept="image/*" onChange={handlePhotoChange} className="hidden" />
+                      <span className="inline-flex items-center justify-center gap-2 w-full px-5 py-3 bg-[#7A1F3D]/40 border border-[#D4AF37]/50 hover:border-[#D4AF37] rounded-xl text-sm font-semibold text-[#F0D78C] transition">
+                        <Camera className="w-4 h-4" />
+                        ছবি বেছে নিন
+                      </span>
+                    </label>
+                    {(rawPhotoSrc || photoPreview) && (
+                      <button
+                        type="button"
+                        onClick={() => setCropSrc(rawPhotoSrc || photoPreview)}
+                        className="inline-flex items-center justify-center gap-2 px-4 py-3 bg-[#0F0C1A] border border-[#D4AF37]/50 rounded-xl text-sm font-semibold text-[#F0D78C] cursor-pointer"
+                      >
+                        <Crop className="w-4 h-4" />
+                        ছবি সেট করুন
+                      </button>
+                    )}
+                  </div>
                 </div>
                 {errors.photo && <p className="text-xs text-[#A52C54] mt-2">{errors.photo}</p>}
               </div>
@@ -467,6 +489,18 @@ export default function RegistrationModal({ isOpen, onClose, existingGuests }: R
           </>
         )}
       </div>
+
+      {cropSrc && (
+        <PhotoCropModal
+          imageSrc={cropSrc}
+          onConfirm={(cropped) => {
+            setPhotoUrl(cropped);
+            setPhotoPreview(cropped);
+            closeCropper();
+          }}
+          onCancel={() => closeCropper(!photoPreview)}
+        />
+      )}
     </div>
   );
 }

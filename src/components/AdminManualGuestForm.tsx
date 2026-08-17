@@ -5,8 +5,9 @@ import { buildGuestTicket } from '../utils/createGuestTicket';
 import { findDuplicateTransactionId } from '../utils/guestExport';
 import { saveHonorableGuest, getGuestCardUrl } from '../utils/guestStorage';
 import { sendRegistrationConfirmationSms } from '../utils/sendConfirmationSms';
-import { compressPhotoFile, validatePhotoFile } from '../utils/photoUpload';
+import { validatePhotoFile } from '../utils/photoUpload';
 import HonorableGuestCard from './HonorableGuestCard';
+import PhotoCropModal from './PhotoCropModal';
 import {
   User,
   Phone,
@@ -19,6 +20,7 @@ import {
   MessageSquare,
   Loader2,
   AlertTriangle,
+  Crop,
 } from 'lucide-react';
 
 interface AdminManualGuestFormProps {
@@ -47,36 +49,40 @@ export default function AdminManualGuestForm({ existingGuests, onGuestCreated }:
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [smsState, setSmsState] = useState<'idle' | 'sending' | 'sent' | 'failed'>('idle');
   const [smsError, setSmsError] = useState('');
+  const [cropSrc, setCropSrc] = useState<string | null>(null);
+  const [rawPhotoSrc, setRawPhotoSrc] = useState<string | null>(null);
 
   const totalAmount = form.adultCount * EVENT_DETAILS.feeAdult;
 
   const resetForm = () => {
+    if (rawPhotoSrc?.startsWith('blob:')) URL.revokeObjectURL(rawPhotoSrc);
     setForm(emptyForm());
     setErrors({});
     setCreatedTicket(null);
     setSmsState('idle');
     setSmsError('');
+    setCropSrc(null);
+    setRawPhotoSrc(null);
   };
 
-  const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    e.target.value = '';
     if (!file) return;
     const validationError = validatePhotoFile(file);
     if (validationError) {
       setErrors((prev) => ({ ...prev, photo: validationError }));
       return;
     }
-    try {
-      const compressed = await compressPhotoFile(file);
-      setForm((prev) => ({ ...prev, photoUrl: compressed, photoPreview: compressed }));
-      setErrors((prev) => {
-        const next = { ...prev };
-        delete next.photo;
-        return next;
-      });
-    } catch {
-      setErrors((prev) => ({ ...prev, photo: 'ছবি আপলোড করতে সমস্যা হয়েছে' }));
-    }
+    if (rawPhotoSrc?.startsWith('blob:')) URL.revokeObjectURL(rawPhotoSrc);
+    const url = URL.createObjectURL(file);
+    setRawPhotoSrc(url);
+    setCropSrc(url);
+    setErrors((prev) => {
+      const next = { ...prev };
+      delete next.photo;
+      return next;
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -261,12 +267,22 @@ export default function AdminManualGuestForm({ existingGuests, onGuestCreated }:
         </label>
         <div className="flex items-center gap-3">
           {form.photoPreview ? (
-            <img src={form.photoPreview} alt="" className="w-16 h-20 object-cover rounded-lg border border-[#D4AF37]/40" />
+            <img src={form.photoPreview} alt="" className="w-16 h-16 object-cover rounded-full border border-[#D4AF37]/40" />
           ) : null}
           <label className="cursor-pointer px-3 py-2 bg-[#1C1730] border border-[#D4AF37]/40 rounded-lg text-xs text-[#F0D78C] font-semibold">
             ছবি বেছে নিন
             <input type="file" accept="image/*" onChange={handlePhotoChange} className="hidden" />
           </label>
+          {(rawPhotoSrc || form.photoPreview) && (
+            <button
+              type="button"
+              onClick={() => setCropSrc(rawPhotoSrc || form.photoPreview)}
+              className="inline-flex items-center gap-1 px-3 py-2 bg-[#0F0C1A] border border-[#D4AF37]/40 rounded-lg text-xs text-[#F0D78C] font-semibold cursor-pointer"
+            >
+              <Crop className="w-3.5 h-3.5" />
+              সেট করুন
+            </button>
+          )}
         </div>
         {errors.photo && <p className="text-xs text-[#A52C54] mt-1">{errors.photo}</p>}
       </div>
@@ -308,6 +324,23 @@ export default function AdminManualGuestForm({ existingGuests, onGuestCreated }:
         <Save className="w-5 h-5" />
         {isSubmitting ? 'সংরক্ষণ হচ্ছে...' : 'Manual Card তৈরি করুন'}
       </button>
+
+      {cropSrc && (
+        <PhotoCropModal
+          imageSrc={cropSrc}
+          onConfirm={(cropped) => {
+            setForm((prev) => ({ ...prev, photoUrl: cropped, photoPreview: cropped }));
+            setCropSrc(null);
+          }}
+          onCancel={() => {
+            setCropSrc(null);
+            if (!form.photoPreview && rawPhotoSrc?.startsWith('blob:')) {
+              URL.revokeObjectURL(rawPhotoSrc);
+              setRawPhotoSrc(null);
+            }
+          }}
+        />
+      )}
     </form>
   );
 }
