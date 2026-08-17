@@ -4,7 +4,7 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 import type { Plugin } from 'vite';
 import { defineConfig, loadEnv } from 'vite';
-import { parseSendSmsRequest, sendConfirmationSms } from './api/_sms';
+import { parseSendSmsRequest, sendConfirmationSms } from './api/send-sms';
 
 function readDotEnvValue(root: string, key: string): string | undefined {
   try {

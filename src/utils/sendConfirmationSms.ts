@@ -8,6 +8,9 @@ export interface SendConfirmationSmsOptions {
   cardUrl?: string;
 }
 
+const SERVER_UNAVAILABLE_MESSAGE =
+  'আপনার রেজিস্ট্রেশন সংরক্ষিত হয়েছে, তবে এখন SMS পাঠানো যাচ্ছে না। অ্যাডমিন যাচাই করে আপনাকে জানাবেন।';
+
 function looksLikeHtml(text: string): boolean {
   const trimmed = text.trim().slice(0, 200).toLowerCase();
   return trimmed.startsWith('<!doctype') || trimmed.startsWith('<html') || trimmed.includes('<div id="root"');
@@ -23,7 +26,7 @@ function readApiError(data: unknown, rawText: string, status: number): string {
       const nested = payload.error as { message?: unknown; code?: unknown };
       const code = typeof nested.code === 'string' ? nested.code : '';
       if (code === 'FUNCTION_INVOCATION_FAILED' || String(nested.message || '').includes('FUNCTION_INVOCATION')) {
-        return 'SMS সার্ভার ক্র্যাশ করেছে। রেজিস্ট্রেশন সেভ হয়েছে — SMS পরে আবার যাবে।';
+        return SERVER_UNAVAILABLE_MESSAGE;
       }
       if (typeof nested.message === 'string' && nested.message.trim()) {
         return nested.message;
@@ -39,7 +42,7 @@ function readApiError(data: unknown, rawText: string, status: number): string {
   }
 
   if (/FUNCTION_INVOCATION_FAILED/i.test(rawText)) {
-    return 'SMS সার্ভার ক্র্যাশ করেছে। রেজিস্ট্রেশন সেভ হয়েছে — SMS পরে আবার যাবে।';
+    return SERVER_UNAVAILABLE_MESSAGE;
   }
 
   return rawText.trim().slice(0, 180) || `SMS পাঠানো যায়নি (HTTP ${status})`;
