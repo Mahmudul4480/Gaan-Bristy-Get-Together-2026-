@@ -27,17 +27,25 @@ function DressCodeHighlight({ compact = false }: { compact?: boolean }) {
   }
 
   return (
-    <div className="mt-3 mx-auto w-full rounded-xl border-2 border-[#F0D78C] bg-[#7A1F3D] px-3 py-2.5">
-      <p className="inline-flex items-center justify-center gap-1 text-[10px] font-black uppercase tracking-[0.28em] text-[#F0D78C]">
+    <div className="mt-3 mx-auto w-full rounded-xl border-2 border-[#F0D78C] bg-[#7A1F3D] px-3 py-2.5 text-center">
+      <p className="flex items-center justify-center gap-1.5 text-[10px] font-black uppercase tracking-[0.28em] text-[#F0D78C]">
         <Shirt className="w-3.5 h-3.5" />
         {EVENT_DETAILS.dressCodeTitle}
       </p>
-      <p className="mt-1.5 text-[11px] sm:text-xs font-bold text-[#F6EFE0] leading-snug">
-        Male: Formal (Shirt, Pant, Shoe)
-      </p>
-      <p className="text-[11px] sm:text-xs font-bold text-[#F6EFE0] leading-snug">
-        Female: Casual
-      </p>
+      <div className="mt-2 space-y-1.5">
+        <p className="flex items-center justify-center gap-1.5 text-[11px] sm:text-xs font-bold text-[#F6EFE0] leading-snug">
+          <span className="inline-flex w-5 h-5 items-center justify-center rounded-full bg-[#0F0C1A] border border-[#F0D78C] text-[12px] text-[#F0D78C] font-black leading-none" aria-hidden>
+            ♂
+          </span>
+          <span>Male: Formal (Shirt, Pant, Shoe)</span>
+        </p>
+        <p className="flex items-center justify-center gap-1.5 text-[11px] sm:text-xs font-bold text-[#F6EFE0] leading-snug">
+          <span className="inline-flex w-5 h-5 items-center justify-center rounded-full bg-[#0F0C1A] border border-[#F0D78C] text-[12px] text-[#F0D78C] font-black leading-none" aria-hidden>
+            ♀
+          </span>
+          <span>Female: Casual</span>
+        </p>
+      </div>
     </div>
   );
 }
@@ -240,8 +248,10 @@ export default function HonorableGuestCard({ ticket, compact = false, showQr = f
             </>
           )}
 
-          <div className="inline-flex items-center gap-2 mt-4 bg-[#7A1F3D]/80 border border-[#D4AF37]/50 text-[#F0D78C] px-4 py-1.5 rounded-full text-[10px] sm:text-xs font-black uppercase tracking-wide">
-            VIP Honorable Guest Pass
+          <div className="flex justify-center mt-4">
+            <div className="flex items-center justify-center bg-[#7A1F3D] border border-[#D4AF37]/50 text-[#F0D78C] px-5 py-2 rounded-full text-[10px] sm:text-xs font-black uppercase tracking-wide text-center leading-none">
+              VIP Honorable Guest Pass
+            </div>
           </div>
 
           <div className="flex items-center justify-center gap-3 my-4 text-[#D4AF37]">
@@ -272,9 +282,11 @@ export default function HonorableGuestCard({ ticket, compact = false, showQr = f
               </p>
             </div>
           ) : (
-            <div className="inline-flex items-center gap-1.5 mt-5 bg-[#0F0C1A]/60 border border-[#D4AF37]/30 text-[#B3A6C9] px-3.5 py-1.5 rounded-full text-[10px] font-semibold">
-              <ShieldCheck className="w-3.5 h-3.5 text-[#D4AF37]" />
-              Verified Honorable Guest
+            <div className="flex justify-center mt-5">
+              <div className="flex items-center justify-center gap-1.5 bg-[#0F0C1A] border border-[#D4AF37]/40 text-[#F0D78C] px-4 py-2 rounded-full text-[10px] font-semibold text-center leading-none">
+                <ShieldCheck className="w-3.5 h-3.5 text-[#D4AF37] shrink-0" />
+                <span>Verified Honorable Guest</span>
+              </div>
             </div>
           )}
 

@@ -273,7 +273,7 @@ export default function RegistrationModal({ isOpen, onClose, existingGuests }: R
               {smsState === 'failed' && (
                 <p className="inline-flex items-center gap-2 text-xs text-[#F6EFE0] bg-[#7A1F3D]/40 border border-[#A52C54]/50 rounded-full px-4 py-2">
                   <AlertTriangle className="w-3.5 h-3.5 text-[#F0D78C]" />
-                  কনফার্মেশন SMS পাঠানো যায়নি: {smsError}
+                  {smsError}
                 </p>
               )}
             </div>

@@ -1,20 +1,10 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { parseSendSmsRequest, sendConfirmationSms } from './_sms';
+import { parseSendSmsRequest, sendConfirmationSms, type SendSmsRequestBody, type SendSmsResult } from './_sms';
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
-  if (req.method !== 'POST') {
-    res.status(405).json({ success: false, error: 'Method not allowed' });
-    return;
-  }
-
-  const body = (typeof req.body === 'string' ? JSON.parse(req.body || '{}') : req.body) as
-    | { phone?: string; type?: string; cardUrl?: string }
-    | undefined;
-
+async function handleSendSms(body: SendSmsRequestBody | undefined): Promise<{ status: number; result: SendSmsResult }> {
   const parsed = parseSendSmsRequest(body);
   if (parsed.error || !parsed.phone || !parsed.message) {
-    res.status(400).json({ success: false, error: parsed.error || 'phone প্রয়োজন' });
-    return;
+    return { status: 400, result: { success: false, error: parsed.error || 'phone প্রয়োজন' } };
   }
 
   const env = process.env as Record<string, string | undefined>;
@@ -22,5 +12,39 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     apiKey: env['SMS_API_KEY'],
     senderId: env['SMS_SENDER_ID'],
   });
-  res.status(result.success ? 200 : 502).json(result);
+  return { status: result.success ? 200 : 502, result };
+}
+
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  if (req.method !== 'POST') {
+    res.status(405).json({ success: false, error: 'Method not allowed' });
+    return;
+  }
+
+  try {
+    const body = (typeof req.body === 'string' ? JSON.parse(req.body || '{}') : req.body) as SendSmsRequestBody;
+    const { status, result } = await handleSendSms(body);
+    res.status(status).json(result);
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'SMS সার্ভারে সমস্যা হয়েছে',
+    });
+  }
+}
+
+export async function POST(request: Request): Promise<Response> {
+  try {
+    const body = (await request.json().catch(() => ({}))) as SendSmsRequestBody;
+    const { status, result } = await handleSendSms(body);
+    return Response.json(result, { status });
+  } catch (error) {
+    return Response.json(
+      {
+        success: false,
+        error: error instanceof Error ? error.message : 'SMS সার্ভারে সমস্যা হয়েছে',
+      },
+      { status: 500 }
+    );
+  }
 }

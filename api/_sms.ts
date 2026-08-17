@@ -14,6 +14,9 @@ export const REGISTRATION_SMS_MESSAGE =
 export const PENDING_SMS_MESSAGE =
   '"Gaan Bristy Grand Get-Together 2026" এ রেজিস্ট্রেশন জমা হয়েছে। পেমেন্ট যাচাইয়ের পর আপনার Honorable Guest Card পাঠানো হবে।';
 
+export const DRESS_CODE_SMS_MESSAGE =
+  'Dress Code: Male- Formal (Shirt, Pant, Shoe), Female- Casual.';
+
 export type SmsKind = 'pending' | 'approved';
 
 export interface SendSmsRequestBody {
@@ -25,7 +28,10 @@ export interface SendSmsRequestBody {
 export function resolveSmsMessage(type: SmsKind, cardUrl?: string): string {
   if (type === 'approved') {
     const url = cardUrl?.trim();
-    return url ? `${REGISTRATION_SMS_MESSAGE} আপনার কার্ড: ${url}` : REGISTRATION_SMS_MESSAGE;
+    const thanks = url
+      ? `${REGISTRATION_SMS_MESSAGE} আপনার কার্ড: ${url}`
+      : REGISTRATION_SMS_MESSAGE;
+    return `${thanks} ${DRESS_CODE_SMS_MESSAGE}`;
   }
   return PENDING_SMS_MESSAGE;
 }
@@ -54,8 +60,8 @@ export interface SendSmsResult {
 
 function normalizeBangladeshiPhone(rawPhone: string): string | null {
   const digits = rawPhone.replace(/\D/g, '');
-  if (/^01\d{9}$/.test(digits)) return digits; // 01XXXXXXXXX
-  if (/^8801\d{9}$/.test(digits)) return digits; // 8801XXXXXXXXX
+  if (/^01\d{9}$/.test(digits)) return digits;
+  if (/^8801\d{9}$/.test(digits)) return digits;
   return null;
 }
 
@@ -65,22 +71,74 @@ interface AlphaSmsResponse {
   message?: string;
 }
 
+function describeAlphaFailure(data: AlphaSmsResponse | null, httpStatus: number): string {
+  const code = Number(data?.error);
+  const apiMsg = (data?.msg || data?.message || '').trim();
+
+  if (code === 405) {
+    return 'Alpha SMS API key ভুল বা অনুমোদিত নয়। Vercel-এ SMS_API_KEY চেক করে Redeploy করুন।';
+  }
+  if (code === 403) {
+    return apiMsg || 'SMS পাঠানোর অনুমতি নেই। Sender ID/মাস্কিং চেক করুন।';
+  }
+  if (code === 400) {
+    return apiMsg || 'SMS রিকোয়েস্টে ভুল প্যারামিটার।';
+  }
+  if (apiMsg) {
+    return apiMsg;
+  }
+  return `SMS পাঠানো যায়নি (HTTP ${httpStatus})`;
+}
+
+async function postToAlphaSms(params: URLSearchParams): Promise<{ data: AlphaSmsResponse | null; status: number }> {
+  const response = await fetch(ALPHA_SMS_ENDPOINT, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+    body: params.toString(),
+  });
+  const text = await response.text();
+  let data: AlphaSmsResponse | null = null;
+  try {
+    data = text ? (JSON.parse(text) as AlphaSmsResponse) : null;
+  } catch {
+    data = null;
+  }
+  return { data, status: response.status };
+}
+
+async function getFromAlphaSms(params: URLSearchParams): Promise<{ data: AlphaSmsResponse | null; status: number }> {
+  const response = await fetch(`${ALPHA_SMS_ENDPOINT}?${params.toString()}`, {
+    method: 'GET',
+  });
+  const text = await response.text();
+  let data: AlphaSmsResponse | null = null;
+  try {
+    data = text ? (JSON.parse(text) as AlphaSmsResponse) : null;
+  } catch {
+    data = null;
+  }
+  return { data, status: response.status };
+}
+
+function isAlphaSuccess(data: AlphaSmsResponse | null, httpStatus: number): boolean {
+  const errorCode = data?.error;
+  return httpStatus >= 200 && httpStatus < 300 && (errorCode === 0 || errorCode === '0');
+}
+
 export async function sendConfirmationSms(
   phone: string,
   message: string,
   credentials?: { apiKey?: string; senderId?: string }
 ): Promise<SendSmsResult> {
-  // Bracket access — Vite/esbuild statically replaces process.env.SMS_API_KEY
-  // with undefined when this file is bundled into vite.config.ts.
   const env = process.env as Record<string, string | undefined>;
-  const apiKey = credentials?.apiKey || env['SMS_API_KEY'];
+  const apiKey = (credentials?.apiKey || env['SMS_API_KEY'] || '').trim();
   if (!apiKey) {
     console.warn('[send-sms] SMS_API_KEY is not configured on the server.');
     const onVercel = Boolean(env['VERCEL']);
     return {
       success: false,
       error: onVercel
-        ? 'লাইভ সাইটে SMS_API_KEY নেই। Vercel Dashboard → Project → Settings → Environment Variables-এ SMS_API_KEY যোগ করে Redeploy করুন।'
+        ? 'লাইভ সাইটে SMS_API_KEY নেই। Vercel Dashboard → Project → Settings → Environment Variables-এ SMS_API_KEY যোগ করে Production + Preview-এ Redeploy করুন।'
         : 'লোকাল .env থেকে SMS_API_KEY লোড হয়নি। npm run dev বন্ধ করে আবার চালু করুন।',
     };
   }
@@ -96,27 +154,22 @@ export async function sendConfirmationSms(
     to: normalizedPhone,
   });
 
-  const senderId = credentials?.senderId || env['SMS_SENDER_ID'];
+  const senderId = (credentials?.senderId || env['SMS_SENDER_ID'] || '').trim();
   if (senderId) params.set('sender_id', senderId);
 
   try {
-    const response = await fetch(ALPHA_SMS_ENDPOINT, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: params.toString(),
-    });
+    let { data, status } = await postToAlphaSms(params);
+    if (!isAlphaSuccess(data, status) && !data) {
+      ({ data, status } = await getFromAlphaSms(params));
+    }
 
-    const data = (await response.json().catch(() => null)) as AlphaSmsResponse | null;
-    const errorCode = data?.error;
-    const isSuccess = response.ok && (errorCode === 0 || errorCode === '0');
-
-    if (isSuccess) {
+    if (isAlphaSuccess(data, status)) {
       return { success: true };
     }
 
     return {
       success: false,
-      error: data?.msg || data?.message || `SMS পাঠানো যায়নি (HTTP ${response.status})`,
+      error: describeAlphaFailure(data, status),
     };
   } catch (error) {
     console.error('[send-sms] Alpha SMS request failed:', error);

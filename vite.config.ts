@@ -35,6 +35,7 @@ function smsDevApiPlugin(): Plugin {
       const credentials = loadSmsCredentials(server.config.root, server.config.mode);
 
       server.middlewares.use('/api/send-sms', (req, res) => {
+        res.setHeader('Content-Type', 'application/json');
         if (req.method !== 'POST') {
           res.statusCode = 405;
           res.end(JSON.stringify({ success: false, error: 'Method not allowed' }));
