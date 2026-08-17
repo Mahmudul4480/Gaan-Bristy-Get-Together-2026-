@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Ticket } from '../types';
 import HonorableGuestCard from './HonorableGuestCard';
-import { Award, Clock, QrCode, Search, XCircle } from 'lucide-react';
+import { Award, ChevronLeft, ChevronRight, Clock, QrCode, Search, XCircle } from 'lucide-react';
 
 interface HonorableGuestSectionProps {
   guests: Ticket[];
@@ -124,23 +124,106 @@ export default function HonorableGuestSection({
                 মোট {confirmedGuests.length} জন Honorable Guest
               </p>
             )}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {confirmedGuests
-                .filter((g) => !selectedConfirmed || g.ticketId !== selectedConfirmed.ticketId)
-                .map((guest) => (
-                  <button
-                    key={guest.ticketId}
-                    type="button"
-                    onClick={() => onSelectGuest?.(guest.ticketId)}
-                    className="text-left cursor-pointer transition hover:scale-[1.01] focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50 rounded-3xl"
-                  >
-                    <HonorableGuestCard ticket={guest} compact />
-                  </button>
-                ))}
-            </div>
+            <GuestCardSlider
+              guests={confirmedGuests.filter((g) => !selectedConfirmed || g.ticketId !== selectedConfirmed.ticketId)}
+              onSelectGuest={onSelectGuest}
+            />
           </div>
         )}
       </div>
     </section>
+  );
+}
+
+function GuestCardSlider({
+  guests,
+  onSelectGuest,
+}: {
+  guests: Ticket[];
+  onSelectGuest?: (ticketId: string | null) => void;
+}) {
+  const [index, setIndex] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const count = guests.length;
+
+  useEffect(() => {
+    setIndex(0);
+  }, [count]);
+
+  useEffect(() => {
+    if (count < 2 || paused) return;
+    const timer = window.setInterval(() => {
+      setIndex((current) => (current + 1) % count);
+    }, 3800);
+    return () => window.clearInterval(timer);
+  }, [count, paused]);
+
+  if (count === 0) return null;
+
+  const goTo = (next: number) => {
+    setIndex((next + count) % count);
+  };
+
+  return (
+    <div
+      className="relative max-w-xl mx-auto"
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+      onFocus={() => setPaused(true)}
+      onBlur={() => setPaused(false)}
+    >
+      <div className="overflow-hidden rounded-3xl">
+        <div
+          className="flex transition-transform duration-700 ease-in-out"
+          style={{ transform: `translateX(-${index * 100}%)` }}
+        >
+          {guests.map((guest) => (
+            <div key={guest.ticketId} className="w-full shrink-0 px-1">
+              <button
+                type="button"
+                onClick={() => onSelectGuest?.(guest.ticketId)}
+                className="w-full text-left cursor-pointer transition hover:scale-[1.01] focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50 rounded-3xl"
+              >
+                <HonorableGuestCard ticket={guest} compact />
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {count > 1 && (
+        <>
+          <button
+            type="button"
+            aria-label="আগের কার্ড"
+            onClick={() => goTo(index - 1)}
+            className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2 sm:-translate-x-4 p-2 rounded-full bg-[#0F0C1A]/90 border border-[#D4AF37]/50 text-[#F0D78C] cursor-pointer"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+          <button
+            type="button"
+            aria-label="পরের কার্ড"
+            onClick={() => goTo(index + 1)}
+            className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-2 sm:translate-x-4 p-2 rounded-full bg-[#0F0C1A]/90 border border-[#D4AF37]/50 text-[#F0D78C] cursor-pointer"
+          >
+            <ChevronRight className="w-5 h-5" />
+          </button>
+          <div className="flex justify-center gap-1.5 mt-4">
+            {guests.map((guest, i) => (
+              <button
+                key={guest.ticketId}
+                type="button"
+                aria-label={`${guest.fullName} কার্ড`}
+                onClick={() => setIndex(i)}
+                className={`h-2 rounded-full transition-all cursor-pointer ${
+                  i === index ? 'w-6 bg-[#D4AF37]' : 'w-2 bg-[#D4AF37]/35'
+                }`}
+              />
+            ))}
+          </div>
+        </>
+      )}
+    </div>
   );
 }
