@@ -1,9 +1,16 @@
-import { useMemo, useState } from 'react';
-import { Ticket } from '../types';
+import { useEffect, useMemo, useState } from 'react';
+import { AdminRole, CardDeleteRequest, Ticket } from '../types';
 import { downloadGuestsCsv, downloadGuestsJson } from '../utils/guestExport';
 import { getGuestCardUrl, saveHonorableGuest } from '../utils/guestStorage';
 import { sendRegistrationConfirmationSms } from '../utils/sendConfirmationSms';
 import { getGuestCardWhatsAppUrl } from '../utils/whatsappShare';
+import {
+  approveDeleteRequest,
+  deleteCardAsSuperAdmin,
+  rejectDeleteRequest,
+  requestCardDelete,
+  subscribeToDeleteRequests,
+} from '../utils/deleteRequestStorage';
 import HonorableGuestCard from './HonorableGuestCard';
 import {
   FileSpreadsheet,
@@ -16,10 +23,14 @@ import {
   MessageCircle,
   Loader2,
   AlertTriangle,
+  Trash2,
+  Send,
 } from 'lucide-react';
 
 interface AdminGuestListProps {
   guests: Ticket[];
+  adminRole: AdminRole;
+  actorName: string;
 }
 
 type StatusFilter = 'all' | 'Pending' | 'Confirmed' | 'Rejected';
@@ -37,14 +48,31 @@ function statusRank(status: Ticket['status']): number {
   return 2;
 }
 
-export default function AdminGuestList({ guests }: AdminGuestListProps) {
+export default function AdminGuestList({ guests, adminRole, actorName }: AdminGuestListProps) {
   const [query, setQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [previewTicket, setPreviewTicket] = useState<Ticket | null>(null);
   const [rowState, setRowState] = useState<Record<string, RowActionState>>({});
   const [rowError, setRowError] = useState<Record<string, string>>({});
+  const [deleteRequests, setDeleteRequests] = useState<CardDeleteRequest[]>([]);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [requestBusyId, setRequestBusyId] = useState<string | null>(null);
+
+  const isSuperAdmin = adminRole === 'Super Admin';
+
+  useEffect(() => {
+    return subscribeToDeleteRequests(setDeleteRequests);
+  }, []);
 
   const pendingCount = guests.filter((g) => g.status === 'Pending').length;
+  const pendingDeleteRequests = deleteRequests.filter((r) => r.status === 'Pending');
+  const pendingDeleteByTicket = useMemo(() => {
+    const map = new Map<string, CardDeleteRequest>();
+    pendingDeleteRequests.forEach((r) => {
+      if (!map.has(r.ticketId)) map.set(r.ticketId, r);
+    });
+    return map;
+  }, [pendingDeleteRequests]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -112,6 +140,68 @@ export default function AdminGuestList({ guests }: AdminGuestListProps) {
     }
   };
 
+  const handleDeleteCard = async (guest: Ticket) => {
+    setRequestBusyId(guest.ticketId);
+    try {
+      await deleteCardAsSuperAdmin(guest.ticketId, deleteRequests);
+      setConfirmDeleteId(null);
+    } catch (error) {
+      setStateFor(
+        guest.ticketId,
+        'idle',
+        error instanceof Error ? error.message : 'ডিলিট করা যায়নি'
+      );
+    } finally {
+      setRequestBusyId(null);
+    }
+  };
+
+  const handleRequestDelete = async (guest: Ticket) => {
+    if (pendingDeleteByTicket.has(guest.ticketId)) return;
+    setRequestBusyId(guest.ticketId);
+    try {
+      await requestCardDelete(guest, actorName);
+    } catch (error) {
+      setStateFor(
+        guest.ticketId,
+        'idle',
+        error instanceof Error ? error.message : 'ডিলিট রিকোয়েস্ট পাঠানো যায়নি'
+      );
+    } finally {
+      setRequestBusyId(null);
+    }
+  };
+
+  const handleApproveDeleteRequest = async (request: CardDeleteRequest) => {
+    setRequestBusyId(request.id);
+    try {
+      await approveDeleteRequest(request);
+    } catch (error) {
+      setStateFor(
+        request.ticketId,
+        'idle',
+        error instanceof Error ? error.message : 'অ্যাপ্রুভ করা যায়নি'
+      );
+    } finally {
+      setRequestBusyId(null);
+    }
+  };
+
+  const handleRejectDeleteRequest = async (request: CardDeleteRequest) => {
+    setRequestBusyId(request.id);
+    try {
+      await rejectDeleteRequest(request.id);
+    } catch (error) {
+      setStateFor(
+        request.ticketId,
+        'idle',
+        error instanceof Error ? error.message : 'রিজেক্ট করা যায়নি'
+      );
+    } finally {
+      setRequestBusyId(null);
+    }
+  };
+
   return (
     <div className="space-y-4 font-body">
       <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
@@ -121,6 +211,12 @@ export default function AdminGuestList({ guests }: AdminGuestListProps) {
             <>
               {' '}
               · <span className="text-[#F0D78C] font-bold">{pendingCount}</span> টি Pending Approval
+            </>
+          )}
+          {pendingDeleteRequests.length > 0 && (
+            <>
+              {' '}
+              · <span className="text-[#F0D78C] font-bold">{pendingDeleteRequests.length}</span> টি Delete Request
             </>
           )}
         </p>
@@ -145,6 +241,40 @@ export default function AdminGuestList({ guests }: AdminGuestListProps) {
           </button>
         </div>
       </div>
+
+      {isSuperAdmin && pendingDeleteRequests.length > 0 && (
+        <div className="bg-[#0F0C1A] border border-[#A52C54]/50 rounded-2xl p-4 space-y-3">
+          <p className="text-sm font-bold text-[#F0D78C]">ডিলিট রিকোয়েস্ট — Super Admin অ্যাপ্রুভ করুন</p>
+          {pendingDeleteRequests.map((req) => (
+            <div key={req.id} className="flex flex-col sm:flex-row sm:items-center gap-2 justify-between bg-[#1C1730] border border-[#D4AF37]/25 rounded-xl px-3 py-2">
+              <div className="text-xs">
+                <p className="text-[#F6EFE0] font-semibold">{req.guestName} <span className="font-mono text-[#F0D78C]">({req.ticketId})</span></p>
+                <p className="text-[#B3A6C9]">রিকোয়েস্ট: {req.requestedBy} · {new Date(req.createdAt).toLocaleString('bn-BD')}</p>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  disabled={requestBusyId === req.id}
+                  onClick={() => handleApproveDeleteRequest(req)}
+                  className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-[#7A1F3D] border border-[#D4AF37]/50 text-[#F0D78C] text-[11px] font-bold cursor-pointer disabled:opacity-50"
+                >
+                  {requestBusyId === req.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
+                  অ্যাপ্রুভ ও ডিলিট
+                </button>
+                <button
+                  type="button"
+                  disabled={requestBusyId === req.id}
+                  onClick={() => handleRejectDeleteRequest(req)}
+                  className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-[#0F0C1A] border border-[#A52C54]/50 text-[#F6EFE0] text-[11px] font-bold cursor-pointer disabled:opacity-50"
+                >
+                  <XCircle className="w-3.5 h-3.5" />
+                  রিজেক্ট
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       <div className="flex flex-wrap gap-2">
         {([
@@ -276,6 +406,49 @@ export default function AdminGuestList({ guests }: AdminGuestListProps) {
                               </a>
                             )}
                           </>
+                        )}
+                        {isSuperAdmin ? (
+                          confirmDeleteId === g.ticketId ? (
+                            <span className="inline-flex items-center gap-1">
+                              <button
+                                type="button"
+                                disabled={requestBusyId === g.ticketId}
+                                onClick={() => handleDeleteCard(g)}
+                                className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-[#A52C54] text-[#F6EFE0] font-bold cursor-pointer disabled:opacity-50"
+                              >
+                                {requestBusyId === g.ticketId ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                                নিশ্চিত
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setConfirmDeleteId(null)}
+                                className="px-2 py-1 text-[#B3A6C9] font-bold cursor-pointer"
+                              >
+                                না
+                              </button>
+                            </span>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => setConfirmDeleteId(g.ticketId)}
+                              className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-[#0F0C1A] border border-[#A52C54]/50 text-[#F6EFE0] font-bold cursor-pointer"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                              ডিলিট
+                            </button>
+                          )
+                        ) : pendingDeleteByTicket.has(g.ticketId) ? (
+                          <span className="text-[10px] text-[#F0D78C] font-bold">ডিলিট রিকোয়েস্ট পেন্ডিং</span>
+                        ) : (
+                          <button
+                            type="button"
+                            disabled={requestBusyId === g.ticketId}
+                            onClick={() => handleRequestDelete(g)}
+                            className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-[#0F0C1A] border border-[#D4AF37]/40 text-[#F0D78C] font-bold cursor-pointer disabled:opacity-50"
+                          >
+                            {requestBusyId === g.ticketId ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+                            ডিলিট রিকোয়েস্ট
+                          </button>
                         )}
                       </div>
                       {action === 'sms-sending' && (

@@ -1,8 +1,10 @@
-import { AppointedAdmin } from '../types';
+import { AppointedAdmin, AdminRole } from '../types';
 import { SUPER_ADMIN_EMAIL, ADMIN_URL_KEY } from '../config/adminConfig';
 
 const ADMINS_KEY = 'gaan-bristy-appointed-admins-2026';
 const SESSION_KEY = 'gaan-bristy-admin-session';
+const ROLE_KEY = 'gaan-bristy-admin-role';
+const ACTOR_KEY = 'gaan-bristy-admin-actor';
 
 const DEFAULT_SUPER_ADMIN: AppointedAdmin = {
   id: 'super-admin',
@@ -55,16 +57,32 @@ export function removeAppointedAdmin(id: string): AppointedAdmin[] {
   return saveAppointedAdmins(loadAppointedAdmins().filter((a) => a.id !== id));
 }
 
-export function setAdminSession(active: boolean): void {
+export function setAdminSession(active: boolean, role?: AdminRole, actorName?: string): void {
   if (active) {
     sessionStorage.setItem(SESSION_KEY, '1');
+    sessionStorage.setItem(ROLE_KEY, role || 'Super Admin');
+    sessionStorage.setItem(ACTOR_KEY, (actorName || (role === 'Card Editor' ? 'Card Editor' : 'Super Admin')).trim());
   } else {
     sessionStorage.removeItem(SESSION_KEY);
+    sessionStorage.removeItem(ROLE_KEY);
+    sessionStorage.removeItem(ACTOR_KEY);
   }
 }
 
 export function isAdminSessionActive(): boolean {
   return sessionStorage.getItem(SESSION_KEY) === '1';
+}
+
+export function getAdminRole(): AdminRole {
+  return sessionStorage.getItem(ROLE_KEY) === 'Card Editor' ? 'Card Editor' : 'Super Admin';
+}
+
+export function getAdminActorName(): string {
+  return sessionStorage.getItem(ACTOR_KEY) || (getAdminRole() === 'Card Editor' ? 'Card Editor' : 'Super Admin');
+}
+
+export function isSuperAdminSession(): boolean {
+  return isAdminSessionActive() && getAdminRole() === 'Super Admin';
 }
 
 export function isAdminUrlMatch(search: string): boolean {

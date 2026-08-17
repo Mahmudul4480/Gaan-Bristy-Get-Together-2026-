@@ -8,7 +8,7 @@ import AdminAssignPanel from './AdminAssignPanel';
 import AdminGalleryManager from './AdminGalleryManager';
 import AdminLoginGate from './AdminLoginGate';
 import { getAdminPanelUrl, ADMIN_PANEL_PIN } from '../config/adminConfig';
-import { isAdminSessionActive } from '../utils/adminStorage';
+import { getAdminActorName, getAdminRole, isAdminSessionActive } from '../utils/adminStorage';
 import { X, Search, ShieldCheck, CheckCircle2, User, Phone, Sparkles, AlertCircle, Camera, CameraOff, Upload, QrCode, RefreshCw, UserPlus, List, Pencil, Crown, Link2, Copy, Check, ImagePlus } from 'lucide-react';
 
 interface AdminTicketVerifyModalProps {
@@ -226,7 +226,9 @@ export default function AdminTicketVerifyModal({ isOpen, onClose, registeredTick
             <div>
               <h2 className="text-xl font-bold font-serif text-[#F0D78C] flex items-center gap-2">
                 <span>Admin Panel — Gaan Bristy 2026</span>
-                <span className="bg-[#7A1F3D] text-[#F0D78C] text-[10px] font-mono px-2 py-0.5 rounded border border-[#D4AF37]/40">Admin</span>
+                <span className="bg-[#7A1F3D] text-[#F0D78C] text-[10px] font-mono px-2 py-0.5 rounded border border-[#D4AF37]/40">
+                  {isAuthenticated ? getAdminRole() : 'Admin'}
+                </span>
               </h2>
               <p className="text-xs text-[#B3A6C9] font-body">
                 গেট ভেরিফাই, Card Edit, Admin নিয়োগ ও Guest List
@@ -324,10 +326,21 @@ export default function AdminTicketVerifyModal({ isOpen, onClose, registeredTick
           <AdminManualGuestForm existingGuests={registeredTickets} onGuestCreated={() => {}} />
         )}
 
-        {panelTab === 'list' && <AdminGuestList guests={registeredTickets} />}
+        {panelTab === 'list' && (
+          <AdminGuestList
+            guests={registeredTickets}
+            adminRole={getAdminRole()}
+            actorName={getAdminActorName()}
+          />
+        )}
 
         {panelTab === 'edit' && (
-          <AdminGuestEditForm guests={registeredTickets} onGuestUpdated={() => {}} />
+          <AdminGuestEditForm
+            guests={registeredTickets}
+            onGuestUpdated={() => {}}
+            adminRole={getAdminRole()}
+            actorName={getAdminActorName()}
+          />
         )}
 
         {panelTab === 'assign' && <AdminAssignPanel />}

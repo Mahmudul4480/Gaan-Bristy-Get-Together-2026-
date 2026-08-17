@@ -46,6 +46,19 @@ export interface AppointedAdmin {
   appointedAt: string;
 }
 
+export type AdminRole = 'Super Admin' | 'Card Editor';
+
+export interface CardDeleteRequest {
+  id: string;
+  ticketId: string;
+  guestName: string;
+  guestPhone: string;
+  requestedBy: string;
+  status: 'Pending' | 'Approved' | 'Rejected';
+  createdAt: string;
+  resolvedAt?: string;
+}
+
 export interface GalleryPhoto {
   id: string;
   title: string;

@@ -1,4 +1,4 @@
-import dotenv from 'dotenv';
+import fs from 'fs';
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
@@ -6,7 +6,24 @@ import type { Plugin } from 'vite';
 import { defineConfig, loadEnv } from 'vite';
 import { parseSendSmsRequest, sendConfirmationSms } from './api/_sms';
 
-dotenv.config({ path: path.resolve(__dirname, '.env') });
+function readDotEnvValue(root: string, key: string): string | undefined {
+  try {
+    const text = fs.readFileSync(path.join(root, '.env'), 'utf8');
+    const match = text.match(new RegExp(`^${key}=(.*)$`, 'm'));
+    const value = match?.[1]?.trim().replace(/^["']|["']$/g, '');
+    return value || undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function loadSmsCredentials(root: string, mode: string): { apiKey?: string; senderId?: string } {
+  const env = loadEnv(mode, root, '');
+  return {
+    apiKey: env.SMS_API_KEY || readDotEnvValue(root, 'SMS_API_KEY'),
+    senderId: env.SMS_SENDER_ID || readDotEnvValue(root, 'SMS_SENDER_ID'),
+  };
+}
 
 // Mirrors api/send-sms.ts (the Vercel serverless function) so the SMS
 // confirmation flow also works with plain `npm run dev` locally, without
@@ -14,15 +31,8 @@ dotenv.config({ path: path.resolve(__dirname, '.env') });
 function smsDevApiPlugin(): Plugin {
   return {
     name: 'sms-dev-api',
-    config(_, { mode }) {
-      const env = loadEnv(mode, path.resolve(__dirname), '');
-      if (env.SMS_API_KEY) process.env.SMS_API_KEY = env.SMS_API_KEY;
-      if (env.SMS_SENDER_ID) process.env.SMS_SENDER_ID = env.SMS_SENDER_ID;
-    },
     configureServer(server) {
-      const env = loadEnv(server.config.mode, server.config.root, '');
-      if (env.SMS_API_KEY) process.env.SMS_API_KEY = env.SMS_API_KEY;
-      if (env.SMS_SENDER_ID) process.env.SMS_SENDER_ID = env.SMS_SENDER_ID;
+      const credentials = loadSmsCredentials(server.config.root, server.config.mode);
 
       server.middlewares.use('/api/send-sms', (req, res) => {
         if (req.method !== 'POST') {
@@ -45,7 +55,7 @@ function smsDevApiPlugin(): Plugin {
                 res.end(JSON.stringify({ success: false, error: parsed.error || 'phone প্রয়োজন' }));
                 return;
               }
-              const result = await sendConfirmationSms(parsed.phone, parsed.message);
+              const result = await sendConfirmationSms(parsed.phone, parsed.message, credentials);
               res.setHeader('Content-Type', 'application/json');
               res.statusCode = result.success ? 200 : 502;
               res.end(JSON.stringify(result));
@@ -75,7 +85,7 @@ export default defineConfig(() => {
     },
     server: {
       // HMR is disabled in AI Studio via DISABLE_HMR env var.
-      // Do not modifyâfile watching is disabled to prevent flickering during agent edits.
+      // Do not modify—file watching is disabled to prevent flickering during agent edits.
       hmr: process.env.DISABLE_HMR !== 'true',
       // Disable file watching when DISABLE_HMR is true to save CPU during agent edits.
       watch: process.env.DISABLE_HMR === 'true' ? null : {},

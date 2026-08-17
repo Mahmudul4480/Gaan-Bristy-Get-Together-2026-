@@ -17,6 +17,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return;
   }
 
-  const result = await sendConfirmationSms(parsed.phone, parsed.message);
+  const env = process.env as Record<string, string | undefined>;
+  const result = await sendConfirmationSms(parsed.phone, parsed.message, {
+    apiKey: env['SMS_API_KEY'],
+    senderId: env['SMS_SENDER_ID'],
+  });
   res.status(result.success ? 200 : 502).json(result);
 }

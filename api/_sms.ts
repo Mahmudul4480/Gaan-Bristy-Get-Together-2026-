@@ -65,11 +65,18 @@ interface AlphaSmsResponse {
   message?: string;
 }
 
-export async function sendConfirmationSms(phone: string, message: string): Promise<SendSmsResult> {
-  const apiKey = process.env.SMS_API_KEY;
+export async function sendConfirmationSms(
+  phone: string,
+  message: string,
+  credentials?: { apiKey?: string; senderId?: string }
+): Promise<SendSmsResult> {
+  // Bracket access — Vite/esbuild statically replaces process.env.SMS_API_KEY
+  // with undefined when this file is bundled into vite.config.ts.
+  const env = process.env as Record<string, string | undefined>;
+  const apiKey = credentials?.apiKey || env['SMS_API_KEY'];
   if (!apiKey) {
     console.warn('[send-sms] SMS_API_KEY is not configured on the server.');
-    const onVercel = Boolean(process.env.VERCEL);
+    const onVercel = Boolean(env['VERCEL']);
     return {
       success: false,
       error: onVercel
@@ -89,7 +96,7 @@ export async function sendConfirmationSms(phone: string, message: string): Promi
     to: normalizedPhone,
   });
 
-  const senderId = process.env.SMS_SENDER_ID;
+  const senderId = credentials?.senderId || env['SMS_SENDER_ID'];
   if (senderId) params.set('sender_id', senderId);
 
   try {

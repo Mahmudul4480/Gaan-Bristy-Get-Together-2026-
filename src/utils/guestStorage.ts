@@ -6,6 +6,7 @@ import {
   orderBy,
   query,
   setDoc,
+  deleteDoc,
 } from 'firebase/firestore';
 import { Ticket } from '../types';
 import { db, isFirebaseConfigured } from '../config/firebase';
@@ -107,6 +108,18 @@ export function subscribeToHonorableGuests(
       onError?.(error as Error);
     }
   );
+}
+
+export async function deleteHonorableGuest(ticketId: string): Promise<void> {
+  if (!db) {
+    throw new Error('Firebase কনফিগার করা নেই।');
+  }
+  try {
+    await deleteDoc(guestDocRef(ticketId));
+  } catch (error) {
+    console.error('[Guest storage] Firestore delete failed:', error);
+    throw new Error(describeGuestSaveError(error));
+  }
 }
 
 export async function getHonorableGuestById(ticketId: string): Promise<Ticket | undefined> {

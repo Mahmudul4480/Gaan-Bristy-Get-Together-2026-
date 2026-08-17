@@ -1,19 +1,26 @@
-import { ChangeEvent, FormEvent, useMemo, useState } from 'react';
-import { Ticket } from '../types';
+import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from 'react';
+import { AdminRole, CardDeleteRequest, Ticket } from '../types';
 import { EVENT_DETAILS } from '../data/eventData';
 import { findDuplicateTransactionId } from '../utils/guestExport';
 import { saveHonorableGuest } from '../utils/guestStorage';
 import { validatePhotoFile } from '../utils/photoUpload';
+import {
+  deleteCardAsSuperAdmin,
+  requestCardDelete,
+  subscribeToDeleteRequests,
+} from '../utils/deleteRequestStorage';
 import HonorableGuestCard from './HonorableGuestCard';
 import PhotoCropModal from './PhotoCropModal';
-import { Search, Save, Camera, User, Users, Phone, Sparkles, CheckCircle2, Crop } from 'lucide-react';
+import { Search, Save, Camera, User, Users, Phone, Sparkles, CheckCircle2, Crop, Trash2, Send, Loader2 } from 'lucide-react';
 
 interface AdminGuestEditFormProps {
   guests: Ticket[];
   onGuestUpdated: () => void;
+  adminRole: AdminRole;
+  actorName: string;
 }
 
-export default function AdminGuestEditForm({ guests, onGuestUpdated }: AdminGuestEditFormProps) {
+export default function AdminGuestEditForm({ guests, onGuestUpdated, adminRole, actorName }: AdminGuestEditFormProps) {
   const [query, setQuery] = useState('');
   const [selected, setSelected] = useState<Ticket | null>(null);
   const [saved, setSaved] = useState(false);
@@ -21,6 +28,15 @@ export default function AdminGuestEditForm({ guests, onGuestUpdated }: AdminGues
   const [isSaving, setIsSaving] = useState(false);
   const [cropSrc, setCropSrc] = useState<string | null>(null);
   const [rawPhotoSrc, setRawPhotoSrc] = useState<string | null>(null);
+  const [deleteRequests, setDeleteRequests] = useState<CardDeleteRequest[]>([]);
+  const [deleteBusy, setDeleteBusy] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
+  const isSuperAdmin = adminRole === 'Super Admin';
+
+  useEffect(() => {
+    return subscribeToDeleteRequests(setDeleteRequests);
+  }, []);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -327,6 +343,79 @@ export default function AdminGuestEditForm({ guests, onGuestUpdated }: AdminGues
               <Save className="w-4 h-4" />
               {isSaving ? 'সংরক্ষণ হচ্ছে...' : 'Card আপডেট সংরক্ষণ করুন'}
             </button>
+
+            {isSuperAdmin ? (
+              confirmDelete ? (
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    disabled={deleteBusy}
+                    onClick={async () => {
+                      if (!selected) return;
+                      setDeleteBusy(true);
+                      try {
+                        await deleteCardAsSuperAdmin(selected.ticketId, deleteRequests);
+                        setSelected(null);
+                        setConfirmDelete(false);
+                        onGuestUpdated();
+                      } catch (error) {
+                        setErrors((prev) => ({
+                          ...prev,
+                          submit: error instanceof Error ? error.message : 'ডিলিট করা যায়নি',
+                        }));
+                      } finally {
+                        setDeleteBusy(false);
+                      }
+                    }}
+                    className="flex-1 py-2.5 rounded-xl bg-[#A52C54] text-[#F6EFE0] font-bold text-sm cursor-pointer disabled:opacity-60 flex items-center justify-center gap-2"
+                  >
+                    {deleteBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                    নিশ্চিত — ডিলিট
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setConfirmDelete(false)}
+                    className="px-4 py-2.5 rounded-xl border border-[#D4AF37]/40 text-[#B3A6C9] text-sm font-bold cursor-pointer"
+                  >
+                    না
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setConfirmDelete(true)}
+                  className="w-full py-2.5 rounded-xl bg-[#0F0C1A] border border-[#A52C54]/50 text-[#F6EFE0] font-bold text-sm cursor-pointer flex items-center justify-center gap-2"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  এই কার্ড ডিলিট করুন
+                </button>
+              )
+            ) : deleteRequests.some((r) => r.ticketId === selected.ticketId && r.status === 'Pending') ? (
+              <p className="text-xs text-center text-[#F0D78C] font-bold">এই কার্ডের ডিলিট রিকোয়েস্ট Super Admin-এর অ্যাপ্রুভালে আছে</p>
+            ) : (
+              <button
+                type="button"
+                disabled={deleteBusy}
+                onClick={async () => {
+                  if (!selected) return;
+                  setDeleteBusy(true);
+                  try {
+                    await requestCardDelete(selected, actorName);
+                  } catch (error) {
+                    setErrors((prev) => ({
+                      ...prev,
+                      submit: error instanceof Error ? error.message : 'ডিলিট রিকোয়েস্ট পাঠানো যায়নি',
+                    }));
+                  } finally {
+                    setDeleteBusy(false);
+                  }
+                }}
+                className="w-full py-2.5 rounded-xl bg-[#0F0C1A] border border-[#D4AF37]/40 text-[#F0D78C] font-bold text-sm cursor-pointer flex items-center justify-center gap-2 disabled:opacity-60"
+              >
+                {deleteBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                Super Admin-কে ডিলিট রিকোয়েস্ট পাঠান
+              </button>
+            )}
 
             {saved && (
               <p className="text-xs text-[#F0D78C] flex items-center gap-1 justify-center">
