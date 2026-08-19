@@ -323,7 +323,12 @@ export default function AdminTicketVerifyModal({ isOpen, onClose, registeredTick
         </div>
 
         {panelTab === 'create' && (
-          <AdminManualGuestForm existingGuests={registeredTickets} onGuestCreated={() => {}} />
+          <AdminManualGuestForm
+            existingGuests={registeredTickets}
+            onGuestCreated={() => {}}
+            adminRole={getAdminRole()}
+            actorName={getAdminActorName()}
+          />
         )}
 
         {panelTab === 'list' && (

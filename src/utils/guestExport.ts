@@ -23,6 +23,11 @@ export function downloadGuestsCsv(guests: Ticket[]): void {
     'Issue Date',
     'Status',
     'Created By Admin',
+    'Created By',
+    'Approved By',
+    'Approved At',
+    'Rejected By',
+    'Rejected At',
     'Card URL',
   ];
 
@@ -41,6 +46,11 @@ export function downloadGuestsCsv(guests: Ticket[]): void {
       g.issueDate,
       g.status,
       g.createdByAdmin ? 'Yes' : 'No',
+      g.createdBy ?? '',
+      g.approvedBy ?? '',
+      g.approvedAt ?? '',
+      g.rejectedBy ?? '',
+      g.rejectedAt ?? '',
       getGuestCardUrl(g.ticketId),
     ]
       .map(escapeCsv)

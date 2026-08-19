@@ -25,6 +25,9 @@ import {
   AlertTriangle,
   Trash2,
   Send,
+  ShieldAlert,
+  ShieldCheck,
+  ScrollText,
 } from 'lucide-react';
 
 interface AdminGuestListProps {
@@ -35,6 +38,14 @@ interface AdminGuestListProps {
 
 type StatusFilter = 'all' | 'Pending' | 'Confirmed' | 'Rejected';
 type RowActionState = 'idle' | 'saving' | 'sms-sending' | 'sms-sent' | 'sms-failed';
+
+interface VerificationLogEntry {
+  ticketId: string;
+  guestName: string;
+  action: 'approved' | 'rejected';
+  by: string;
+  at: string;
+}
 
 const STATUS_LABEL: Record<Ticket['status'], string> = {
   Pending: 'Pending',
@@ -48,6 +59,13 @@ function statusRank(status: Ticket['status']): number {
   return 2;
 }
 
+function formatLogTime(iso?: string): string {
+  if (!iso) return '';
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return '';
+  return date.toLocaleString('bn-BD', { dateStyle: 'short', timeStyle: 'short' });
+}
+
 export default function AdminGuestList({ guests, adminRole, actorName }: AdminGuestListProps) {
   const [query, setQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
@@ -55,6 +73,7 @@ export default function AdminGuestList({ guests, adminRole, actorName }: AdminGu
   const [rowState, setRowState] = useState<Record<string, RowActionState>>({});
   const [rowError, setRowError] = useState<Record<string, string>>({});
   const [deleteRequests, setDeleteRequests] = useState<CardDeleteRequest[]>([]);
+  const [showAllLog, setShowAllLog] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [requestBusyId, setRequestBusyId] = useState<string | null>(null);
 
@@ -73,6 +92,32 @@ export default function AdminGuestList({ guests, adminRole, actorName }: AdminGu
     });
     return map;
   }, [pendingDeleteRequests]);
+
+  const verificationLog = useMemo<VerificationLogEntry[]>(() => {
+    const entries: VerificationLogEntry[] = [];
+    guests.forEach((g) => {
+      if (g.status === 'Confirmed' && (g.approvedAt || g.approvedBy)) {
+        entries.push({
+          ticketId: g.ticketId,
+          guestName: g.fullName,
+          action: 'approved',
+          by: g.approvedBy || 'অজানা',
+          at: g.approvedAt || '',
+        });
+      } else if (g.status === 'Rejected' && (g.rejectedAt || g.rejectedBy)) {
+        entries.push({
+          ticketId: g.ticketId,
+          guestName: g.fullName,
+          action: 'rejected',
+          by: g.rejectedBy || 'অজানা',
+          at: g.rejectedAt || '',
+        });
+      }
+    });
+    return entries.sort((a, b) => b.at.localeCompare(a.at));
+  }, [guests]);
+
+  const visibleLog = showAllLog ? verificationLog : verificationLog.slice(0, 5);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -103,8 +148,14 @@ export default function AdminGuestList({ guests, adminRole, actorName }: AdminGu
   };
 
   const handleApprove = async (guest: Ticket) => {
+    if (!isSuperAdmin) return;
     setStateFor(guest.ticketId, 'saving');
-    const approved: Ticket = { ...guest, status: 'Confirmed' };
+    const approved: Ticket = {
+      ...guest,
+      status: 'Confirmed',
+      approvedBy: actorName,
+      approvedAt: new Date().toISOString(),
+    };
     try {
       await saveHonorableGuest(approved);
       setStateFor(guest.ticketId, 'sms-sending');
@@ -127,9 +178,15 @@ export default function AdminGuestList({ guests, adminRole, actorName }: AdminGu
   };
 
   const handleReject = async (guest: Ticket) => {
+    if (!isSuperAdmin) return;
     setStateFor(guest.ticketId, 'saving');
     try {
-      await saveHonorableGuest({ ...guest, status: 'Rejected' });
+      await saveHonorableGuest({
+        ...guest,
+        status: 'Rejected',
+        rejectedBy: actorName,
+        rejectedAt: new Date().toISOString(),
+      });
       setStateFor(guest.ticketId, 'idle');
     } catch (error) {
       setStateFor(
@@ -240,6 +297,65 @@ export default function AdminGuestList({ guests, adminRole, actorName }: AdminGu
             সব List JSON ডাউনলোড
           </button>
         </div>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2 text-[11px]">
+        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#0F0C1A] border border-[#D4AF37]/40 text-[#F0D78C] font-bold">
+          <ShieldCheck className="w-3.5 h-3.5" />
+          লগইন: {actorName} ({adminRole})
+        </span>
+        {!isSuperAdmin && (
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#7A1F3D]/40 border border-[#A52C54]/50 text-[#F6EFE0] font-semibold">
+            <ShieldAlert className="w-3.5 h-3.5 text-[#D4AF37]" />
+            পেমেন্ট ভেরিফিকেশন (অ্যাপ্রুভ/রিজেক্ট) শুধুমাত্র Super Admin করতে পারবেন
+          </span>
+        )}
+      </div>
+
+      <div className="bg-[#0F0C1A] border border-[#D4AF37]/30 rounded-2xl p-4">
+        <p className="text-sm font-bold text-[#F0D78C] flex items-center gap-2">
+          <ScrollText className="w-4 h-4" />
+          পেমেন্ট ভেরিফিকেশন লগ — কে অ্যাপ্রুভ/রিজেক্ট করেছে
+        </p>
+        {verificationLog.length === 0 ? (
+          <p className="text-xs text-[#B3A6C9] mt-2">এখনও কোনো ভেরিফিকেশন হয়নি।</p>
+        ) : (
+          <>
+            <ul className="mt-3 space-y-1.5">
+              {visibleLog.map((entry) => (
+                <li
+                  key={`${entry.ticketId}-${entry.action}`}
+                  className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs bg-[#1C1730] border border-[#D4AF37]/20 rounded-xl px-3 py-2"
+                >
+                  <span
+                    className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                      entry.action === 'approved'
+                        ? 'bg-[#7A1F3D] text-[#F0D78C]'
+                        : 'bg-[#0F0C1A] text-[#B3A6C9] border border-[#A52C54]/40'
+                    }`}
+                  >
+                    {entry.action === 'approved' ? 'Approved' : 'Rejected'}
+                  </span>
+                  <span className="text-[#F6EFE0] font-semibold">{entry.guestName}</span>
+                  <span className="font-mono text-[#F0D78C]">{entry.ticketId}</span>
+                  <span className="text-[#B3A6C9]">
+                    — {entry.by}
+                    {formatLogTime(entry.at) ? ` · ${formatLogTime(entry.at)}` : ''}
+                  </span>
+                </li>
+              ))}
+            </ul>
+            {verificationLog.length > 5 && (
+              <button
+                type="button"
+                onClick={() => setShowAllLog((prev) => !prev)}
+                className="mt-2 text-xs text-[#F0D78C] underline underline-offset-2 font-semibold cursor-pointer"
+              >
+                {showAllLog ? 'কম দেখুন' : `সব ${verificationLog.length} টি লগ দেখুন`}
+              </button>
+            )}
+          </>
+        )}
       </div>
 
       {isSuperAdmin && pendingDeleteRequests.length > 0 && (
@@ -357,33 +473,63 @@ export default function AdminGuestList({ guests, adminRole, actorName }: AdminGu
                         {STATUS_LABEL[g.status]}
                       </span>
                       {g.createdByAdmin && (
-                        <span className="block mt-1 text-[9px] text-[#B3A6C9]">Admin</span>
+                        <span className="block mt-1 text-[9px] text-[#B3A6C9]">
+                          Admin{g.createdBy ? ` · ${g.createdBy}` : ''}
+                        </span>
+                      )}
+                      {g.status === 'Confirmed' && (
+                        <span className="block mt-1 text-[9px] leading-tight text-[#B3A6C9]">
+                          {g.approvedBy ? (
+                            <>
+                              ভেরিফাই: <span className="text-[#F0D78C] font-bold">{g.approvedBy}</span>
+                              {formatLogTime(g.approvedAt) && (
+                                <span className="block">{formatLogTime(g.approvedAt)}</span>
+                              )}
+                            </>
+                          ) : (
+                            'ভেরিফাই লগ নেই (পুরনো এন্ট্রি)'
+                          )}
+                        </span>
+                      )}
+                      {g.status === 'Rejected' && g.rejectedBy && (
+                        <span className="block mt-1 text-[9px] leading-tight text-[#B3A6C9]">
+                          রিজেক্ট: <span className="text-[#F0D78C] font-bold">{g.rejectedBy}</span>
+                          {formatLogTime(g.rejectedAt) && (
+                            <span className="block">{formatLogTime(g.rejectedAt)}</span>
+                          )}
+                        </span>
                       )}
                     </td>
                     <td className="px-3 py-2">
                       <div className="flex flex-wrap gap-1.5">
-                        {g.status === 'Pending' && (
-                          <>
-                            <button
-                              type="button"
-                              disabled={busy}
-                              onClick={() => handleApprove(g)}
-                              className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-[#7A1F3D] border border-[#D4AF37]/50 text-[#F0D78C] font-bold cursor-pointer disabled:opacity-50"
-                            >
-                              {action === 'saving' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
-                              অ্যাপ্রুভ
-                            </button>
-                            <button
-                              type="button"
-                              disabled={busy}
-                              onClick={() => handleReject(g)}
-                              className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-[#0F0C1A] border border-[#A52C54]/50 text-[#F6EFE0] font-bold cursor-pointer disabled:opacity-50"
-                            >
-                              <XCircle className="w-3.5 h-3.5" />
-                              রিজেক্ট
-                            </button>
-                          </>
-                        )}
+                        {g.status === 'Pending' &&
+                          (isSuperAdmin ? (
+                            <>
+                              <button
+                                type="button"
+                                disabled={busy}
+                                onClick={() => handleApprove(g)}
+                                className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-[#7A1F3D] border border-[#D4AF37]/50 text-[#F0D78C] font-bold cursor-pointer disabled:opacity-50"
+                              >
+                                {action === 'saving' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
+                                অ্যাপ্রুভ
+                              </button>
+                              <button
+                                type="button"
+                                disabled={busy}
+                                onClick={() => handleReject(g)}
+                                className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-[#0F0C1A] border border-[#A52C54]/50 text-[#F6EFE0] font-bold cursor-pointer disabled:opacity-50"
+                              >
+                                <XCircle className="w-3.5 h-3.5" />
+                                রিজেক্ট
+                              </button>
+                            </>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-[#0F0C1A] border border-[#D4AF37]/30 text-[10px] text-[#B3A6C9] font-semibold">
+                              <ShieldAlert className="w-3.5 h-3.5 text-[#D4AF37]" />
+                              Super Admin ভেরিফাই করবেন
+                            </span>
+                          ))}
                         {g.status === 'Confirmed' && (
                           <>
                             <button

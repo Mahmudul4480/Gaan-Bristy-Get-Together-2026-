@@ -36,6 +36,11 @@ export interface Ticket {
   seatNumbers: string[];
   songRequest?: string;
   createdByAdmin?: boolean;
+  createdBy?: string;
+  approvedBy?: string;
+  approvedAt?: string;
+  rejectedBy?: string;
+  rejectedAt?: string;
 }
 
 export interface AppointedAdmin {

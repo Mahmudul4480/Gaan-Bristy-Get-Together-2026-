@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Ticket } from '../types';
 import HonorableGuestCard from './HonorableGuestCard';
-import { Award, ChevronLeft, ChevronRight, Clock, QrCode, Search, XCircle } from 'lucide-react';
+import { Award, ChevronLeft, ChevronRight, Clock, QrCode, Search, Sparkles, XCircle } from 'lucide-react';
 
 interface HonorableGuestSectionProps {
   guests: Ticket[];
@@ -120,9 +120,16 @@ export default function HonorableGuestSection({
         ) : (
           <div>
             {!selectedConfirmed && (
-              <p className="text-sm text-[#B3A6C9] text-center mb-6">
-                মোট {confirmedGuests.length} জন Honorable Guest
-              </p>
+              <div className="text-center mb-6">
+                <p className="inline-flex items-center gap-2 bg-[#1C1730] border border-[#D4AF37]/35 rounded-full px-4 py-1.5 text-sm font-bold text-[#F0D78C]">
+                  <Sparkles className="w-4 h-4" />
+                  মোট {confirmedGuests.length} জন Honorable Guest
+                </p>
+                <p className="text-xs text-[#B3A6C9] mt-3">
+                  কার্ডগুলো নিজে নিজেই স্লাইড হচ্ছে — যেকোনো কার্ডে ট্যাপ করলে সেটি উপরে খুলবে এবং PNG/PDF
+                  ডাউনলোড করা যাবে।
+                </p>
+              </div>
             )}
             <GuestCardSlider
               guests={confirmedGuests.filter((g) => !selectedConfirmed || g.ticketId !== selectedConfirmed.ticketId)}
@@ -135,6 +142,14 @@ export default function HonorableGuestSection({
   );
 }
 
+const SLIDE_INTERVAL_MS = 5500;
+const SWIPE_THRESHOLD_PX = 45;
+const MAX_DOTS = 12;
+
+function toBengaliDigits(value: number): string {
+  return String(value).replace(/\d/g, (d) => '০১২৩৪৫৬৭৮৯'[Number(d)]);
+}
+
 function GuestCardSlider({
   guests,
   onSelectGuest,
@@ -144,6 +159,7 @@ function GuestCardSlider({
 }) {
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
+  const touchStartX = useRef<number | null>(null);
   const count = guests.length;
 
   useEffect(() => {
@@ -154,7 +170,7 @@ function GuestCardSlider({
     if (count < 2 || paused) return;
     const timer = window.setInterval(() => {
       setIndex((current) => (current + 1) % count);
-    }, 3800);
+    }, SLIDE_INTERVAL_MS);
     return () => window.clearInterval(timer);
   }, [count, paused]);
 
@@ -164,27 +180,54 @@ function GuestCardSlider({
     setIndex((next + count) % count);
   };
 
+  const handleTouchEnd = (endX: number) => {
+    const startX = touchStartX.current;
+    touchStartX.current = null;
+    if (startX === null) return;
+    const delta = endX - startX;
+    if (Math.abs(delta) < SWIPE_THRESHOLD_PX) return;
+    goTo(delta < 0 ? index + 1 : index - 1);
+  };
+
   return (
     <div
-      className="relative max-w-xl mx-auto"
+      className="relative mx-auto w-full max-w-md sm:max-w-lg"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
       onFocus={() => setPaused(true)}
       onBlur={() => setPaused(false)}
     >
-      <div className="overflow-hidden rounded-3xl">
+      <div
+        className="overflow-hidden rounded-[28px] p-1 sm:p-2"
+        onTouchStart={(e) => {
+          touchStartX.current = e.touches[0]?.clientX ?? null;
+          setPaused(true);
+        }}
+        onTouchEnd={(e) => {
+          handleTouchEnd(e.changedTouches[0]?.clientX ?? 0);
+          setPaused(false);
+        }}
+      >
         <div
-          className="flex transition-transform duration-700 ease-in-out"
+          className="flex transition-transform duration-[900ms] ease-[cubic-bezier(0.22,1,0.36,1)]"
           style={{ transform: `translateX(-${index * 100}%)` }}
         >
-          {guests.map((guest) => (
-            <div key={guest.ticketId} className="w-full shrink-0 px-1">
+          {guests.map((guest, i) => (
+            <div
+              key={guest.ticketId}
+              className={`w-full shrink-0 px-1.5 transition-all duration-700 ${
+                i === index ? 'opacity-100 scale-100' : 'opacity-40 scale-[0.94]'
+              }`}
+              aria-hidden={i !== index}
+            >
               <button
                 type="button"
+                tabIndex={i === index ? 0 : -1}
                 onClick={() => onSelectGuest?.(guest.ticketId)}
-                className="w-full text-left cursor-pointer transition hover:scale-[1.01] focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50 rounded-3xl"
+                aria-label={`${guest.fullName} — কার্ড বড় করে দেখুন`}
+                className="block w-full cursor-pointer rounded-3xl text-left transition-transform duration-300 hover:scale-[1.02] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D4AF37]"
               >
-                <HonorableGuestCard ticket={guest} compact />
+                <HonorableGuestCard ticket={guest} showActions={false} />
               </button>
             </div>
           ))}
@@ -193,35 +236,43 @@ function GuestCardSlider({
 
       {count > 1 && (
         <>
-          <button
-            type="button"
-            aria-label="আগের কার্ড"
-            onClick={() => goTo(index - 1)}
-            className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2 sm:-translate-x-4 p-2 rounded-full bg-[#0F0C1A]/90 border border-[#D4AF37]/50 text-[#F0D78C] cursor-pointer"
-          >
-            <ChevronLeft className="w-5 h-5" />
-          </button>
-          <button
-            type="button"
-            aria-label="পরের কার্ড"
-            onClick={() => goTo(index + 1)}
-            className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-2 sm:translate-x-4 p-2 rounded-full bg-[#0F0C1A]/90 border border-[#D4AF37]/50 text-[#F0D78C] cursor-pointer"
-          >
-            <ChevronRight className="w-5 h-5" />
-          </button>
-          <div className="flex justify-center gap-1.5 mt-4">
-            {guests.map((guest, i) => (
-              <button
-                key={guest.ticketId}
-                type="button"
-                aria-label={`${guest.fullName} কার্ড`}
-                onClick={() => setIndex(i)}
-                className={`h-2 rounded-full transition-all cursor-pointer ${
-                  i === index ? 'w-6 bg-[#D4AF37]' : 'w-2 bg-[#D4AF37]/35'
-                }`}
-              />
-            ))}
+          <div className="mt-5 flex items-center justify-center gap-4">
+            <button
+              type="button"
+              aria-label="আগের কার্ড"
+              onClick={() => goTo(index - 1)}
+              className="p-2.5 rounded-full bg-[#1C1730] border border-[#D4AF37]/50 text-[#F0D78C] hover:bg-[#7A1F3D] transition cursor-pointer"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            <p className="text-sm font-bold text-[#F0D78C] tabular-nums">
+              {toBengaliDigits(index + 1)} / {toBengaliDigits(count)}
+            </p>
+            <button
+              type="button"
+              aria-label="পরের কার্ড"
+              onClick={() => goTo(index + 1)}
+              className="p-2.5 rounded-full bg-[#1C1730] border border-[#D4AF37]/50 text-[#F0D78C] hover:bg-[#7A1F3D] transition cursor-pointer"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
           </div>
+
+          {count <= MAX_DOTS && (
+            <div className="flex justify-center gap-1.5 mt-3">
+              {guests.map((guest, i) => (
+                <button
+                  key={guest.ticketId}
+                  type="button"
+                  aria-label={`${guest.fullName} কার্ড`}
+                  onClick={() => setIndex(i)}
+                  className={`h-2 rounded-full transition-all cursor-pointer ${
+                    i === index ? 'w-6 bg-[#D4AF37]' : 'w-2 bg-[#D4AF37]/35'
+                  }`}
+                />
+              ))}
+            </div>
+          )}
         </>
       )}
     </div>

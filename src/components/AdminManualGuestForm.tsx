@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Ticket } from '../types';
+import { AdminRole, Ticket } from '../types';
 import { EVENT_DETAILS } from '../data/eventData';
 import { buildGuestTicket } from '../utils/createGuestTicket';
 import { findDuplicateTransactionId } from '../utils/guestExport';
@@ -21,11 +21,14 @@ import {
   Loader2,
   AlertTriangle,
   Crop,
+  ShieldAlert,
 } from 'lucide-react';
 
 interface AdminManualGuestFormProps {
   existingGuests: Ticket[];
   onGuestCreated: (ticket: Ticket) => void;
+  adminRole: AdminRole;
+  actorName: string;
 }
 
 const emptyForm = () => ({
@@ -42,7 +45,13 @@ const emptyForm = () => ({
   songRequest: '',
 });
 
-export default function AdminManualGuestForm({ existingGuests, onGuestCreated }: AdminManualGuestFormProps) {
+export default function AdminManualGuestForm({
+  existingGuests,
+  onGuestCreated,
+  adminRole,
+  actorName,
+}: AdminManualGuestFormProps) {
+  const isSuperAdmin = adminRole === 'Super Admin';
   const [form, setForm] = useState(emptyForm());
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [createdTicket, setCreatedTicket] = useState<Ticket | null>(null);
@@ -104,7 +113,7 @@ export default function AdminManualGuestForm({ existingGuests, onGuestCreated }:
       return;
     }
 
-    const ticket = buildGuestTicket({
+    const baseTicket = buildGuestTicket({
       fullName: form.fullName,
       familyName: form.familyName,
       starMakerId: form.starMakerId || undefined,
@@ -117,6 +126,17 @@ export default function AdminManualGuestForm({ existingGuests, onGuestCreated }:
       songRequest: form.songRequest || undefined,
       createdByAdmin: true,
     });
+
+    // Payment verification is a Super Admin job — a Card Editor's manual entry
+    // is saved as Pending so a Super Admin still has to approve it.
+    const ticket: Ticket = isSuperAdmin
+      ? {
+          ...baseTicket,
+          createdBy: actorName,
+          approvedBy: actorName,
+          approvedAt: new Date().toISOString(),
+        }
+      : { ...baseTicket, status: 'Pending', createdBy: actorName };
 
     setIsSubmitting(true);
     setErrors((prev) => {
@@ -131,10 +151,12 @@ export default function AdminManualGuestForm({ existingGuests, onGuestCreated }:
       onGuestCreated(ticket);
 
       setSmsState('sending');
-      sendRegistrationConfirmationSms(ticket.phone, {
-        type: 'approved',
-        cardUrl: getGuestCardUrl(ticket.ticketId),
-      }).then((result) => {
+      sendRegistrationConfirmationSms(
+        ticket.phone,
+        isSuperAdmin
+          ? { type: 'approved', cardUrl: getGuestCardUrl(ticket.ticketId) }
+          : { type: 'pending' }
+      ).then((result) => {
         if (result.success) {
           setSmsState('sent');
         } else {
@@ -157,9 +179,29 @@ export default function AdminManualGuestForm({ existingGuests, onGuestCreated }:
       <div className="space-y-4 font-body">
         <div className="flex items-center gap-2 text-[#F0D78C] text-sm font-bold">
           <CheckCircle2 className="w-5 h-5" />
-          Admin manual card তৈরি হয়েছে — {createdTicket.ticketId}
+          {isSuperAdmin
+            ? `Admin manual card তৈরি হয়েছে — ${createdTicket.ticketId}`
+            : `এন্ট্রি সংরক্ষিত হয়েছে — ${createdTicket.ticketId}`}
         </div>
-        <HonorableGuestCard ticket={createdTicket} showQr />
+
+        {isSuperAdmin ? (
+          <HonorableGuestCard ticket={createdTicket} showQr />
+        ) : (
+          <div className="bg-[#0F0C1A] border border-[#D4AF37]/40 rounded-2xl p-4">
+            <p className="text-sm font-bold text-[#F6EFE0] flex items-center gap-2">
+              <ShieldAlert className="w-4 h-4 text-[#D4AF37]" />
+              Super Admin অ্যাপ্রুভাল পেন্ডিং
+            </p>
+            <p className="text-xs text-[#B3A6C9] mt-2">
+              পেমেন্ট ভেরিফাই করবেন শুধুমাত্র Super Admin। অ্যাপ্রুভ হলে অতিথির Honorable Guest Card তৈরি হবে
+              এবং কার্ড লিংক SMS-এ চলে যাবে।
+            </p>
+            <p className="text-xs text-[#B3A6C9] mt-2">
+              অতিথি: <span className="text-[#F0D78C] font-bold">{createdTicket.fullName}</span> · TrxID:{' '}
+              <span className="font-mono text-[#F0D78C]">{createdTicket.transactionId}</span>
+            </p>
+          </div>
+        )}
 
         {smsState === 'sending' && (
           <p className="inline-flex items-center gap-2 text-xs text-[#B3A6C9] bg-[#0F0C1A] border border-[#D4AF37]/30 rounded-full px-4 py-2">
@@ -199,6 +241,12 @@ export default function AdminManualGuestForm({ existingGuests, onGuestCreated }:
       <p className="text-xs text-[#B3A6C9] bg-[#0F0C1A] border border-[#D4AF37]/30 rounded-xl p-3">
         যারা ওয়েবসাইট ব্যবহার করতে পারেন না — শুধু টাকা পাঠিয়েছেন — Admin এখানে তাদের Transaction ID, নাম ও
         তথ্য দিয়ে Honorable Guest Card তৈরি করতে পারবেন।
+        {!isSuperAdmin && (
+          <span className="block mt-2 text-[#F0D78C] font-semibold">
+            আপনি Card Editor — আপনার এন্ট্রি Pending হিসেবে জমা হবে, পেমেন্ট ভেরিফাই করে Super Admin অ্যাপ্রুভ
+            করলে কার্ড তৈরি হবে।
+          </span>
+        )}
       </p>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

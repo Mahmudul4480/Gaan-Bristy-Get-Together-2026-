@@ -11,6 +11,7 @@ interface HonorableGuestCardProps {
   ticket: Ticket;
   compact?: boolean;
   showQr?: boolean;
+  showActions?: boolean;
 }
 
 const CARD_NOTES = ['♪', '♫', '♬', '♩'];
@@ -50,7 +51,12 @@ function DressCodeHighlight({ compact = false }: { compact?: boolean }) {
   );
 }
 
-export default function HonorableGuestCard({ ticket, compact = false, showQr = false }: HonorableGuestCardProps) {
+export default function HonorableGuestCard({
+  ticket,
+  compact = false,
+  showQr = false,
+  showActions = true,
+}: HonorableGuestCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const qrWrapRef = useRef<HTMLDivElement>(null);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -297,7 +303,7 @@ export default function HonorableGuestCard({ ticket, compact = false, showQr = f
         </div>
       </div>
 
-      <div className="flex flex-wrap justify-center gap-3 mt-5 print:hidden">
+      <div className={`flex-wrap justify-center gap-3 mt-5 print:hidden ${showActions ? 'flex' : 'hidden'}`}>
         <button
           type="button"
           onClick={handleDownloadPNG}
