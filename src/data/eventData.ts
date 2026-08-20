@@ -272,6 +272,16 @@ export const TEAM_MEMBERS: TeamMember[] = [
     imageClass: "scale-[1.5] object-top",
     bio: "এডমিন — ব্র্যান্ডিং ও কো-অর্ডিনেশন।"
   },
+  {
+    id: "admin-12",
+    name: "Snigdha",
+    role: "Admin",
+    roleBengali: "এডমিন ১২",
+    starMakerId: "62159425887",
+    image: "https://i.postimg.cc/Y0qhdf8T/b44bd4cb-f18d-4258-9090-0e179b57a0c3.jpg",
+    imageClass: "scale-[1.5] object-top",
+    bio: "এডমিন — ইভেন্ট কো-অর্ডিনেশন ও সাপোর্ট।"
+  },
   // Super Active Members
   {
     id: "super-1",
@@ -385,41 +395,4 @@ export const TEAM_MEMBERS: TeamMember[] = [
   },
 ];
 
-export const GALLERY_PHOTOS: GalleryPhoto[] = [
-  {
-    id: "gal-1",
-    title: "Gaan Bristy Polo T-shirt Special Gathering",
-    url: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&q=80&w=800",
-    category: "Previous Events"
-  },
-  {
-    id: "gal-2",
-    title: "Gulshan Garden High-Tea Meeting",
-    url: "https://images.unsplash.com/photo-1528605248644-14dd04022da1?auto=format&fit=crop&q=80&w=800",
-    category: "Family Meeting"
-  },
-  {
-    id: "gal-3",
-    title: "StarMaker Singers Acoustic Rehearsal",
-    url: "https://images.unsplash.com/photo-1465847899084-d164df4dedc6?auto=format&fit=crop&q=80&w=800",
-    category: "Performance"
-  },
-  {
-    id: "gal-4",
-    title: "Grand Cake Cutting Ceremony",
-    url: "https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?auto=format&fit=crop&q=80&w=800",
-    category: "Previous Events"
-  },
-  {
-    id: "gal-5",
-    title: "Family Dinner & Musical Evening",
-    url: "https://images.unsplash.com/photo-1517457373958-b7bdd4587205?auto=format&fit=crop&q=80&w=800",
-    category: "Previous Events"
-  },
-  {
-    id: "gal-6",
-    title: "Red Carpet Smiles & Memories",
-    url: "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&q=80&w=800",
-    category: "Family Meeting"
-  }
-];
+export const GALLERY_PHOTOS: GalleryPhoto[] = [];

@@ -1,14 +1,34 @@
 import { blobToDataUrl, compressCanvasToBlob, loadImageFromSrc, smartCompressImage } from './imageCompression';
 
-const MAX_PHOTO_BYTES = 3 * 1024 * 1024;
+export const IMAGE_FILE_ACCEPT =
+  'image/jpeg,image/png,image/webp,image/heic,image/heif,.jpg,.jpeg,.png,.webp,.heic,.heif';
+
+const IMAGE_EXTENSION_PATTERN = /\.(jpe?g|png|webp|heic|heif)$/i;
+const CARD_SOURCE_MAX_BYTES = 15 * 1024 * 1024;
+const GALLERY_SOURCE_MAX_BYTES = 25 * 1024 * 1024;
 const CARD_PHOTO_SIZE = 640;
 
+export function isLikelyImageFile(file: File): boolean {
+  if (file.type.startsWith('image/')) return true;
+  return IMAGE_EXTENSION_PATTERN.test(file.name);
+}
+
 export function validatePhotoFile(file: File): string | null {
-  if (!file.type.startsWith('image/')) {
+  if (!isLikelyImageFile(file)) {
     return 'শুধুমাত্র ছবি (JPG, PNG, WEBP) আপলোড করা যাবে';
   }
-  if (file.size > MAX_PHOTO_BYTES) {
-    return 'ছবির সাইজ সর্বোচ্চ ৩ MB হতে হবে';
+  if (file.size > CARD_SOURCE_MAX_BYTES) {
+    return 'ছবির সাইজ সর্বোচ্চ ১৫ MB হতে হবে — ফোনের ক্যামেরা ছবি আপলোডের আগে একটু ছোট করে নিন';
+  }
+  return null;
+}
+
+export function validateGalleryPhotoFile(file: File): string | null {
+  if (!isLikelyImageFile(file)) {
+    return 'শুধুমাত্র ছবি (JPG, PNG, WEBP) আপলোড করা যাবে';
+  }
+  if (file.size > GALLERY_SOURCE_MAX_BYTES) {
+    return 'ছবির সাইজ সর্বোচ্চ ২৫ MB হতে হবে';
   }
   return null;
 }

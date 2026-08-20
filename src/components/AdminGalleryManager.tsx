@@ -1,7 +1,8 @@
-import { ChangeEvent, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { GalleryPhoto } from '../types';
 import { deleteGalleryPhoto, subscribeToGalleryPhotos, uploadGalleryPhoto } from '../utils/galleryStorage';
-import { validatePhotoFile } from '../utils/photoUpload';
+import { validateGalleryPhotoFile } from '../utils/photoUpload';
+import PhotoFilePicker from './PhotoFilePicker';
 import { ImagePlus, Loader2, Trash2, Upload, CheckCircle2, AlertTriangle, ZoomIn, X } from 'lucide-react';
 
 const CATEGORIES: GalleryPhoto['category'][] = ['Previous Events', 'Family Meeting', 'Performance'];
@@ -31,10 +32,8 @@ export default function AdminGalleryManager() {
     return unsubscribe;
   }, []);
 
-  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const selected = e.target.files?.[0];
-    if (!selected) return;
-    const validationError = validatePhotoFile(selected);
+  const handleFileChange = (selected: File) => {
+    const validationError = validateGalleryPhotoFile(selected);
     if (validationError) {
       setError(validationError);
       return;
@@ -85,7 +84,7 @@ export default function AdminGalleryManager() {
       <p className="text-xs text-[#B3A6C9] bg-[#0F0C1A] border border-[#D4AF37]/30 rounded-xl p-3">
         এখান থেকে ছবি আপলোড করলেই সেটা সাথে সাথে ওয়েবসাইটের "Memories Gallery"-তে
         (নির্বাচিত ক্যাটাগরিতে) সবার জন্য দেখা যাবে — কোনো কোড পরিবর্তন বা রিডিপ্লয় লাগবে না।
-        ফোন থেকেও এই প্যানেল খুলে ছবি আপলোড করা যাবে।
+        ফোন থেকেও Gallery/ক্যামেরা থেকে ছবি বেছে নিয়ে আপলোড করা যাবে; বড় ছবি অটো কম্প্রেস হবে।
       </p>
 
       {/* Upload form */}
@@ -128,13 +127,17 @@ export default function AdminGalleryManager() {
               <ImagePlus className="w-8 h-8" />
             </div>
           )}
-          <label className="flex-1 w-full cursor-pointer">
-            <input type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
-            <span className="inline-flex items-center justify-center gap-2 w-full sm:w-auto px-5 py-2.5 bg-[#7A1F3D]/40 border border-[#D4AF37]/50 hover:border-[#D4AF37] rounded-xl text-sm font-semibold text-[#F0D78C] transition">
-              <ImagePlus className="w-4 h-4" />
-              ছবি বেছে নিন
-            </span>
-          </label>
+          <PhotoFilePicker
+            onFileSelected={handleFileChange}
+            disabled={isUploading}
+            className="inline-flex items-center justify-center gap-2 w-full sm:w-auto px-5 py-2.5 bg-[#7A1F3D]/40 border border-[#D4AF37]/50 hover:border-[#D4AF37] rounded-xl text-sm font-semibold text-[#F0D78C] transition cursor-pointer disabled:opacity-60"
+            label={
+              <>
+                <ImagePlus className="w-4 h-4" />
+                ছবি বেছে নিন
+              </>
+            }
+          />
         </div>
 
         {error && (

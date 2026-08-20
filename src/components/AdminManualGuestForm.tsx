@@ -8,6 +8,7 @@ import { sendRegistrationConfirmationSms } from '../utils/sendConfirmationSms';
 import { validatePhotoFile } from '../utils/photoUpload';
 import HonorableGuestCard from './HonorableGuestCard';
 import PhotoCropModal from './PhotoCropModal';
+import PhotoFilePicker from './PhotoFilePicker';
 import {
   User,
   Phone,
@@ -74,10 +75,7 @@ export default function AdminManualGuestForm({
     setRawPhotoSrc(null);
   };
 
-  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    e.target.value = '';
-    if (!file) return;
+  const handlePhotoChange = (file: File) => {
     const validationError = validatePhotoFile(file);
     if (validationError) {
       setErrors((prev) => ({ ...prev, photo: validationError }));
@@ -311,16 +309,17 @@ export default function AdminManualGuestForm({
 
       <div className="bg-[#0F0C1A] border border-[#D4AF37]/30 rounded-xl p-3">
         <label className="text-xs font-semibold text-[#F6EFE0] mb-2 flex items-center gap-1">
-          <Camera className="w-3.5 h-3.5 text-[#D4AF37]" /> ছবি (৩ MB, ঐচ্ছিক)
+          <Camera className="w-3.5 h-3.5 text-[#D4AF37]" /> ছবি (১৫ MB পর্যন্ত, ঐচ্ছিক)
         </label>
         <div className="flex items-center gap-3">
           {form.photoPreview ? (
             <img src={form.photoPreview} alt="" className="w-16 h-16 object-cover rounded-full border border-[#D4AF37]/40" />
           ) : null}
-          <label className="cursor-pointer px-3 py-2 bg-[#1C1730] border border-[#D4AF37]/40 rounded-lg text-xs text-[#F0D78C] font-semibold">
-            ছবি বেছে নিন
-            <input type="file" accept="image/*" onChange={handlePhotoChange} className="hidden" />
-          </label>
+          <PhotoFilePicker
+            onFileSelected={handlePhotoChange}
+            className="cursor-pointer px-3 py-2 bg-[#1C1730] border border-[#D4AF37]/40 rounded-lg text-xs text-[#F0D78C] font-semibold"
+            label="ছবি বেছে নিন"
+          />
           {(rawPhotoSrc || form.photoPreview) && (
             <button
               type="button"

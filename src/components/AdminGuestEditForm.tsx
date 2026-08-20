@@ -1,4 +1,4 @@
-import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { AdminRole, CardDeleteRequest, Ticket } from '../types';
 import { EVENT_DETAILS } from '../data/eventData';
 import { findDuplicateTransactionId } from '../utils/guestExport';
@@ -11,6 +11,7 @@ import {
 } from '../utils/deleteRequestStorage';
 import HonorableGuestCard from './HonorableGuestCard';
 import PhotoCropModal from './PhotoCropModal';
+import PhotoFilePicker from './PhotoFilePicker';
 import { Search, Save, Camera, User, Users, Phone, Sparkles, CheckCircle2, Crop, Trash2, Send, Loader2 } from 'lucide-react';
 
 interface AdminGuestEditFormProps {
@@ -66,10 +67,8 @@ export default function AdminGuestEditForm({ guests, onGuestUpdated, adminRole, 
     setSaved(false);
   };
 
-  const handlePhotoChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    e.target.value = '';
-    if (!file || !selected) return;
+  const handlePhotoChange = (file: File) => {
+    if (!selected) return;
     const validationError = validatePhotoFile(file);
     if (validationError) {
       setErrors((prev) => ({ ...prev, photo: validationError }));
@@ -311,10 +310,11 @@ export default function AdminGuestEditForm({ guests, onGuestUpdated, adminRole, 
                 {selected.photoUrl ? (
                   <img src={selected.photoUrl} alt="" className="w-16 h-16 object-cover rounded-full border border-[#D4AF37]/40" />
                 ) : null}
-                <label className="cursor-pointer px-3 py-2 bg-[#1C1730] border border-[#D4AF37]/40 rounded-lg text-xs text-[#F0D78C] font-semibold">
-                  ছবি বদলান
-                  <input type="file" accept="image/*" onChange={handlePhotoChange} className="hidden" />
-                </label>
+                <PhotoFilePicker
+                  onFileSelected={handlePhotoChange}
+                  className="cursor-pointer px-3 py-2 bg-[#1C1730] border border-[#D4AF37]/40 rounded-lg text-xs text-[#F0D78C] font-semibold"
+                  label="ছবি বদলান"
+                />
                 {(rawPhotoSrc || selected.photoUrl) && (
                   <button
                     type="button"

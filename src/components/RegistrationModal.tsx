@@ -7,6 +7,7 @@ import { sendRegistrationConfirmationSms } from '../utils/sendConfirmationSms';
 import { findDuplicateTransactionId } from '../utils/guestExport';
 import { validatePhotoFile } from '../utils/photoUpload';
 import PhotoCropModal from './PhotoCropModal';
+import PhotoFilePicker from './PhotoFilePicker';
 import {
   X,
   Ticket as TicketIcon,
@@ -85,11 +86,7 @@ export default function RegistrationModal({ isOpen, onClose, existingGuests }: R
     setTimeout(() => setIsCopied(false), 2000);
   };
 
-  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    e.target.value = '';
-    if (!file) return;
-
+  const handlePhotoChange = (file: File) => {
     const validationError = validatePhotoFile(file);
     if (validationError) {
       setErrors((prev) => ({ ...prev, photo: validationError }));
@@ -423,7 +420,7 @@ export default function RegistrationModal({ isOpen, onClose, existingGuests }: R
               <div className="bg-[#0F0C1A]/80 border border-[#D4AF37]/45 rounded-2xl p-4">
                 <label className="block text-xs font-semibold text-[#F6EFE0] mb-1 flex items-center gap-1.5">
                   <Camera className="w-3.5 h-3.5 text-[#D4AF37]" />
-                  ছবি আপলোড (ঐচ্ছিক, সর্বোচ্চ ৩ MB)
+                  ছবি আপলোড (ঐচ্ছিক, সর্বোচ্চ ১৫ MB)
                 </label>
                 <p className="text-xs text-[#F0D78C] font-semibold mb-1 font-bangla leading-relaxed">
                   এই ছবি সম্মান কার্ড (Honorable Guest Card)-এর জন্য ব্যবহৃত হবে।
@@ -441,13 +438,16 @@ export default function RegistrationModal({ isOpen, onClose, existingGuests }: R
                     </div>
                   )}
                   <div className="flex-1 w-full flex flex-col sm:flex-row gap-2">
-                    <label className="flex-1 w-full cursor-pointer">
-                      <input type="file" accept="image/*" onChange={handlePhotoChange} className="hidden" />
-                      <span className="inline-flex items-center justify-center gap-2 w-full px-5 py-3 bg-[#7A1F3D]/40 border border-[#D4AF37]/50 hover:border-[#D4AF37] rounded-xl text-sm font-semibold text-[#F0D78C] transition">
-                        <Camera className="w-4 h-4" />
-                        ছবি বেছে নিন
-                      </span>
-                    </label>
+                    <PhotoFilePicker
+                      onFileSelected={handlePhotoChange}
+                      className="inline-flex items-center justify-center gap-2 w-full px-5 py-3 bg-[#7A1F3D]/40 border border-[#D4AF37]/50 hover:border-[#D4AF37] rounded-xl text-sm font-semibold text-[#F0D78C] transition cursor-pointer"
+                      label={
+                        <>
+                          <Camera className="w-4 h-4" />
+                          ছবি বেছে নিন
+                        </>
+                      }
+                    />
                     {(rawPhotoSrc || photoPreview) && (
                       <button
                         type="button"

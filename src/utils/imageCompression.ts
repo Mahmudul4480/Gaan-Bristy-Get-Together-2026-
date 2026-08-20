@@ -11,16 +11,52 @@ export interface CompressOptions {
 
 function loadImage(file: File): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const img = new Image();
-      img.onload = () => resolve(img);
-      img.onerror = () => reject(new Error('ছবিটি সঠিক নয়'));
-      img.src = reader.result as string;
+    const objectUrl = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+      resolve(img);
     };
-    reader.onerror = () => reject(new Error('ফাইল পড়া যায়নি'));
-    reader.readAsDataURL(file);
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error('ছবিটি খোলা যায়নি। JPG/PNG ফরম্যাটে সেভ করে আবার চেষ্টা করুন।'));
+    };
+    img.src = objectUrl;
   });
+}
+
+async function loadImageBitmapScaled(file: File, maxDimension: number): Promise<ImageBitmap | null> {
+  if (typeof createImageBitmap !== 'function') return null;
+
+  try {
+    const source = await createImageBitmap(file);
+    const longestSide = Math.max(source.width, source.height);
+    if (longestSide <= maxDimension) return source;
+
+    const scale = maxDimension / longestSide;
+    const resizeWidth = Math.max(1, Math.round(source.width * scale));
+    const resizeHeight = Math.max(1, Math.round(source.height * scale));
+    const resized = await createImageBitmap(source, {
+      resizeWidth,
+      resizeHeight,
+      resizeQuality: 'high',
+    });
+    source.close();
+    return resized;
+  } catch {
+    return null;
+  }
+}
+
+function drawBitmapToCanvas(bitmap: ImageBitmap): HTMLCanvasElement {
+  const canvas = document.createElement('canvas');
+  canvas.width = bitmap.width;
+  canvas.height = bitmap.height;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) throw new Error('Canvas সাপোর্ট করছে না');
+  ctx.drawImage(bitmap, 0, 0);
+  bitmap.close();
+  return canvas;
 }
 
 function canvasToBlob(canvas: HTMLCanvasElement, quality: number): Promise<Blob> {
@@ -67,6 +103,12 @@ export async function compressCanvasToBlob(
  */
 export async function smartCompressImage(file: File, options: CompressOptions): Promise<Blob> {
   const { maxDimension, targetBytes, initialQuality = 0.92, minQuality = 0.62 } = options;
+
+  const bitmap = await loadImageBitmapScaled(file, maxDimension);
+  if (bitmap) {
+    const canvas = drawBitmapToCanvas(bitmap);
+    return compressCanvasToBlob(canvas, { targetBytes, initialQuality, minQuality });
+  }
 
   const img = await loadImage(file);
   const scale = Math.min(1, maxDimension / Math.max(img.width, img.height));

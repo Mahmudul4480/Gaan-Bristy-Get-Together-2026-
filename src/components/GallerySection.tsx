@@ -4,6 +4,12 @@ import { GalleryPhoto } from '../types';
 import { subscribeToGalleryPhotos } from '../utils/galleryStorage';
 import { Image as ImageIcon, X, ZoomIn } from 'lucide-react';
 
+const CATEGORY_LABELS: Record<GalleryPhoto['category'], string> = {
+  'Previous Events': 'বিগত অনুষ্ঠানসমূহ',
+  'Family Meeting': 'ফ্যামিলি আড্ডা',
+  Performance: 'লাইভ আনপ্লাগড',
+};
+
 export default function GallerySection() {
   const [selectedCategory, setSelectedCategory] = useState<'All' | 'Previous Events' | 'Family Meeting' | 'Performance'>('All');
   const [activePhoto, setActivePhoto] = useState<GalleryPhoto | null>(null);
@@ -15,6 +21,23 @@ export default function GallerySection() {
     const unsubscribe = subscribeToGalleryPhotos((photos) => setUploadedPhotos(photos));
     return unsubscribe;
   }, []);
+
+  useEffect(() => {
+    if (!activePhoto) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setActivePhoto(null);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [activePhoto]);
 
   const allPhotos = [...uploadedPhotos, ...GALLERY_PHOTOS];
 
@@ -71,6 +94,15 @@ export default function GallerySection() {
         </div>
 
         {/* Photo Grid */}
+        {filteredPhotos.length === 0 ? (
+          <div className="text-center py-16 bg-[#1C1730]/60 border border-[#D4AF37]/30 rounded-3xl">
+            <ImageIcon className="w-10 h-10 text-[#D4AF37]/50 mx-auto mb-3" />
+            <p className="text-[#F6EFE0] font-bold">এখনও Gallery-তে কোনো ছবি নেই</p>
+            <p className="text-sm text-[#B3A6C9] mt-2">
+              Admin Panel → গ্যালারি থেকে ছবি আপলোড করলে এখানে দেখা যাবে।
+            </p>
+          </div>
+        ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
           {filteredPhotos.map((photo) => (
             <div
@@ -98,27 +130,43 @@ export default function GallerySection() {
             </div>
           ))}
         </div>
+        )}
 
       </div>
 
-      {/* Lightbox Modal */}
+      {/* Lightbox — full-screen style zoom */}
       {activePhoto && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0F0C1A]/90 backdrop-blur-md">
-          <div className="relative max-w-4xl w-full bg-[#1C1730] rounded-3xl overflow-hidden border-2 border-[#D4AF37] p-3 shadow-2xl">
-            <button
-              onClick={() => setActivePhoto(null)}
-              className="absolute top-4 right-4 z-10 p-2 rounded-full bg-[#0F0C1A]/80 text-[#F6EFE0] border border-[#D4AF37]/40 hover:bg-[#7A1F3D] transition"
-            >
-              <X className="w-6 h-6" />
-            </button>
-            <img 
-              src={activePhoto.url} 
-              alt={activePhoto.title} 
-              className="w-full max-h-[80vh] object-contain rounded-2xl bg-[#0F0C1A]"
+        <div
+          className="fixed inset-0 z-[70] flex flex-col items-center justify-center bg-[#0F0C1A]/96 backdrop-blur-lg p-2 sm:p-4"
+          onClick={() => setActivePhoto(null)}
+          role="dialog"
+          aria-modal="true"
+          aria-label={activePhoto.title}
+        >
+          <button
+            type="button"
+            onClick={() => setActivePhoto(null)}
+            className="absolute top-3 right-3 sm:top-5 sm:right-5 z-20 p-2.5 rounded-full bg-[#0F0C1A]/90 text-[#F6EFE0] border border-[#D4AF37]/50 hover:bg-[#7A1F3D] transition cursor-pointer shadow-lg"
+            aria-label="বন্ধ করুন"
+          >
+            <X className="w-6 h-6" />
+          </button>
+
+          <div
+            className="relative flex flex-col items-center justify-center w-full max-w-[min(96vw,1400px)] max-h-[96dvh]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img
+              src={activePhoto.url}
+              alt={activePhoto.title}
+              className="max-w-full max-h-[88dvh] w-auto h-auto object-contain rounded-xl sm:rounded-2xl border-2 border-[#D4AF37]/60 shadow-[0_0_60px_rgba(212,175,55,0.25)] bg-[#0F0C1A]"
             />
-            <div className="p-4 text-center">
-              <h3 className="text-lg font-bold text-[#F0D78C] font-serif">{activePhoto.title}</h3>
-              <p className="text-xs text-[#B3A6C9] mt-1">Gaan Bristy Grand Family Collection</p>
+            <div className="mt-3 sm:mt-4 text-center px-4 max-w-2xl">
+              <span className="inline-block text-[10px] sm:text-xs bg-[#7A1F3D] text-[#F0D78C] font-bold px-2.5 py-0.5 rounded-full border border-[#D4AF37]/40 mb-2">
+                {CATEGORY_LABELS[activePhoto.category]}
+              </span>
+              <h3 className="text-base sm:text-xl font-bold text-[#F0D78C] font-serif">{activePhoto.title}</h3>
+              <p className="text-[11px] sm:text-xs text-[#B3A6C9] mt-1">Gaan Bristy Grand Family Collection</p>
             </div>
           </div>
         </div>
