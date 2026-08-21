@@ -84,3 +84,16 @@ export interface GuestbookEntry {
   badge?: string;
   avatarColor?: string;
 }
+
+export type ProgramLedgerKind = 'income' | 'expense';
+
+export interface ProgramLedgerEntry {
+  id: string;
+  kind: ProgramLedgerKind;
+  title: string;
+  amount: number;
+  note?: string;
+  category?: string;
+  createdBy: string;
+  createdAt: string;
+}

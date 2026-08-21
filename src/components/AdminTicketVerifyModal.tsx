@@ -6,10 +6,11 @@ import AdminGuestList from './AdminGuestList';
 import AdminGuestEditForm from './AdminGuestEditForm';
 import AdminAssignPanel from './AdminAssignPanel';
 import AdminGalleryManager from './AdminGalleryManager';
+import AdminBudgetPanel from './AdminBudgetPanel';
 import AdminLoginGate from './AdminLoginGate';
 import { getAdminPanelUrl, ADMIN_PANEL_PIN } from '../config/adminConfig';
-import { getAdminActorName, getAdminRole, isAdminSessionActive } from '../utils/adminStorage';
-import { X, Search, ShieldCheck, CheckCircle2, User, Phone, Sparkles, AlertCircle, Camera, CameraOff, Upload, QrCode, RefreshCw, UserPlus, List, Pencil, Crown, Link2, Copy, Check, ImagePlus } from 'lucide-react';
+import { getAdminActorName, getAdminRole, isAdminSessionActive, isSuperAdminSession } from '../utils/adminStorage';
+import { X, Search, ShieldCheck, CheckCircle2, User, Phone, Sparkles, AlertCircle, Camera, CameraOff, Upload, QrCode, RefreshCw, UserPlus, List, Pencil, Crown, Link2, Copy, Check, ImagePlus, Wallet } from 'lucide-react';
 
 interface AdminTicketVerifyModalProps {
   isOpen: boolean;
@@ -18,7 +19,7 @@ interface AdminTicketVerifyModalProps {
 }
 
 export default function AdminTicketVerifyModal({ isOpen, onClose, registeredTickets }: AdminTicketVerifyModalProps) {
-  const [panelTab, setPanelTab] = useState<'verify' | 'create' | 'list' | 'edit' | 'assign' | 'gallery'>('verify');
+  const [panelTab, setPanelTab] = useState<'verify' | 'create' | 'list' | 'edit' | 'assign' | 'gallery' | 'budget'>('verify');
   const [isAuthenticated, setIsAuthenticated] = useState(() => isAdminSessionActive());
   const [linkCopied, setLinkCopied] = useState(false);
   const [activeTab, setActiveTab] = useState<'camera' | 'manual'>('camera');
@@ -177,7 +178,8 @@ export default function AdminTicketVerifyModal({ isOpen, onClose, registeredTick
     onClose();
   };
 
-  const switchPanelTab = (tab: 'verify' | 'create' | 'list' | 'edit' | 'assign' | 'gallery') => {
+  const switchPanelTab = (tab: 'verify' | 'create' | 'list' | 'edit' | 'assign' | 'gallery' | 'budget') => {
+    if (tab === 'budget' && !isSuperAdminSession()) return;
     if (tab !== 'verify') stopCameraScanner();
     setPanelTab(tab);
     setSearchError('');
@@ -196,6 +198,12 @@ export default function AdminTicketVerifyModal({ isOpen, onClose, registeredTick
   }, [isOpen]);
 
   useEffect(() => {
+    if (panelTab === 'budget' && !isSuperAdminSession()) {
+      setPanelTab('verify');
+    }
+  }, [panelTab, isAuthenticated]);
+
+  useEffect(() => {
     return () => {
       stopCameraScanner();
     };
@@ -204,7 +212,12 @@ export default function AdminTicketVerifyModal({ isOpen, onClose, registeredTick
   if (!isOpen) return null;
 
   const adminLink = getAdminPanelUrl();
-  const widePanel = panelTab === 'list' || panelTab === 'edit' || panelTab === 'gallery';
+  const widePanel =
+    panelTab === 'list' ||
+    panelTab === 'edit' ||
+    panelTab === 'gallery' ||
+    (panelTab === 'budget' && isSuperAdminSession());
+  const isSuperAdmin = isSuperAdminSession();
 
   return (
     <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center p-2 sm:p-4 bg-[#0F0C1A]/90 backdrop-blur-md overflow-y-auto">
@@ -319,6 +332,15 @@ export default function AdminTicketVerifyModal({ isOpen, onClose, registeredTick
               <ImagePlus className="w-4 h-4" />
               <span>গ্যালারি</span>
             </button>
+            {isSuperAdmin && (
+              <button
+                onClick={() => switchPanelTab('budget')}
+                className={`flex-1 min-w-[7rem] py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${panelTab === 'budget' ? 'gold-gradient-btn text-[#0F0C1A] shadow-md' : 'text-[#B3A6C9] hover:text-[#F6EFE0]'}`}
+              >
+                <Wallet className="w-4 h-4" />
+                <span>আয়-খরচ</span>
+              </button>
+            )}
           </div>
         </div>
 
@@ -351,6 +373,10 @@ export default function AdminTicketVerifyModal({ isOpen, onClose, registeredTick
         {panelTab === 'assign' && <AdminAssignPanel />}
 
         {panelTab === 'gallery' && <AdminGalleryManager />}
+
+        {panelTab === 'budget' && isSuperAdmin && (
+          <AdminBudgetPanel tickets={registeredTickets} actorName={getAdminActorName()} />
+        )}
 
         {panelTab === 'verify' && (
           <>
