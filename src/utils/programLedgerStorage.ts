@@ -12,6 +12,10 @@ import { db } from '../config/firebase';
 
 const LEDGER_COLLECTION = 'programLedger';
 
+function omitUndefined<T extends Record<string, unknown>>(data: T): Record<string, unknown> {
+  return Object.fromEntries(Object.entries(data).filter(([, value]) => value !== undefined));
+}
+
 function ledgerCol() {
   if (!db) throw new Error('Firebase চালু নেই');
   return collection(db, LEDGER_COLLECTION);
@@ -59,15 +63,18 @@ export async function addProgramLedgerEntry(input: {
     throw new Error('সঠিক পরিমাণ (amount) দিন');
   }
 
-  await addDoc(ledgerCol(), {
-    kind: input.kind,
-    title,
-    amount: Math.round(input.amount),
-    note: input.note?.trim() || undefined,
-    category: input.category?.trim() || undefined,
-    createdBy: input.createdBy.trim() || 'Admin',
-    createdAt: new Date().toISOString(),
-  });
+  await addDoc(
+    ledgerCol(),
+    omitUndefined({
+      kind: input.kind,
+      title,
+      amount: Math.round(input.amount),
+      note: input.note?.trim() || undefined,
+      category: input.category?.trim() || undefined,
+      createdBy: input.createdBy.trim() || 'Admin',
+      createdAt: new Date().toISOString(),
+    })
+  );
 }
 
 export async function deleteProgramLedgerEntry(entryId: string): Promise<void> {
