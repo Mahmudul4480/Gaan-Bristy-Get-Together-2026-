@@ -19,9 +19,18 @@ interface AdminGuestEditFormProps {
   onGuestUpdated: () => void;
   adminRole: AdminRole;
   actorName: string;
+  initialTicketId?: string | null;
+  onClearInitialEdit?: () => void;
 }
 
-export default function AdminGuestEditForm({ guests, onGuestUpdated, adminRole, actorName }: AdminGuestEditFormProps) {
+export default function AdminGuestEditForm({
+  guests,
+  onGuestUpdated,
+  adminRole,
+  actorName,
+  initialTicketId,
+  onClearInitialEdit,
+}: AdminGuestEditFormProps) {
   const [query, setQuery] = useState('');
   const [selected, setSelected] = useState<Ticket | null>(null);
   const [saved, setSaved] = useState(false);
@@ -60,6 +69,14 @@ export default function AdminGuestEditForm({ guests, onGuestUpdated, adminRole, 
     setSaved(false);
     setErrors({});
   };
+
+  useEffect(() => {
+    if (!initialTicketId) return;
+    const guest = guests.find((g) => g.ticketId === initialTicketId);
+    if (!guest) return;
+    if (selected?.ticketId === initialTicketId) return;
+    selectGuest(guest);
+  }, [initialTicketId, guests, selected?.ticketId]);
 
   const updateField = <K extends keyof Ticket>(key: K, value: Ticket[K]) => {
     if (!selected) return;
@@ -195,7 +212,10 @@ export default function AdminGuestEditForm({ guests, onGuestUpdated, adminRole, 
               </p>
               <button
                 type="button"
-                onClick={() => setSelected(null)}
+                onClick={() => {
+                  setSelected(null);
+                  onClearInitialEdit?.();
+                }}
                 className="text-xs text-[#B3A6C9] hover:text-[#F6EFE0] cursor-pointer"
               >
                 ← অন্য card

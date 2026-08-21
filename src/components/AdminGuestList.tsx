@@ -28,12 +28,14 @@ import {
   ShieldAlert,
   ShieldCheck,
   ScrollText,
+  Pencil,
 } from 'lucide-react';
 
 interface AdminGuestListProps {
   guests: Ticket[];
   adminRole: AdminRole;
   actorName: string;
+  onEditGuest?: (ticket: Ticket) => void;
 }
 
 type StatusFilter = 'all' | 'Pending' | 'Confirmed' | 'Rejected';
@@ -66,7 +68,7 @@ function formatLogTime(iso?: string): string {
   return date.toLocaleString('bn-BD', { dateStyle: 'short', timeStyle: 'short' });
 }
 
-export default function AdminGuestList({ guests, adminRole, actorName }: AdminGuestListProps) {
+export default function AdminGuestList({ guests, adminRole, actorName, onEditGuest }: AdminGuestListProps) {
   const [query, setQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [previewTicket, setPreviewTicket] = useState<Ticket | null>(null);
@@ -502,6 +504,16 @@ export default function AdminGuestList({ guests, adminRole, actorName }: AdminGu
                     </td>
                     <td className="px-3 py-2">
                       <div className="flex flex-wrap gap-1.5">
+                        {onEditGuest && (
+                          <button
+                            type="button"
+                            onClick={() => onEditGuest(g)}
+                            className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-[#1C1730] border border-[#D4AF37]/50 text-[#F0D78C] font-bold cursor-pointer"
+                          >
+                            <Pencil className="w-3.5 h-3.5" />
+                            Edit
+                          </button>
+                        )}
                         {g.status === 'Pending' &&
                           (isSuperAdmin ? (
                             <>

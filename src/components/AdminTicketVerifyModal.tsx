@@ -27,8 +27,7 @@ export default function AdminTicketVerifyModal({ isOpen, onClose, registeredTick
   const [searchedTicket, setSearchedTicket] = useState<Ticket | null>(null);
   const [entryChecked, setEntryChecked] = useState(false);
   const [searchError, setSearchError] = useState('');
-  
-  // Camera scanner states
+  const [editTicketId, setEditTicketId] = useState<string | null>(null);
   const [isScanning, setIsScanning] = useState(false);
   const [cameraError, setCameraError] = useState('');
   const scannerRef = useRef<Html5Qrcode | null>(null);
@@ -181,7 +180,15 @@ export default function AdminTicketVerifyModal({ isOpen, onClose, registeredTick
   const switchPanelTab = (tab: 'verify' | 'create' | 'list' | 'edit' | 'assign' | 'gallery' | 'budget') => {
     if (tab === 'budget' && !isSuperAdminSession()) return;
     if (tab !== 'verify') stopCameraScanner();
+    if (tab !== 'edit') setEditTicketId(null);
     setPanelTab(tab);
+    setSearchError('');
+  };
+
+  const openGuestEdit = (ticket: Ticket) => {
+    stopCameraScanner();
+    setEditTicketId(ticket.ticketId);
+    setPanelTab('edit');
     setSearchError('');
   };
 
@@ -358,6 +365,7 @@ export default function AdminTicketVerifyModal({ isOpen, onClose, registeredTick
             guests={registeredTickets}
             adminRole={getAdminRole()}
             actorName={getAdminActorName()}
+            onEditGuest={openGuestEdit}
           />
         )}
 
@@ -367,6 +375,8 @@ export default function AdminTicketVerifyModal({ isOpen, onClose, registeredTick
             onGuestUpdated={() => {}}
             adminRole={getAdminRole()}
             actorName={getAdminActorName()}
+            initialTicketId={editTicketId}
+            onClearInitialEdit={() => setEditTicketId(null)}
           />
         )}
 
