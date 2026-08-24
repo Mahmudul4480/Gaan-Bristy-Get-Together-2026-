@@ -153,7 +153,9 @@ export default function EventDetails({ onOpenRegister }: EventDetailsProps) {
               </div>
 
               <p className="text-xs sm:text-sm text-[#B3A6C9] leading-relaxed mb-6 font-body">
-                গুলশান ক্লাবের হল ধারণক্ষমতা ও ডিসিপ্লিন নিশ্চিতকরণে নির্ধারিত আসন সংখ্যার অতিরিক্ত কোনো রেজিস্ট্রেশন গ্রহণ করা হবে না। ১৫ সেপ্টেম্বর ২০২৬ তারিখের পূর্বে রেজিস্ট্রেশন সম্পন্ন করার অনুরোধ রইলো।
+                গুলশান ক্লাবের হল ধারণক্ষমতা ও ডিসিপ্লিন নিশ্চিতকরণে নির্ধারিত আসন সংখ্যার অতিরিক্ত কোনো রেজিস্ট্রেশন গ্রহণ করা হবে না।{' '}
+                {EVENT_DETAILS.registrationDeadlineBengali} ({EVENT_DETAILS.registrationDeadlineTimeBengali})-এর
+                মধ্যে রেজিস্ট্রেশন সম্পন্ন করার অনুরোধ রইলো।
               </p>
 
               <div className="space-y-3 pt-4 border-t border-[#D4AF37]/20 text-xs text-[#F6EFE0]">

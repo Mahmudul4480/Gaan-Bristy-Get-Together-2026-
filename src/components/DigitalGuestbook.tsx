@@ -1,8 +1,14 @@
 import { useState, useEffect, FormEvent } from 'react';
 import { GuestbookEntry } from '../types';
-import { MessageSquarePlus, Heart, Music, Send, Sparkles, User, Search, CheckCircle2, MessageCircle, Star } from 'lucide-react';
+import {
+  addGuestbookEntry,
+  formatGuestbookTimestamp,
+  subscribeToGuestbookEntries,
+  updateGuestbookLikes,
+} from '../utils/guestbookStorage';
+import { MessageSquarePlus, Heart, Music, Send, Sparkles, User, Search, CheckCircle2, MessageCircle, Star, Loader2, AlertCircle } from 'lucide-react';
 
-const INITIAL_GUESTBOOK_ENTRIES: GuestbookEntry[] = [
+const SEED_GUESTBOOK_ENTRIES: GuestbookEntry[] = [
   {
     id: 'gb-msg-1',
     name: 'MD SAZZAD HOSSAIN',
@@ -60,18 +66,15 @@ const INITIAL_GUESTBOOK_ENTRIES: GuestbookEntry[] = [
   }
 ];
 
+function isSeedEntry(id: string): boolean {
+  return id.startsWith('gb-msg-');
+}
+
 export default function DigitalGuestbook() {
-  const [entries, setEntries] = useState<GuestbookEntry[]>(() => {
-    try {
-      const saved = localStorage.getItem('gb_guestbook_entries');
-      if (saved) {
-        return JSON.parse(saved);
-      }
-    } catch {
-      // Fallback
-    }
-    return INITIAL_GUESTBOOK_ENTRIES;
-  });
+  const [liveEntries, setLiveEntries] = useState<GuestbookEntry[]>([]);
+  const [seedEntries, setSeedEntries] = useState<GuestbookEntry[]>(SEED_GUESTBOOK_ENTRIES);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const [likedMap, setLikedMap] = useState<Record<string, boolean>>(() => {
     try {
@@ -91,14 +94,23 @@ export default function DigitalGuestbook() {
   const [formMessage, setFormMessage] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [submittedSuccess, setSubmittedSuccess] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    try {
-      localStorage.setItem('gb_guestbook_entries', JSON.stringify(entries));
-    } catch {
-      // Ignore
-    }
-  }, [entries]);
+    const unsubscribe = subscribeToGuestbookEntries(
+      (entries) => {
+        setLiveEntries(entries);
+        setIsLoading(false);
+        setLoadError(null);
+      },
+      (error) => {
+        setIsLoading(false);
+        setLoadError(error.message || 'গেস্টবুক লোড করা যায়নি।');
+      }
+    );
+    return unsubscribe;
+  }, []);
 
   useEffect(() => {
     try {
@@ -108,51 +120,57 @@ export default function DigitalGuestbook() {
     }
   }, [likedMap]);
 
-  const handleToggleLike = (id: string) => {
-    const isLiked = !!likedMap[id];
-    setLikedMap(prev => ({ ...prev, [id]: !isLiked }));
-    setEntries(prev =>
-      prev.map(item => {
-        if (item.id === id) {
-          return {
-            ...item,
-            likes: isLiked ? Math.max(0, item.likes - 1) : item.likes + 1
-          };
-        }
-        return item;
-      })
-    );
+  const entries = [...liveEntries, ...seedEntries];
+
+  const handleToggleLike = async (entry: GuestbookEntry) => {
+    const isLiked = !!likedMap[entry.id];
+    const nextLikes = isLiked ? Math.max(0, entry.likes - 1) : entry.likes + 1;
+
+    setLikedMap((prev) => ({ ...prev, [entry.id]: !isLiked }));
+
+    if (isSeedEntry(entry.id)) {
+      setSeedEntries((prev) =>
+        prev.map((item) => (item.id === entry.id ? { ...item, likes: nextLikes } : item))
+      );
+      return;
+    }
+
+    try {
+      await updateGuestbookLikes(entry.id, nextLikes);
+    } catch {
+      setLikedMap((prev) => ({ ...prev, [entry.id]: isLiked }));
+    }
   };
 
-  const handleSubmitMessage = (e: FormEvent) => {
+  const handleSubmitMessage = async (e: FormEvent) => {
     e.preventDefault();
-    if (!formName.trim() || !formMessage.trim()) return;
+    if (!formName.trim() || !formMessage.trim() || isSubmitting) return;
 
-    const newEntry: GuestbookEntry = {
-      id: `gb-msg-${Date.now()}`,
-      name: formName.trim(),
-      starMakerId: formStarMakerId.trim() || undefined,
-      favoriteSong: formFavoriteSong.trim() || undefined,
-      message: formMessage.trim(),
-      timestamp: 'এইমাত্র',
-      likes: 1,
-      badge: formStarMakerId.trim() ? 'GB Member' : 'Guest',
-      avatarColor: 'from-[#D4AF37] to-[#7A1F3D]'
-    };
+    setIsSubmitting(true);
+    setSubmitError(null);
 
-    setEntries([newEntry, ...entries]);
-    setFormName('');
-    setFormStarMakerId('');
-    setFormFavoriteSong('');
-    setFormMessage('');
-    setSubmittedSuccess(true);
+    try {
+      await addGuestbookEntry({
+        name: formName,
+        starMakerId: formStarMakerId,
+        favoriteSong: formFavoriteSong,
+        message: formMessage,
+      });
 
-    setTimeout(() => {
-      setSubmittedSuccess(false);
-    }, 4000);
+      setFormName('');
+      setFormStarMakerId('');
+      setFormFavoriteSong('');
+      setFormMessage('');
+      setSubmittedSuccess(true);
+      setTimeout(() => setSubmittedSuccess(false), 4000);
+    } catch (error) {
+      setSubmitError(error instanceof Error ? error.message : 'বার্তা পোস্ট করা যায়নি।');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const filteredEntries = entries.filter(item => {
+  const filteredEntries = entries.filter((item) => {
     if (!searchQuery.trim()) return true;
     const query = searchQuery.toLowerCase();
     return (
@@ -162,6 +180,8 @@ export default function DigitalGuestbook() {
       (item.favoriteSong && item.favoriteSong.toLowerCase().includes(query))
     );
   });
+
+  const guestMessageCount = liveEntries.length;
 
   return (
     <section id="guestbook" className="py-16 bg-[#0F0C1A] text-white relative overflow-hidden border-t border-[#7A1F3D]/30">
@@ -178,7 +198,7 @@ export default function DigitalGuestbook() {
             Digital Guestbook
           </h2>
           <p className="text-[#B3A6C9] text-sm sm:text-base font-body">
-            ২০২৬ এর গ্র্যান্ড মিলনমেলা উপলক্ষে আপনার মূল্যবান শুভেচ্ছা ও মতামত লিখে গেস্টবুকে পোস্ট করুন।
+            ২০২৬ এর গ্র্যান্ড মিলনমেলা উপলক্ষে আপনার মূল্যবান শুভেচ্ছা ও মতামত লিখে গেস্টবুকে পোস্ট করুন — সবাই একই জায়গায় দেখতে পাবে।
           </p>
           <div className="w-24 h-1 bg-gradient-to-r from-[#7A1F3D] to-[#D4AF37] mx-auto my-3 rounded-full"></div>
         </div>
@@ -195,7 +215,14 @@ export default function DigitalGuestbook() {
             {submittedSuccess && (
               <div className="mb-5 p-3.5 bg-[#7A1F3D]/30 border border-[#7A1F3D] text-white rounded-2xl text-xs font-bold flex items-center gap-2 animate-bounce">
                 <CheckCircle2 className="w-5 h-5 text-[#7A1F3D] shrink-0" />
-                <span>ধন্যবাদ! আপনার বার্তাটি সফলভাবে গেস্টবুকে যুক্ত হয়েছে।</span>
+                <span>ধন্যবাদ! আপনার বার্তাটি সবার জন্য গেস্টবুকে যুক্ত হয়েছে।</span>
+              </div>
+            )}
+
+            {submitError && (
+              <div className="mb-5 p-3.5 bg-red-900/30 border border-red-500/50 text-red-100 rounded-2xl text-xs font-bold flex items-start gap-2">
+                <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+                <span>{submitError}</span>
               </div>
             )}
 
@@ -264,10 +291,20 @@ export default function DigitalGuestbook() {
 
               <button
                 type="submit"
-                className="btn-lighting w-full py-3.5 text-white font-extrabold rounded-full text-sm transition shadow-xl flex items-center justify-center gap-2 cursor-pointer"
+                disabled={isSubmitting}
+                className="btn-lighting w-full py-3.5 text-white font-extrabold rounded-full text-sm transition shadow-xl flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                <Send className="w-4 h-4 text-white" />
-                <span className="text-lighting">গেস্টবুকে বার্তা পোস্ট করুন</span>
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>পোস্ট হচ্ছে...</span>
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-4 h-4 text-white" />
+                    <span className="text-lighting">গেস্টবুকে বার্তা পোস্ট করুন</span>
+                  </>
+                )}
               </button>
             </form>
           </div>
@@ -277,9 +314,17 @@ export default function DigitalGuestbook() {
             
             {/* Search & Stats Bar */}
             <div className="bg-[#1C1730] border border-[#7A1F3D]/40 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-lg">
-              <div className="flex items-center gap-2 text-xs text-white font-semibold w-full sm:w-auto">
-                <MessageCircle className="w-4 h-4 text-[#7A1F3D]" />
-                <span>মোট শুভেচ্ছা বার্তা: <strong className="text-[#7A1F3D] font-mono text-sm">{entries.length}</strong></span>
+              <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 text-xs text-white font-semibold w-full sm:w-auto">
+                <div className="flex items-center gap-2">
+                  <MessageCircle className="w-4 h-4 text-[#7A1F3D]" />
+                  <span>
+                    অতিথির বার্তা: <strong className="text-[#D4AF37] font-mono text-sm">{guestMessageCount}</strong>
+                  </span>
+                </div>
+                <span className="hidden sm:inline text-[#B3A6C9]">•</span>
+                <span className="text-[#B3A6C9]">
+                  মোট দেখানো: <strong className="text-[#7A1F3D] font-mono">{entries.length}</strong>
+                </span>
               </div>
 
               <div className="relative w-full sm:w-64">
@@ -294,9 +339,21 @@ export default function DigitalGuestbook() {
               </div>
             </div>
 
+            {loadError && (
+              <div className="p-3.5 bg-red-900/20 border border-red-500/40 rounded-2xl text-xs text-red-100 flex items-start gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                <span>{loadError}</span>
+              </div>
+            )}
+
             {/* Scrollable Container */}
             <div className="max-h-[520px] overflow-y-auto pr-1 space-y-4 custom-scrollbar">
-              {filteredEntries.length === 0 ? (
+              {isLoading ? (
+                <div className="bg-[#1C1730]/50 border border-[#7A1F3D]/30 rounded-2xl p-8 text-center text-[#B3A6C9] space-y-3">
+                  <Loader2 className="w-6 h-6 animate-spin mx-auto text-[#7A1F3D]" />
+                  <p className="text-sm font-semibold">গেস্টবুক বার্তা লোড হচ্ছে...</p>
+                </div>
+              ) : filteredEntries.length === 0 ? (
                 <div className="bg-[#1C1730]/50 border border-[#7A1F3D]/30 rounded-2xl p-8 text-center text-[#B3A6C9] space-y-2">
                   <p className="text-sm font-semibold">কোনো বার্তা খুঁজে পাওয়া যায়নি!</p>
                   <p className="text-xs text-[#B3A6C9]">আপনার নিজস্ব বার্তা লিখে গেস্টবুকে যুক্ত করুন</p>
@@ -305,6 +362,7 @@ export default function DigitalGuestbook() {
                 filteredEntries.map((entry) => {
                   const isLiked = !!likedMap[entry.id];
                   const initialLetter = entry.name.charAt(0).toUpperCase();
+                  const isGuestPost = !isSeedEntry(entry.id);
 
                   return (
                     <div
@@ -327,6 +385,11 @@ export default function DigitalGuestbook() {
                                   {entry.badge}
                                 </span>
                               )}
+                              {isGuestPost && (
+                                <span className="bg-[#D4AF37]/20 text-[#F0D78C] border border-[#D4AF37]/40 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                                  নতুন
+                                </span>
+                              )}
                             </div>
 
                             <div className="flex items-center gap-2 text-[11px] text-[#B3A6C9] mt-0.5">
@@ -335,15 +398,15 @@ export default function DigitalGuestbook() {
                                   ID: {entry.starMakerId}
                                 </span>
                               )}
-                              <span>•</span>
-                              <span>{entry.timestamp}</span>
+                              {entry.starMakerId && <span>•</span>}
+                              <span>{formatGuestbookTimestamp(entry)}</span>
                             </div>
                           </div>
                         </div>
 
                         {/* Like Button */}
                         <button
-                          onClick={() => handleToggleLike(entry.id)}
+                          onClick={() => handleToggleLike(entry)}
                           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-bold transition cursor-pointer ${
                             isLiked
                               ? 'bg-[#7A1F3D] border-white text-white shadow-md'
@@ -382,4 +445,3 @@ export default function DigitalGuestbook() {
     </section>
   );
 }
-

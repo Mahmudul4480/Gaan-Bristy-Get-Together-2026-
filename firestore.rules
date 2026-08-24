@@ -83,6 +83,31 @@ service cloud.firestore {
       allow delete: if true;
     }
 
+    // Digital Guestbook — public read/write so every visitor sees the same
+    // messages live. create validates required fields; update is limited to
+    // the likes counter only.
+    match /guestbookEntries/{entryId} {
+      allow read: if true;
+
+      allow create: if request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.name.size() <= 120
+        && request.resource.data.message is string
+        && request.resource.data.message.size() > 0
+        && request.resource.data.message.size() <= 2000
+        && request.resource.data.likes is number
+        && request.resource.data.likes == 0
+        && request.resource.data.createdAt is string;
+
+      allow update: if request.resource.data.name == resource.data.name
+        && request.resource.data.message == resource.data.message
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.likes is number
+        && request.resource.data.likes >= 0;
+
+      allow delete: if true;
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }

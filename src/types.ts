@@ -80,6 +80,7 @@ export interface GuestbookEntry {
   message: string;
   favoriteSong?: string;
   timestamp: string;
+  createdAt?: string;
   likes: number;
   badge?: string;
   avatarColor?: string;

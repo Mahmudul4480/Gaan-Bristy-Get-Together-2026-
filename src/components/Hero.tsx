@@ -166,7 +166,10 @@ export default function Hero({ onOpenRegister, onExploreSchedule }: HeroProps) {
             <div className="bg-[#1C1730] border border-[#D4AF37]/40 rounded-2xl p-4 shadow-xl">
               <div className="flex items-center justify-center gap-2 mb-2 text-xs font-semibold text-[#F6EFE0]">
                 <Sparkles className="w-4 h-4 text-[#D4AF37]" />
-                <span>রেজিস্ট্রেশনের শেষ তারিখ: {EVENT_DETAILS.registrationDeadlineBengali}</span>
+                <span>
+                  রেজিস্ট্রেশনের শেষ: {EVENT_DETAILS.registrationDeadlineBengali} (
+                  {EVENT_DETAILS.registrationDeadlineTimeBengali})
+                </span>
               </div>
               <CountdownTimer targetDateISO={EVENT_DETAILS.registrationDeadlineISO} />
             </div>

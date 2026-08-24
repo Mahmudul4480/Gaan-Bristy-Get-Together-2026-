@@ -1,0 +1,142 @@
+import {
+  addDoc,
+  collection,
+  doc,
+  onSnapshot,
+  orderBy,
+  query,
+  updateDoc,
+} from 'firebase/firestore';
+import { GuestbookEntry } from '../types';
+import { db } from '../config/firebase';
+
+const GUESTBOOK_COLLECTION = 'guestbookEntries';
+
+const AVATAR_GRADIENTS = [
+  'from-[#D4AF37] to-[#7A1F3D]',
+  'from-[#7A1F3D] to-[#0F0C1A]',
+  'from-[#D4AF37] to-[#1C1730]',
+  'from-[#7A1F3D] to-[#D4AF37]',
+  'from-[#1C1730] to-[#7A1F3D]',
+];
+
+function omitUndefined<T extends Record<string, unknown>>(data: T): Record<string, unknown> {
+  return Object.fromEntries(Object.entries(data).filter(([, value]) => value !== undefined));
+}
+
+function pickAvatarColor(name: string): string {
+  let hash = 0;
+  for (let i = 0; i < name.length; i += 1) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return AVATAR_GRADIENTS[Math.abs(hash) % AVATAR_GRADIENTS.length];
+}
+
+export const isGuestbookStorageReady = Boolean(db);
+
+export function formatGuestbookTimestamp(entry: GuestbookEntry): string {
+  if (entry.createdAt) {
+    const date = new Date(entry.createdAt);
+    if (!Number.isNaN(date.getTime())) {
+      return date.toLocaleString('bn-BD', {
+        timeZone: 'Asia/Dhaka',
+        dateStyle: 'medium',
+        timeStyle: 'short',
+      });
+    }
+  }
+  return entry.timestamp;
+}
+
+export function subscribeToGuestbookEntries(
+  onChange: (entries: GuestbookEntry[]) => void,
+  onError?: (error: Error) => void
+): () => void {
+  if (!db) {
+    onChange([]);
+    return () => {};
+  }
+
+  const guestbookQuery = query(collection(db, GUESTBOOK_COLLECTION), orderBy('createdAt', 'desc'));
+
+  return onSnapshot(
+    guestbookQuery,
+    (snapshot) => {
+      const entries = snapshot.docs.map((docSnap) => {
+        const data = docSnap.data() as Omit<GuestbookEntry, 'id'>;
+        return { ...data, id: docSnap.id };
+      });
+      onChange(entries);
+    },
+    (error) => {
+      console.error('[Guestbook storage] Subscription failed:', error);
+      onError?.(error as Error);
+    }
+  );
+}
+
+export async function addGuestbookEntry(input: {
+  name: string;
+  starMakerId?: string;
+  favoriteSong?: string;
+  message: string;
+}): Promise<GuestbookEntry> {
+  if (!db) {
+    throw new Error('Firebase কনফিগার করা নেই।');
+  }
+
+  const trimmedName = input.name.trim();
+  const trimmedMessage = input.message.trim();
+  const starMakerId = input.starMakerId?.trim();
+  const favoriteSong = input.favoriteSong?.trim();
+  const createdAt = new Date().toISOString();
+
+  const payload = omitUndefined({
+    name: trimmedName,
+    starMakerId: starMakerId || undefined,
+    favoriteSong: favoriteSong || undefined,
+    message: trimmedMessage,
+    likes: 0,
+    badge: starMakerId ? 'GB Member' : 'Guest',
+    avatarColor: pickAvatarColor(trimmedName),
+    createdAt,
+  });
+
+  try {
+    const docRef = await addDoc(collection(db, GUESTBOOK_COLLECTION), payload);
+    return {
+      id: docRef.id,
+      name: trimmedName,
+      starMakerId,
+      favoriteSong,
+      message: trimmedMessage,
+      timestamp: 'এইমাত্র',
+      likes: 0,
+      badge: starMakerId ? 'GB Member' : 'Guest',
+      avatarColor: pickAvatarColor(trimmedName),
+      createdAt,
+    };
+  } catch (error) {
+    console.error('[Guestbook storage] Create failed:', error);
+    const code = (error as { code?: string })?.code || '';
+    if (code === 'permission-denied') {
+      throw new Error(
+        'Firestore Rules Publish করা হয়নি। Firebase Console → Firestore Database → Rules ট্যাবে firestore.rules Publish করুন।'
+      );
+    }
+    throw new Error('বার্তা পোস্ট করা যায়নি — আবার চেষ্টা করুন।');
+  }
+}
+
+export async function updateGuestbookLikes(entryId: string, likes: number): Promise<void> {
+  if (!db) {
+    throw new Error('Firebase কনফিগার করা নেই।');
+  }
+
+  try {
+    await updateDoc(doc(db, GUESTBOOK_COLLECTION, entryId), { likes: Math.max(0, likes) });
+  } catch (error) {
+    console.error('[Guestbook storage] Like update failed:', error);
+    throw new Error('লাইক আপডেট করা যায়নি।');
+  }
+}
