@@ -16,7 +16,7 @@ import FallingMusicNotes from './components/FallingMusicNotes';
 import { Ticket } from './types';
 import { subscribeToHonorableGuests, isFirebaseConfigured } from './utils/guestStorage';
 import { isAdminUrlMatch } from './utils/adminStorage';
-import { navigateToSection, scrollToHashFromLocation, scrollToSectionWithRetry } from './utils/scrollToSection';
+import { bindHashNavigation, navigateToSection } from './utils/scrollToSection';
 import { MessageSquare, Ticket as TicketIcon } from 'lucide-react';
 
 function getGuestIdFromUrl(): string | null {
@@ -55,24 +55,9 @@ export default function App() {
       setIsAdminVerifyOpen(true);
     }
 
-    const hashSection = window.location.hash.replace(/^#/, '');
-    const targetSection = hashSection || (guestId ? 'honorable-guests' : '');
-
-    let cancelScroll = () => {};
-    if (targetSection) {
-      cancelScroll = scrollToSectionWithRetry(targetSection, { initialBehavior: 'auto' });
-    }
-
-    const onHashChange = () => {
-      cancelScroll();
-      cancelScroll = scrollToHashFromLocation();
-    };
-    window.addEventListener('hashchange', onHashChange);
-
-    return () => {
-      cancelScroll();
-      window.removeEventListener('hashchange', onHashChange);
-    };
+    return bindHashNavigation({
+      fallbackSection: guestId ? 'honorable-guests' : undefined,
+    });
   }, []);
 
   const handleSelectGuest = (ticketId: string | null) => {
@@ -98,7 +83,7 @@ export default function App() {
   return (
     <div id="app-root" className="relative min-h-screen bg-[#0F0C1A] text-[#F6EFE0] font-sans antialiased selection:bg-[#D4AF37] selection:text-[#0F0C1A] midnight-bg-glow overflow-x-hidden">
 
-      <div className="bg-[#7A1F3D] text-[#F6EFE0] py-2 px-3 sm:px-4 border-b border-[#D4AF37]/30 text-xs sm:text-sm font-semibold flex items-center justify-between gap-2 shadow-lg z-50 relative">
+      <div id="top-announcement-bar" className="bg-[#7A1F3D] text-[#F6EFE0] py-2 px-3 sm:px-4 border-b border-[#D4AF37]/30 text-xs sm:text-sm font-semibold flex items-center justify-between gap-2 shadow-lg z-50 relative">
         <div className="max-w-7xl mx-auto w-full flex items-center justify-between gap-2 sm:gap-3">
           <div className="flex items-center gap-1.5 sm:gap-2 overflow-hidden min-w-0 flex-1">
             <span className="bg-[#D4AF37] text-[#0F0C1A] text-[9px] sm:text-[10px] font-black uppercase px-1.5 sm:px-2 py-0.5 rounded-md animate-pulse shrink-0 shadow-sm">LIVE</span>

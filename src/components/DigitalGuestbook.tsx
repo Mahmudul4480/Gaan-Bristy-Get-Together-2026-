@@ -1,14 +1,17 @@
-import { useState, useEffect, FormEvent } from 'react';
+import { useState, useEffect, useRef, FormEvent } from 'react';
 import { GuestbookEntry } from '../types';
 import {
   addGuestbookEntry,
   formatGuestbookTimestamp,
+  getDisplayFavoriteSong,
+  migrateLegacyGuestbookEntries,
+  shouldShowFavoriteSong,
   subscribeToGuestbookEntries,
   updateGuestbookLikes,
 } from '../utils/guestbookStorage';
-import { MessageSquarePlus, Heart, Music, Send, Sparkles, User, Search, CheckCircle2, MessageCircle, Star, Loader2, AlertCircle } from 'lucide-react';
+import { MessageSquarePlus, Heart, Music, Send, Sparkles, User, Search, CheckCircle2, MessageCircle, Star, Loader2, AlertCircle, ChevronDown } from 'lucide-react';
 
-const SEED_GUESTBOOK_ENTRIES: GuestbookEntry[] = [
+const TEAM_WELCOME_ENTRIES: GuestbookEntry[] = [
   {
     id: 'gb-msg-1',
     name: 'MD SAZZAD HOSSAIN',
@@ -66,15 +69,97 @@ const SEED_GUESTBOOK_ENTRIES: GuestbookEntry[] = [
   }
 ];
 
-function isSeedEntry(id: string): boolean {
+function isTeamEntry(id: string): boolean {
   return id.startsWith('gb-msg-');
+}
+
+function GuestbookMessageCard({
+  entry,
+  isLiked,
+  initialLetter,
+  isGuestPost = false,
+  onToggleLike,
+}: {
+  entry: GuestbookEntry;
+  isLiked: boolean;
+  initialLetter: string;
+  isGuestPost?: boolean;
+  onToggleLike: () => void | Promise<void>;
+}) {
+  const favoriteSong = getDisplayFavoriteSong(entry);
+
+  return (
+    <div className="bg-[#1C1730] border border-[#7A1F3D]/30 hover:border-[#7A1F3D] rounded-2xl p-5 shadow-lg transition duration-200 relative group">
+      <div className="flex items-start justify-between gap-3 mb-3">
+        <div className="flex items-center gap-3">
+          <div className={`w-10 h-10 rounded-full bg-gradient-to-tr ${entry.avatarColor || 'from-[#7A1F3D] to-[#0F0C1A]'} flex items-center justify-center font-bold text-white text-base shadow-md shrink-0 border border-[#7A1F3D]`}>
+            {initialLetter}
+          </div>
+
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h4 className="text-sm font-bold text-white font-serif">{entry.name}</h4>
+              {entry.badge && (
+                <span className="bg-[#7A1F3D] text-white border border-white/30 text-[10px] font-black px-2 py-0.5 rounded-full flex items-center gap-1 font-mono shadow-sm">
+                  <Star className="w-2.5 h-2.5 fill-white" />
+                  {entry.badge}
+                </span>
+              )}
+              {isGuestPost && (
+                <span className="bg-[#D4AF37]/20 text-[#F0D78C] border border-[#D4AF37]/40 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                  অতিথি
+                </span>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2 text-[11px] text-[#B3A6C9] mt-0.5">
+              {entry.starMakerId && (
+                <span className="font-mono text-[#7A1F3D] font-bold">
+                  ID: {entry.starMakerId}
+                </span>
+              )}
+              {entry.starMakerId && <span>•</span>}
+              <span>{formatGuestbookTimestamp(entry)}</span>
+            </div>
+          </div>
+        </div>
+
+        <button
+          onClick={onToggleLike}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-bold transition cursor-pointer ${
+            isLiked
+              ? 'bg-[#7A1F3D] border-white text-white shadow-md'
+              : 'bg-[#0F0C1A] border-[#7A1F3D]/40 text-[#B3A6C9] hover:text-white hover:border-[#7A1F3D]'
+          }`}
+        >
+          <Heart className={`w-3.5 h-3.5 ${isLiked ? 'fill-white text-white' : ''}`} />
+          <span className="font-mono">{entry.likes}</span>
+        </button>
+      </div>
+
+      <p className="text-xs sm:text-sm text-white leading-relaxed pl-1 sm:pl-2 border-l-2 border-[#7A1F3D] my-2 font-body">
+        "{entry.message}"
+      </p>
+
+      {shouldShowFavoriteSong(entry) && favoriteSong && (
+        <div className="mt-3 pt-2 border-t border-[#7A1F3D]/20 flex items-center gap-1.5 text-[11px] text-[#B3A6C9]">
+          <Music className="w-3 h-3 text-[#7A1F3D]" />
+          <span>পছন্দের গান:</span>
+          <span className="text-[#D4AF37] font-medium italic">"{favoriteSong}"</span>
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default function DigitalGuestbook() {
   const [liveEntries, setLiveEntries] = useState<GuestbookEntry[]>([]);
-  const [seedEntries, setSeedEntries] = useState<GuestbookEntry[]>(SEED_GUESTBOOK_ENTRIES);
+  const [teamEntries, setTeamEntries] = useState<GuestbookEntry[]>(TEAM_WELCOME_ENTRIES);
+  const [showTeamMessages, setShowTeamMessages] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [migrationNotice, setMigrationNotice] = useState<string | null>(null);
+  const migrationStarted = useRef(false);
 
   const [likedMap, setLikedMap] = useState<Record<string, boolean>>(() => {
     try {
@@ -113,6 +198,21 @@ export default function DigitalGuestbook() {
   }, []);
 
   useEffect(() => {
+    if (isLoading || migrationStarted.current) return;
+    migrationStarted.current = true;
+
+    migrateLegacyGuestbookEntries(liveEntries)
+      .then((count) => {
+        if (count > 0) {
+          setMigrationNotice(`${count}টি পুরনো বার্তা সার্ভারে যুক্ত হয়েছে — এখন সবাই দেখতে পাবে।`);
+        }
+      })
+      .catch((error) => {
+        console.error('[Guestbook] Legacy migration failed:', error);
+      });
+  }, [isLoading, liveEntries]);
+
+  useEffect(() => {
     try {
       localStorage.setItem('gb_guestbook_liked_map', JSON.stringify(likedMap));
     } catch {
@@ -120,7 +220,7 @@ export default function DigitalGuestbook() {
     }
   }, [likedMap]);
 
-  const entries = [...liveEntries, ...seedEntries];
+  const entries = liveEntries;
 
   const handleToggleLike = async (entry: GuestbookEntry) => {
     const isLiked = !!likedMap[entry.id];
@@ -128,8 +228,8 @@ export default function DigitalGuestbook() {
 
     setLikedMap((prev) => ({ ...prev, [entry.id]: !isLiked }));
 
-    if (isSeedEntry(entry.id)) {
-      setSeedEntries((prev) =>
+    if (isTeamEntry(entry.id)) {
+      setTeamEntries((prev) =>
         prev.map((item) => (item.id === entry.id ? { ...item, likes: nextLikes } : item))
       );
       return;
@@ -323,7 +423,7 @@ export default function DigitalGuestbook() {
                 </div>
                 <span className="hidden sm:inline text-[#B3A6C9]">•</span>
                 <span className="text-[#B3A6C9]">
-                  মোট দেখানো: <strong className="text-[#7A1F3D] font-mono">{entries.length}</strong>
+                  মোট অতিথি বার্তা: <strong className="text-[#7A1F3D] font-mono">{entries.length}</strong>
                 </span>
               </div>
 
@@ -338,6 +438,13 @@ export default function DigitalGuestbook() {
                 />
               </div>
             </div>
+
+            {migrationNotice && (
+              <div className="p-3.5 bg-[#7A1F3D]/20 border border-[#D4AF37]/40 rounded-2xl text-xs text-[#F0D78C] flex items-start gap-2">
+                <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" />
+                <span>{migrationNotice}</span>
+              </div>
+            )}
 
             {loadError && (
               <div className="p-3.5 bg-red-900/20 border border-red-500/40 rounded-2xl text-xs text-red-100 flex items-start gap-2">
@@ -355,85 +462,57 @@ export default function DigitalGuestbook() {
                 </div>
               ) : filteredEntries.length === 0 ? (
                 <div className="bg-[#1C1730]/50 border border-[#7A1F3D]/30 rounded-2xl p-8 text-center text-[#B3A6C9] space-y-2">
-                  <p className="text-sm font-semibold">কোনো বার্তা খুঁজে পাওয়া যায়নি!</p>
-                  <p className="text-xs text-[#B3A6C9]">আপনার নিজস্ব বার্তা লিখে গেস্টবুকে যুক্ত করুন</p>
+                  <p className="text-sm font-semibold">এখনও কোনো অতিথি বার্তা নেই</p>
+                  <p className="text-xs text-[#B3A6C9]">প্রথম শুভেচ্ছা লিখে গেস্টবুকে যুক্ত করুন — সবাই দেখতে পাবে</p>
                 </div>
               ) : (
                 filteredEntries.map((entry) => {
                   const isLiked = !!likedMap[entry.id];
                   const initialLetter = entry.name.charAt(0).toUpperCase();
-                  const isGuestPost = !isSeedEntry(entry.id);
 
                   return (
-                    <div
-                      key={entry.id}
-                      className="bg-[#1C1730] border border-[#7A1F3D]/30 hover:border-[#7A1F3D] rounded-2xl p-5 shadow-lg transition duration-200 relative group"
-                    >
-                      <div className="flex items-start justify-between gap-3 mb-3">
-                        <div className="flex items-center gap-3">
-                          {/* Avatar Circle */}
-                          <div className={`w-10 h-10 rounded-full bg-gradient-to-tr ${entry.avatarColor || 'from-[#7A1F3D] to-[#0F0C1A]'} flex items-center justify-center font-bold text-white text-base shadow-md shrink-0 border border-[#7A1F3D]`}>
-                            {initialLetter}
-                          </div>
-
-                          <div>
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <h4 className="text-sm font-bold text-white font-serif">{entry.name}</h4>
-                              {entry.badge && (
-                                <span className="bg-[#7A1F3D] text-white border border-white/30 text-[10px] font-black px-2 py-0.5 rounded-full flex items-center gap-1 font-mono shadow-sm">
-                                  <Star className="w-2.5 h-2.5 fill-white" />
-                                  {entry.badge}
-                                </span>
-                              )}
-                              {isGuestPost && (
-                                <span className="bg-[#D4AF37]/20 text-[#F0D78C] border border-[#D4AF37]/40 text-[10px] font-bold px-2 py-0.5 rounded-full">
-                                  নতুন
-                                </span>
-                              )}
-                            </div>
-
-                            <div className="flex items-center gap-2 text-[11px] text-[#B3A6C9] mt-0.5">
-                              {entry.starMakerId && (
-                                <span className="font-mono text-[#7A1F3D] font-bold">
-                                  ID: {entry.starMakerId}
-                                </span>
-                              )}
-                              {entry.starMakerId && <span>•</span>}
-                              <span>{formatGuestbookTimestamp(entry)}</span>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Like Button */}
-                        <button
-                          onClick={() => handleToggleLike(entry)}
-                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-bold transition cursor-pointer ${
-                            isLiked
-                              ? 'bg-[#7A1F3D] border-white text-white shadow-md'
-                              : 'bg-[#0F0C1A] border-[#7A1F3D]/40 text-[#B3A6C9] hover:text-white hover:border-[#7A1F3D]'
-                          }`}
-                        >
-                          <Heart className={`w-3.5 h-3.5 ${isLiked ? 'fill-white text-white' : ''}`} />
-                          <span className="font-mono">{entry.likes}</span>
-                        </button>
-                      </div>
-
-                      {/* Message Content */}
-                      <p className="text-xs sm:text-sm text-white leading-relaxed pl-1 sm:pl-2 border-l-2 border-[#7A1F3D] my-2 font-body">
-                        "{entry.message}"
-                      </p>
-
-                      {/* Favorite Song Badge */}
-                      {entry.favoriteSong && (
-                        <div className="mt-3 pt-2 border-t border-[#7A1F3D]/20 flex items-center gap-1.5 text-[11px] text-[#B3A6C9]">
-                          <Music className="w-3 h-3 text-[#7A1F3D]" />
-                          <span>পছন্দের গান:</span>
-                          <span className="text-[#D4AF37] font-medium italic">"{entry.favoriteSong}"</span>
-                        </div>
-                      )}
+                    <div key={entry.id}>
+                      <GuestbookMessageCard
+                        entry={entry}
+                        isLiked={isLiked}
+                        initialLetter={initialLetter}
+                        isGuestPost
+                        onToggleLike={() => handleToggleLike(entry)}
+                      />
                     </div>
                   );
                 })
+              )}
+            </div>
+
+            <div className="pt-2">
+              <button
+                type="button"
+                onClick={() => setShowTeamMessages((open) => !open)}
+                className="w-full flex items-center justify-between gap-2 px-4 py-3 rounded-2xl bg-[#1C1730]/70 border border-[#7A1F3D]/30 text-xs font-bold text-[#B3A6C9] hover:text-[#F0D78C] transition cursor-pointer"
+              >
+                <span>আয়োজক দলের শুভেচ্ছা ({teamEntries.length})</span>
+                <ChevronDown className={`w-4 h-4 transition ${showTeamMessages ? 'rotate-180' : ''}`} />
+              </button>
+
+              {showTeamMessages && (
+                <div className="mt-3 space-y-4 max-h-[420px] overflow-y-auto pr-1 custom-scrollbar">
+                  {teamEntries.map((entry) => {
+                    const isLiked = !!likedMap[entry.id];
+                    const initialLetter = entry.name.charAt(0).toUpperCase();
+
+                    return (
+                      <div key={entry.id}>
+                        <GuestbookMessageCard
+                          entry={entry}
+                          isLiked={isLiked}
+                          initialLetter={initialLetter}
+                          onToggleLike={() => handleToggleLike(entry)}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
               )}
             </div>
 
