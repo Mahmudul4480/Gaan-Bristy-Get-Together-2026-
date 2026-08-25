@@ -199,11 +199,23 @@ export default function AdminTicketVerifyModal({ isOpen, onClose, registeredTick
     setTimeout(() => setLinkCopied(false), 2500);
   };
 
+  const pendingCount = registeredTickets.filter((t) => t.status === 'Pending').length;
+  const autoOpenedListRef = useRef(false);
+
   useEffect(() => {
     if (isOpen) {
       setIsAuthenticated(isAdminSessionActive());
+    } else {
+      autoOpenedListRef.current = false;
     }
   }, [isOpen]);
+
+  useEffect(() => {
+    if (isOpen && isAuthenticated && pendingCount > 0 && !autoOpenedListRef.current) {
+      setPanelTab('list');
+      autoOpenedListRef.current = true;
+    }
+  }, [isOpen, isAuthenticated, pendingCount]);
 
   useEffect(() => {
     if (panelTab === 'budget' && !isSuperAdminSession()) {
@@ -328,9 +340,9 @@ export default function AdminTicketVerifyModal({ isOpen, onClose, registeredTick
             >
               <List className="w-4 h-4" />
               <span>সব Card List</span>
-              {registeredTickets.filter((t) => t.status === 'Pending').length > 0 && (
+              {pendingCount > 0 && (
                 <span className="min-w-[1.15rem] h-5 px-1.5 rounded-full bg-[#A52C54] text-[#F6EFE0] text-[10px] font-black leading-5">
-                  {registeredTickets.filter((t) => t.status === 'Pending').length}
+                  {pendingCount}
                 </span>
               )}
             </button>

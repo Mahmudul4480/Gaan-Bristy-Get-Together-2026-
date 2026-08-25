@@ -62,6 +62,67 @@ function guestDocRef(ticketId: string) {
   return doc(db, GUESTS_COLLECTION, ticketId);
 }
 
+/** Generates a ticket id that is unlikely to collide with existing cards. */
+export function generateUniqueTicketId(existingIds?: Iterable<string>): string {
+  const taken = new Set(existingIds);
+  for (let attempt = 0; attempt < 30; attempt += 1) {
+    const randomPart = Math.floor(1000 + Math.random() * 9000);
+    const timePart = Date.now().toString().slice(-3);
+    const candidate = attempt < 10 ? `GB2026-${randomPart}` : `GB2026-${timePart}${randomPart.toString().slice(-1)}`;
+    if (!taken.has(candidate)) return candidate;
+  }
+  return `GB2026-${Date.now().toString().slice(-6)}`;
+}
+
+function buildSeatNumbers(ticketId: string, adultCount: number): string[] {
+  const base = Number.parseInt(ticketId.replace(/\D/g, '').slice(-4), 10) || 100;
+  return Array.from({ length: adultCount }, (_, i) => `VIP-${base + i}`);
+}
+
+/**
+ * Creates a brand-new public registration (status Pending). Uses a create-only
+ * write so an accidental ticket-id collision cannot overwrite an existing card.
+ */
+export async function createHonorableGuestRegistration(
+  ticket: Ticket,
+  options?: { existingIds?: Iterable<string> }
+): Promise<Ticket> {
+  if (!db) {
+    throw new Error('Firebase কনফিগার করা নেই। .env ফাইলে Firebase key যোগ করুন এবং সাইট রিস্টার্ট করুন।');
+  }
+
+  let nextTicket: Ticket = {
+    ...ticket,
+    status: 'Pending',
+    kidCount: ticket.kidCount ?? 0,
+    seatNumbers: ticket.seatNumbers?.length ? ticket.seatNumbers : buildSeatNumbers(ticket.ticketId, ticket.adultCount),
+  };
+
+  for (let attempt = 0; attempt < 8; attempt += 1) {
+    const ref = guestDocRef(nextTicket.ticketId);
+    try {
+      const existing = await getDoc(ref);
+      if (existing.exists()) {
+        const newId = generateUniqueTicketId(options?.existingIds);
+        nextTicket = {
+          ...nextTicket,
+          ticketId: newId,
+          seatNumbers: buildSeatNumbers(newId, nextTicket.adultCount),
+        };
+        continue;
+      }
+
+      await setDoc(ref, omitUndefined({ ...nextTicket }));
+      return nextTicket;
+    } catch (error) {
+      console.error('[Guest storage] Registration create failed:', error);
+      throw new Error(describeGuestSaveError(error));
+    }
+  }
+
+  throw new Error('নতুন টিকিট আইডি তৈরি করা যায়নি — আবার চেষ্টা করুন।');
+}
+
 /**
  * Saves (creates or updates) a guest's Honorable Guest Card in Firestore.
  * Every admin/browser subscribed via `subscribeToHonorableGuests` receives

@@ -14,7 +14,7 @@ export type SiteSectionId = (typeof SITE_SECTION_IDS)[number];
 const SECTION_ID_SET = new Set<string>(SITE_SECTION_IDS);
 
 /** Re-scroll after gallery/images load and shift layout above the target section. */
-const STABILIZE_DELAYS_MS = [0, 150, 400, 800, 1400, 2200, 3500];
+const STABILIZE_DELAYS_MS = [0, 120, 300, 600, 1000, 1600, 2500, 4000, 6000];
 
 export function normalizeSectionId(hash: string): string {
   return decodeURIComponent(hash.replace(/^#/, '').trim());
@@ -24,24 +24,18 @@ export function isSiteSectionId(id: string): id is SiteSectionId {
   return SECTION_ID_SET.has(id);
 }
 
-function getScrollOffsetForElement(element: HTMLElement): number {
-  const style = window.getComputedStyle(element);
-  const scrollMargin = parseFloat(style.scrollMarginTop || '0');
-  if (!Number.isNaN(scrollMargin) && scrollMargin > 0) {
-    return scrollMargin;
-  }
-
+function isSectionVisibleEnough(element: HTMLElement): boolean {
+  const rect = element.getBoundingClientRect();
   const header = document.getElementById('main-header');
-  return (header?.getBoundingClientRect().height ?? 80) + 12;
+  const offset = (header?.getBoundingClientRect().height ?? 80) + 16;
+  return rect.top >= offset - 24 && rect.top <= offset + 120;
 }
 
 export function scrollToSectionId(sectionId: string, behavior: ScrollBehavior = 'smooth'): boolean {
   const element = document.getElementById(sectionId);
   if (!element) return false;
 
-  const offset = getScrollOffsetForElement(element);
-  const top = element.getBoundingClientRect().top + window.scrollY - offset;
-  window.scrollTo({ top: Math.max(0, top), behavior });
+  element.scrollIntoView({ behavior, block: 'start' });
   return true;
 }
 
@@ -70,7 +64,9 @@ export function scheduleHashScrollStabilization(
   const delays = options?.delaysMs ?? STABILIZE_DELAYS_MS;
   const timers = delays.map((delay) =>
     window.setTimeout(() => {
-      scrollToSectionId(sectionId, delay === 0 ? 'auto' : 'auto');
+      const element = document.getElementById(sectionId);
+      if (!element || isSectionVisibleEnough(element)) return;
+      scrollToSectionId(sectionId, 'auto');
     }, delay)
   );
 
@@ -87,7 +83,7 @@ export function scrollToSectionWithRetry(
     return () => {};
   }
 
-  const maxAttempts = options?.maxAttempts ?? 30;
+  const maxAttempts = options?.maxAttempts ?? 40;
   const intervalMs = options?.intervalMs ?? 100;
   let attempts = 0;
   let retryTimer = 0;
@@ -137,6 +133,11 @@ export function bindHashNavigation(options?: { fallbackSection?: string }): () =
   let cancelActiveScroll = () => {};
   let resizeTimer = 0;
   let resizeObserver: ResizeObserver | null = null;
+  const previousScrollRestoration = history.scrollRestoration;
+
+  if ('scrollRestoration' in history) {
+    history.scrollRestoration = 'manual';
+  }
 
   const scrollToCurrentTarget = () => {
     const target = resolveHashTarget(options?.fallbackSection);
@@ -149,6 +150,10 @@ export function bindHashNavigation(options?: { fallbackSection?: string }): () =
   const onHashChange = () => scrollToCurrentTarget();
   const onLoad = () => scrollToCurrentTarget();
 
+  // Prevent the browser's default hash jump before our precise scroll runs.
+  if (resolveHashTarget(options?.fallbackSection)) {
+    window.scrollTo(0, 0);
+  }
   scrollToCurrentTarget();
 
   window.addEventListener('hashchange', onHashChange);
@@ -157,12 +162,15 @@ export function bindHashNavigation(options?: { fallbackSection?: string }): () =
   const main = document.getElementById('main-content');
   if (main && typeof ResizeObserver !== 'undefined') {
     resizeObserver = new ResizeObserver(() => {
-      if (!resolveHashTarget(options?.fallbackSection)) return;
+      const target = resolveHashTarget(options?.fallbackSection);
+      if (!target) return;
       window.clearTimeout(resizeTimer);
       resizeTimer = window.setTimeout(() => {
-        const target = resolveHashTarget(options?.fallbackSection);
-        if (target) scrollToSectionId(target, 'auto');
-      }, 100);
+        const element = document.getElementById(target);
+        if (element && !isSectionVisibleEnough(element)) {
+          scrollToSectionId(target, 'auto');
+        }
+      }, 80);
     });
     resizeObserver.observe(main);
   }
@@ -173,5 +181,8 @@ export function bindHashNavigation(options?: { fallbackSection?: string }): () =
     window.removeEventListener('hashchange', onHashChange);
     window.removeEventListener('load', onLoad);
     resizeObserver?.disconnect();
+    if ('scrollRestoration' in history) {
+      history.scrollRestoration = previousScrollRestoration;
+    }
   };
 }

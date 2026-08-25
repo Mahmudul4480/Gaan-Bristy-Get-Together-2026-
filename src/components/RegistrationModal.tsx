@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Ticket } from '../types';
 import { EVENT_DETAILS, LOGO_URL } from '../data/eventData';
-import { saveHonorableGuest } from '../utils/guestStorage';
+import { createHonorableGuestRegistration, generateUniqueTicketId } from '../utils/guestStorage';
 import { notifyAdminPaymentComplete } from '../utils/notifyAdminPayment';
 import { sendRegistrationConfirmationSms } from '../utils/sendConfirmationSms';
 import { findDuplicateTransactionId } from '../utils/guestExport';
@@ -153,9 +153,11 @@ export default function RegistrationModal({ isOpen, onClose, existingGuests }: R
       return;
     }
 
-    const randomCode = Math.floor(1000 + Math.random() * 9000);
+    const existingIds = existingGuests.map((guest) => guest.ticketId);
+    const ticketId = generateUniqueTicketId(existingIds);
+    const seatBase = Number.parseInt(ticketId.replace(/\D/g, '').slice(-4), 10) || 100;
     const newTicket: Ticket = {
-      ticketId: `GB2026-${randomCode}`,
+      ticketId,
       fullName: fullName.trim(),
       familyName: familyName.trim(),
       starMakerId: starMakerId.trim() || undefined,
@@ -169,7 +171,7 @@ export default function RegistrationModal({ isOpen, onClose, existingGuests }: R
       transactionId: transactionId.trim(),
       status: 'Pending',
       issueDate: new Date().toISOString(),
-      seatNumbers: Array.from({ length: adultCount }, (_, i) => `VIP-${100 + randomCode + i}`),
+      seatNumbers: Array.from({ length: adultCount }, (_, i) => `VIP-${seatBase + i}`),
       songRequest: songRequest.trim() || undefined,
     };
 
@@ -181,13 +183,13 @@ export default function RegistrationModal({ isOpen, onClose, existingGuests }: R
     });
 
     try {
-      await saveHonorableGuest(newTicket);
-      void notifyAdminPaymentComplete(newTicket);
+      const savedTicket = await createHonorableGuestRegistration(newTicket, { existingIds });
+      void notifyAdminPaymentComplete(savedTicket);
 
-      setCreatedTicket(newTicket);
+      setCreatedTicket(savedTicket);
 
       setSmsState('sending');
-      sendRegistrationConfirmationSms(newTicket.phone, { type: 'pending' }).then((result) => {
+      sendRegistrationConfirmationSms(savedTicket.phone, { type: 'pending' }).then((result) => {
         if (result.success) {
           setSmsState('sent');
         } else {

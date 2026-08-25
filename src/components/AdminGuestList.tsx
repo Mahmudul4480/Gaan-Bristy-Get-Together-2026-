@@ -86,6 +86,12 @@ export default function AdminGuestList({ guests, adminRole, actorName, onEditGue
   }, []);
 
   const pendingCount = guests.filter((g) => g.status === 'Pending').length;
+
+  useEffect(() => {
+    if (pendingCount > 0) {
+      setStatusFilter('Pending');
+    }
+  }, [pendingCount]);
   const pendingDeleteRequests = deleteRequests.filter((r) => r.status === 'Pending');
   const pendingDeleteByTicket = useMemo(() => {
     const map = new Map<string, CardDeleteRequest>();
@@ -263,6 +269,13 @@ export default function AdminGuestList({ guests, adminRole, actorName, onEditGue
 
   return (
     <div className="space-y-4 font-body">
+      {pendingCount > 0 && (
+        <div className="rounded-2xl border-2 border-[#D4AF37]/60 bg-[#7A1F3D]/40 px-4 py-3 text-sm text-[#F6EFE0]">
+          <span className="font-bold text-[#F0D78C]">{pendingCount} জন</span> নতুন রেজিস্ট্রেশন অ্যাপ্রুভের অপেক্ষায়।
+          {!isSuperAdmin && ' পেমেন্ট ভেরিফাই (অ্যাপ্রুভ/রিজেক্ট) শুধু Super Admin করতে পারবেন।'}
+          {isSuperAdmin && ' নিচের তালিকা থেকে অ্যাপ্রুভ বা রিজেক্ট করুন।'}
+        </div>
+      )}
       <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
         <p className="text-sm text-[#B3A6C9]">
           মোট <span className="text-[#F0D78C] font-bold">{guests.length}</span> টি রেজিস্ট্রেশন
