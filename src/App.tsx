@@ -16,6 +16,7 @@ import FallingMusicNotes from './components/FallingMusicNotes';
 import { Ticket } from './types';
 import { subscribeToHonorableGuests, isFirebaseConfigured } from './utils/guestStorage';
 import { isAdminUrlMatch } from './utils/adminStorage';
+import { navigateToSection, scrollToHashFromLocation, scrollToSectionWithRetry } from './utils/scrollToSection';
 import { MessageSquare, Ticket as TicketIcon } from 'lucide-react';
 
 function getGuestIdFromUrl(): string | null {
@@ -48,14 +49,30 @@ export default function App() {
     const guestId = getGuestIdFromUrl();
     if (guestId) {
       setSelectedGuestId(guestId);
-      setTimeout(() => {
-        document.getElementById('honorable-guests')?.scrollIntoView({ behavior: 'smooth' });
-      }, 400);
     }
 
     if (isAdminUrlMatch(window.location.search)) {
       setIsAdminVerifyOpen(true);
     }
+
+    const hashSection = window.location.hash.replace(/^#/, '');
+    const targetSection = hashSection || (guestId ? 'honorable-guests' : '');
+
+    let cancelScroll = () => {};
+    if (targetSection) {
+      cancelScroll = scrollToSectionWithRetry(targetSection, { initialBehavior: 'auto' });
+    }
+
+    const onHashChange = () => {
+      cancelScroll();
+      cancelScroll = scrollToHashFromLocation();
+    };
+    window.addEventListener('hashchange', onHashChange);
+
+    return () => {
+      cancelScroll();
+      window.removeEventListener('hashchange', onHashChange);
+    };
   }, []);
 
   const handleSelectGuest = (ticketId: string | null) => {
@@ -71,11 +88,11 @@ export default function App() {
   };
 
   const handleExploreSchedule = () => {
-    document.getElementById('schedule')?.scrollIntoView({ behavior: 'smooth' });
+    navigateToSection('schedule');
   };
 
   const handleOpenGuestbook = () => {
-    document.getElementById('guestbook')?.scrollIntoView({ behavior: 'smooth' });
+    navigateToSection('guestbook');
   };
 
   return (

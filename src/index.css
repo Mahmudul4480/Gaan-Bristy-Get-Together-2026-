@@ -24,6 +24,23 @@ body, input, button, select, textarea {
   overflow-x: hidden;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
+/* Sticky header + top banner — hash links land below the nav */
+#main-content section[id],
+section#hero {
+  scroll-margin-top: 7.5rem;
+}
+
+@media (min-width: 640px) {
+  #main-content section[id],
+  section#hero {
+    scroll-margin-top: 8.5rem;
+  }
+}
+
 /* Custom Typography Helpers */
 .font-english-heading {
   font-family: 'Playfair Display', Georgia, serif;

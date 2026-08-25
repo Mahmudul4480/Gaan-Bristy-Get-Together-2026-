@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { navigateToSection } from '../utils/scrollToSection';
 import { LOGO_URL } from '../data/eventData';
 import { Ticket as TicketIcon, Users, Calendar, MapPin, Image as ImageIcon, ShieldCheck, Menu, X, MessageSquare } from 'lucide-react';
 
@@ -17,11 +18,8 @@ export default function Header({
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const scrollToSection = (id: string) => {
+    navigateToSection(id);
     setMobileMenuOpen(false);
-    const element = document.getElementById(id);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-    }
   };
 
   return (
