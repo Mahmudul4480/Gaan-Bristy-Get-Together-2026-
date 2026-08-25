@@ -6,6 +6,7 @@ import {
   onSnapshot,
   orderBy,
   query,
+  updateDoc,
 } from 'firebase/firestore';
 import { deleteObject, getDownloadURL, ref, uploadBytes } from 'firebase/storage';
 import { GalleryPhoto } from '../types';
@@ -50,7 +51,8 @@ function describeUploadError(error: unknown): string {
 export async function uploadGalleryPhoto(
   file: File,
   category: GalleryPhoto['category'],
-  title: string
+  title: string,
+  options?: { featured?: boolean }
 ): Promise<GalleryPhoto> {
   if (!db || !storage) {
     throw new Error('Firebase কনফিগার করা নেই।');
@@ -77,11 +79,19 @@ export async function uploadGalleryPhoto(
       title: finalTitle,
       url,
       category,
+      featured: !!options?.featured,
       storagePath,
       createdAt: new Date().toISOString(),
     });
 
-    return { id: docRef.id, title: finalTitle, url, category, storagePath };
+    return {
+      id: docRef.id,
+      title: finalTitle,
+      url,
+      category,
+      featured: !!options?.featured,
+      storagePath,
+    };
   } catch (error) {
     console.error('[Gallery storage] Upload failed:', error);
     throw new Error(describeUploadError(error));
@@ -113,6 +123,17 @@ export function subscribeToGalleryPhotos(
       onError?.(error as Error);
     }
   );
+}
+
+export async function updateGalleryPhotoFeatured(photoId: string, featured: boolean): Promise<void> {
+  if (!db) throw new Error('Firebase কনফিগার করা নেই।');
+
+  try {
+    await updateDoc(doc(db, GALLERY_COLLECTION, photoId), { featured });
+  } catch (error) {
+    console.error('[Gallery storage] Featured update failed:', error);
+    throw new Error(describeUploadError(error));
+  }
 }
 
 export async function deleteGalleryPhoto(photo: GalleryPhoto): Promise<void> {

@@ -61,10 +61,16 @@ service cloud.firestore {
 
       allow create: if request.resource.data.title is string
         && request.resource.data.url is string
-        && request.resource.data.category in ['Previous Events', 'Family Meeting', 'Performance']
-        && request.resource.data.createdAt is string;
+        && request.resource.data.category in ['Previous Events', 'Family Meeting', 'Performance', 'Family Funny Moment']
+        && request.resource.data.createdAt is string
+        && (!('featured' in request.resource.data) || request.resource.data.featured is bool);
 
-      allow update: if false;
+      allow update: if request.resource.data.title == resource.data.title
+        && request.resource.data.url == resource.data.url
+        && request.resource.data.category == resource.data.category
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.featured is bool;
+
       allow delete: if true;
     }
 

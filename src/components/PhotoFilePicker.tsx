@@ -2,7 +2,10 @@ import { ChangeEvent, ReactNode, useRef } from 'react';
 import { IMAGE_FILE_ACCEPT } from '../utils/photoUpload';
 
 interface PhotoFilePickerProps {
-  onFileSelected: (file: File) => void;
+  onFileSelected?: (file: File) => void;
+  onFilesSelected?: (files: File[]) => void;
+  multiple?: boolean;
+  maxFiles?: number;
   label: ReactNode;
   className?: string;
   disabled?: boolean;
@@ -10,6 +13,9 @@ interface PhotoFilePickerProps {
 
 export default function PhotoFilePicker({
   onFileSelected,
+  onFilesSelected,
+  multiple = false,
+  maxFiles,
   label,
   className = '',
   disabled = false,
@@ -17,9 +23,18 @@ export default function PhotoFilePicker({
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const selected = event.target.files?.[0];
+    const selected = Array.from(event.target.files ?? []) as File[];
     event.target.value = '';
-    if (selected) onFileSelected(selected);
+    if (selected.length === 0) return;
+
+    if (multiple) {
+      const limited = maxFiles ? selected.slice(0, maxFiles) : selected;
+      onFilesSelected?.(limited);
+      return;
+    }
+
+    const first = selected[0];
+    if (first) onFileSelected?.(first);
   };
 
   return (
@@ -36,6 +51,7 @@ export default function PhotoFilePicker({
         ref={inputRef}
         type="file"
         accept={IMAGE_FILE_ACCEPT}
+        multiple={multiple}
         onChange={handleChange}
         disabled={disabled}
         className="sr-only"

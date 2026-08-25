@@ -68,7 +68,8 @@ export interface GalleryPhoto {
   id: string;
   title: string;
   url: string;
-  category: 'Previous Events' | 'Family Meeting' | 'Performance';
+  category: 'Previous Events' | 'Family Meeting' | 'Performance' | 'Family Funny Moment';
+  featured?: boolean;
   storagePath?: string;
   createdAt?: string;
 }
