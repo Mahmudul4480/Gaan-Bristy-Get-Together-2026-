@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { QRCodeSVG } from 'qrcode.react';
+import { QRCodeCanvas } from 'qrcode.react';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { Ticket } from '../types';
@@ -17,6 +17,53 @@ interface HonorableGuestCardProps {
 const CARD_NOTES = ['♪', '♫', '♬', '♩'];
 const MIN_QR_SIZE = 168;
 const MAX_QR_SIZE = 260;
+
+async function waitForImages(root: HTMLElement): Promise<void> {
+  const images = Array.from(root.querySelectorAll('img'));
+  await Promise.all(
+    images.map(
+      (img) =>
+        new Promise<void>((resolve) => {
+          if (img.complete && img.naturalWidth > 0) {
+            resolve();
+            return;
+          }
+          const finish = () => resolve();
+          img.addEventListener('load', finish, { once: true });
+          img.addEventListener('error', finish, { once: true });
+        })
+    )
+  );
+}
+
+function triggerFileDownload(blob: Blob, filename: string): void {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  link.rel = 'noopener';
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1500);
+}
+
+function prepareCardClone(clonedDoc: Document): void {
+  clonedDoc.querySelectorAll<HTMLElement>('.royal-title-effect').forEach((el) => {
+    el.style.setProperty('background', 'none');
+    el.style.setProperty('background-image', 'none');
+    el.style.setProperty('-webkit-background-clip', 'unset');
+    el.style.setProperty('background-clip', 'unset');
+    el.style.setProperty('-webkit-text-fill-color', '#F0D78C');
+    el.style.setProperty('color', '#F0D78C');
+    el.style.setProperty('filter', 'none');
+    el.style.setProperty('animation', 'none');
+  });
+  clonedDoc.querySelectorAll<HTMLElement>('.card-floating-note').forEach((el) => {
+    el.style.setProperty('animation', 'none');
+    el.style.setProperty('opacity', '0.35');
+  });
+}
 
 function DressCodeHighlight({ compact = false }: { compact?: boolean }) {
   if (compact) {
@@ -60,6 +107,7 @@ export default function HonorableGuestCard({
   const cardRef = useRef<HTMLDivElement>(null);
   const qrWrapRef = useRef<HTMLDivElement>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [downloadError, setDownloadError] = useState('');
   const [qrSize, setQrSize] = useState(MAX_QR_SIZE);
 
   const cardUrl = getGuestCardUrl(ticket.ticketId);
@@ -84,39 +132,54 @@ export default function HonorableGuestCard({
 
   const captureCard = async () => {
     if (!cardRef.current) return null;
+
+    cardRef.current.scrollIntoView({ block: 'center', behavior: 'auto' });
+    await waitForImages(cardRef.current);
+    await new Promise<void>((resolve) => {
+      window.requestAnimationFrame(() => window.requestAnimationFrame(() => resolve()));
+    });
+
+    const rect = cardRef.current.getBoundingClientRect();
+    let scale = 3;
+    while ((rect.height * scale > 12000 || rect.width * scale > 12000) && scale > 1) {
+      scale -= 0.5;
+    }
+
     return html2canvas(cardRef.current, {
-      scale: 3,
+      scale,
       useCORS: true,
       allowTaint: true,
       backgroundColor: '#1a0a14',
+      logging: false,
+      imageTimeout: 15000,
       onclone: (clonedDoc) => {
-        // html2canvas can't render `background-clip: text` gradients — it draws
-        // the gradient box but not the clipped/transparent text, leaving a
-        // solid block behind invisible text. Swap to a plain solid gold color
-        // in the cloned DOM used only for the screenshot.
-        clonedDoc.querySelectorAll<HTMLElement>('.royal-title-effect').forEach((el) => {
-          el.style.setProperty('background', 'none');
-          el.style.setProperty('background-image', 'none');
-          el.style.setProperty('-webkit-background-clip', 'unset');
-          el.style.setProperty('background-clip', 'unset');
-          el.style.setProperty('-webkit-text-fill-color', '#F0D78C');
-          el.style.setProperty('color', '#F0D78C');
-          el.style.setProperty('filter', 'none');
-          el.style.setProperty('animation', 'none');
-        });
+        prepareCardClone(clonedDoc);
       },
     });
   };
 
   const handleDownloadPNG = async () => {
     setIsGenerating(true);
+    setDownloadError('');
     try {
       const canvas = await captureCard();
-      if (!canvas) return;
-      const link = document.createElement('a');
-      link.download = `Honorable_Guest_${ticket.ticketId}.png`;
-      link.href = canvas.toDataURL('image/png', 1);
-      link.click();
+      if (!canvas) {
+        throw new Error('কার্ড খুঁজে পাওয়া যায়নি');
+      }
+
+      const blob = await new Promise<Blob | null>((resolve) => {
+        canvas.toBlob((result) => resolve(result), 'image/png', 1);
+      });
+      if (!blob) {
+        throw new Error('PNG তৈরি করা যায়নি');
+      }
+
+      triggerFileDownload(blob, `Honorable_Guest_${ticket.ticketId}.png`);
+    } catch (error) {
+      console.error('[Guest card] PNG download failed:', error);
+      setDownloadError(
+        error instanceof Error ? error.message : 'PNG ডাউনলোড করা যায়নি — আবার চেষ্টা করুন'
+      );
     } finally {
       setIsGenerating(false);
     }
@@ -124,15 +187,24 @@ export default function HonorableGuestCard({
 
   const handleDownloadPDF = async () => {
     setIsGenerating(true);
+    setDownloadError('');
     try {
       const canvas = await captureCard();
-      if (!canvas) return;
+      if (!canvas) {
+        throw new Error('কার্ড খুঁজে পাওয়া যায়নি');
+      }
+
       const imgData = canvas.toDataURL('image/png', 1);
       const pdfWidth = 210;
       const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
       const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [pdfWidth, pdfHeight] });
       pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');
       pdf.save(`Honorable_Guest_${ticket.ticketId}.pdf`);
+    } catch (error) {
+      console.error('[Guest card] PDF download failed:', error);
+      setDownloadError(
+        error instanceof Error ? error.message : 'PDF ডাউনলোড করা যায়নি — আবার চেষ্টা করুন'
+      );
     } finally {
       setIsGenerating(false);
     }
@@ -278,7 +350,14 @@ export default function HonorableGuestCard({
           {showQr ? (
             <div ref={qrWrapRef} className="mt-5 flex flex-col items-center w-full">
               <div className="bg-[#FFF9E6] p-4 sm:p-5 rounded-2xl shadow-lg border-2 border-[#D4AF37]/50 inline-flex">
-                <QRCodeSVG value={cardUrl} size={qrSize} level="H" bgColor="#FFF9E6" fgColor="#1a0a14" />
+                <QRCodeCanvas
+                  value={cardUrl}
+                  size={qrSize}
+                  level="H"
+                  bgColor="#FFF9E6"
+                  fgColor="#1a0a14"
+                  style={{ display: 'block' }}
+                />
               </div>
               <p className="text-[11px] sm:text-xs text-[#F0D78C] font-bold mt-3 font-mono tracking-wide">
                 gaanbristy.site
@@ -323,6 +402,11 @@ export default function HonorableGuestCard({
           PDF ডাউনলোড
         </button>
       </div>
+      {downloadError && (
+        <p className="mt-3 text-center text-xs text-[#F6EFE0] bg-[#7A1F3D]/60 border border-[#A52C54]/50 rounded-xl px-3 py-2">
+          {downloadError}
+        </p>
+      )}
     </div>
   );
 }
