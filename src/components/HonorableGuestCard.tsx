@@ -59,6 +59,10 @@ function prepareCardClone(clonedDoc: Document): void {
     el.style.setProperty('filter', 'none');
     el.style.setProperty('animation', 'none');
   });
+  clonedDoc.querySelectorAll<HTMLElement>('.honorable-guest-photo-ring').forEach((el) => {
+    el.style.setProperty('background', '#D4AF37');
+    el.style.setProperty('background-image', 'none');
+  });
   clonedDoc.querySelectorAll<HTMLElement>('.card-floating-note').forEach((el) => {
     el.style.setProperty('animation', 'none');
     el.style.setProperty('opacity', '0.35');
@@ -106,9 +110,12 @@ export default function HonorableGuestCard({
 }: HonorableGuestCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const qrWrapRef = useRef<HTMLDivElement>(null);
+  const qrCanvasRef = useRef<HTMLCanvasElement>(null);
+  const qrImageUrlRef = useRef('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [downloadError, setDownloadError] = useState('');
-  const [qrSize, setQrSize] = useState(MAX_QR_SIZE);
+  const [qrSize, setQrSize] = useState(MIN_QR_SIZE);
+  const [qrImageUrl, setQrImageUrl] = useState('');
 
   const cardUrl = getGuestCardUrl(ticket.ticketId);
 
@@ -120,18 +127,54 @@ export default function HonorableGuestCard({
     const updateSize = () => {
       const availableWidth = el.clientWidth - 32;
       const nextSize = Math.round(
-        Math.min(MAX_QR_SIZE, Math.max(MIN_QR_SIZE, availableWidth))
+        Math.min(MAX_QR_SIZE, Math.max(MIN_QR_SIZE, availableWidth || MIN_QR_SIZE))
       );
       setQrSize(nextSize);
     };
 
     updateSize();
+    const observer = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(updateSize) : null;
+    observer?.observe(el);
     window.addEventListener('resize', updateSize);
-    return () => window.removeEventListener('resize', updateSize);
+    return () => {
+      observer?.disconnect();
+      window.removeEventListener('resize', updateSize);
+    };
   }, [compact, showQr]);
+
+  useEffect(() => {
+    if (!showQr || compact) {
+      setQrImageUrl('');
+      return;
+    }
+
+    const syncQrImage = () => {
+      const canvas = qrCanvasRef.current;
+      if (!canvas || canvas.width === 0 || canvas.height === 0) return;
+      const nextUrl = canvas.toDataURL('image/png');
+      qrImageUrlRef.current = nextUrl;
+      setQrImageUrl(nextUrl);
+    };
+
+    syncQrImage();
+    const retryTimers = [0, 50, 150, 350].map((delay) => window.setTimeout(syncQrImage, delay));
+    return () => retryTimers.forEach((timer) => window.clearTimeout(timer));
+  }, [showQr, compact, cardUrl, qrSize]);
 
   const captureCard = async () => {
     if (!cardRef.current) return null;
+
+    if (showQr && !qrImageUrlRef.current) {
+      const canvas = qrCanvasRef.current;
+      if (canvas && canvas.width > 0 && canvas.height > 0) {
+        const nextUrl = canvas.toDataURL('image/png');
+        qrImageUrlRef.current = nextUrl;
+        setQrImageUrl(nextUrl);
+        await new Promise<void>((resolve) => window.requestAnimationFrame(() => resolve()));
+      } else {
+        throw new Error('QR কোড লোড হচ্ছে — এক সেকেন্ড পর আবার চেষ্টা করুন');
+      }
+    }
 
     cardRef.current.scrollIntoView({ block: 'center', behavior: 'auto' });
     await waitForImages(cardRef.current);
@@ -145,7 +188,9 @@ export default function HonorableGuestCard({
       scale -= 0.5;
     }
 
-    return html2canvas(cardRef.current, {
+    const sourceRoot = cardRef.current;
+
+    return html2canvas(sourceRoot, {
       scale,
       useCORS: true,
       allowTaint: true,
@@ -242,7 +287,7 @@ export default function HonorableGuestCard({
   }
 
   return (
-    <div className="max-w-md mx-auto">
+    <div className="relative max-w-md mx-auto">
       <div
         ref={cardRef}
         className="honorable-guest-invite-card relative overflow-hidden rounded-3xl border-2 border-[#D4AF37]/70 shadow-[0_0_50px_rgba(212,175,55,0.25)]"
@@ -350,14 +395,22 @@ export default function HonorableGuestCard({
           {showQr ? (
             <div ref={qrWrapRef} className="mt-5 flex flex-col items-center w-full">
               <div className="bg-[#FFF9E6] p-4 sm:p-5 rounded-2xl shadow-lg border-2 border-[#D4AF37]/50 inline-flex">
-                <QRCodeCanvas
-                  value={cardUrl}
-                  size={qrSize}
-                  level="H"
-                  bgColor="#FFF9E6"
-                  fgColor="#1a0a14"
-                  style={{ display: 'block' }}
-                />
+                {qrImageUrl ? (
+                  <img
+                    src={qrImageUrl}
+                    alt="Guest card QR code"
+                    width={qrSize}
+                    height={qrSize}
+                    className="block"
+                    style={{ width: qrSize, height: qrSize }}
+                  />
+                ) : (
+                  <div
+                    className="bg-[#FFF9E6] animate-pulse rounded-lg"
+                    style={{ width: qrSize, height: qrSize }}
+                    aria-hidden
+                  />
+                )}
               </div>
               <p className="text-[11px] sm:text-xs text-[#F0D78C] font-bold mt-3 font-mono tracking-wide">
                 gaanbristy.site
@@ -406,6 +459,19 @@ export default function HonorableGuestCard({
         <p className="mt-3 text-center text-xs text-[#F6EFE0] bg-[#7A1F3D]/60 border border-[#A52C54]/50 rounded-xl px-3 py-2">
           {downloadError}
         </p>
+      )}
+
+      {showQr && !compact && (
+        <div className="absolute w-0 h-0 overflow-hidden" aria-hidden>
+          <QRCodeCanvas
+            ref={qrCanvasRef}
+            value={cardUrl}
+            size={qrSize}
+            level="H"
+            bgColor="#FFF9E6"
+            fgColor="#1a0a14"
+          />
+        </div>
       )}
     </div>
   );
