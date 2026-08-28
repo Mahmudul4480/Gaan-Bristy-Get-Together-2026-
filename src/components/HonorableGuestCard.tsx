@@ -36,6 +36,18 @@ async function waitForImages(root: HTMLElement): Promise<void> {
   );
 }
 
+function describeExportError(error: unknown, fallback: string): string {
+  const message = error instanceof Error ? error.message : String(error ?? '');
+  if (/createPattern|width or height of 0/i.test(message)) {
+    return 'কার্ডের ছবি তৈরি করা যায়নি (ব্রাউজার রেন্ডার সমস্যা)। পেজ রিফ্রেশ করে আবার চেষ্টা করুন।';
+  }
+  if (/tainted|SecurityError/i.test(message)) {
+    return 'গেস্টের ছবিটি ব্লক হয়েছে — ছবিটি আবার আপলোড করে চেষ্টা করুন।';
+  }
+  if (message.trim()) return message;
+  return fallback;
+}
+
 function triggerFileDownload(blob: Blob, filename: string): void {
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
@@ -48,24 +60,115 @@ function triggerFileDownload(blob: Blob, filename: string): void {
   window.setTimeout(() => URL.revokeObjectURL(url), 1500);
 }
 
-function prepareCardClone(clonedDoc: Document): void {
-  clonedDoc.querySelectorAll<HTMLElement>('.royal-title-effect').forEach((el) => {
-    el.style.setProperty('background', 'none');
-    el.style.setProperty('background-image', 'none');
-    el.style.setProperty('-webkit-background-clip', 'unset');
-    el.style.setProperty('background-clip', 'unset');
-    el.style.setProperty('-webkit-text-fill-color', '#F0D78C');
-    el.style.setProperty('color', '#F0D78C');
-    el.style.setProperty('filter', 'none');
-    el.style.setProperty('animation', 'none');
+type CaptureMode = 'rich' | 'safe';
+
+/** Lets us match a cloned node back to its live counterpart inside `onclone`. */
+const EXPORT_ID_ATTR = 'data-gb-export-id';
+
+function tagSourceElements(root: HTMLElement): Map<string, HTMLElement> {
+  const sourceById = new Map<string, HTMLElement>();
+  [root, ...Array.from(root.querySelectorAll<HTMLElement>('*'))].forEach((el, index) => {
+    const id = String(index);
+    el.setAttribute(EXPORT_ID_ATTR, id);
+    sourceById.set(id, el);
   });
-  clonedDoc.querySelectorAll<HTMLElement>('.honorable-guest-photo-ring').forEach((el) => {
-    el.style.setProperty('background', '#D4AF37');
-    el.style.setProperty('background-image', 'none');
+  return sourceById;
+}
+
+function untagSourceElements(sourceById: Map<string, HTMLElement>): void {
+  sourceById.forEach((el) => el.removeAttribute(EXPORT_ID_ATTR));
+}
+
+/** Solid stand-ins used when a gradient/background image can't be rasterized. */
+const SOLID_BACKGROUND_FALLBACKS: Array<[string, string]> = [
+  ['honorable-guest-invite-card', '#1a0a14'],
+  ['honorable-guest-invite-inner', 'transparent'],
+  ['honorable-guest-photo-ring', '#D4AF37'],
+  ['midnight-bg-glow', '#0F0C1A'],
+];
+
+function solidFallbackFor(el: HTMLElement): string {
+  const match = SOLID_BACKGROUND_FALLBACKS.find(([className]) => el.classList.contains(className));
+  if (match) return match[1];
+  return '#D4AF37';
+}
+
+/**
+ * html2canvas rasterizes background images itself, and a background whose
+ * source image has no intrinsic size makes it build a 0×0 canvas — which then
+ * throws `createPattern ... width or height of 0`. Stripping those backgrounds
+ * (all of them in `safe` mode) keeps the export working.
+ */
+function prepareCardClone(
+  clonedCard: HTMLElement,
+  sourceById: Map<string, HTMLElement>,
+  mode: CaptureMode
+): void {
+  const clonedElements = [clonedCard, ...Array.from(clonedCard.querySelectorAll<HTMLElement>('*'))];
+
+  clonedElements.forEach((clonedEl) => {
+    clonedEl.style.setProperty('animation', 'none');
+    clonedEl.style.setProperty('transition', 'none');
+
+    const exportId = clonedEl.getAttribute(EXPORT_ID_ATTR);
+    const sourceEl = exportId ? sourceById.get(exportId) : undefined;
+    if (!sourceEl) return;
+
+    const computed = window.getComputedStyle(sourceEl);
+    const backgroundImage = computed.backgroundImage;
+    const hasBackgroundImage = Boolean(backgroundImage) && backgroundImage !== 'none';
+
+    if (clonedEl.classList.contains('royal-title-effect')) {
+      clonedEl.style.setProperty('background', 'none');
+      clonedEl.style.setProperty('background-image', 'none');
+      clonedEl.style.setProperty('-webkit-background-clip', 'unset');
+      clonedEl.style.setProperty('background-clip', 'unset');
+      clonedEl.style.setProperty('-webkit-text-fill-color', '#F0D78C');
+      clonedEl.style.setProperty('color', '#F0D78C');
+      clonedEl.style.setProperty('filter', 'none');
+      return;
+    }
+
+    if (!hasBackgroundImage) return;
+
+    const rect = sourceEl.getBoundingClientRect();
+    const isUnrenderable = backgroundImage.includes('url(') || rect.width < 1 || rect.height < 1;
+
+    if (mode === 'safe' || isUnrenderable) {
+      clonedEl.style.setProperty('background-image', 'none');
+      const currentColor = computed.backgroundColor;
+      const isTransparent = !currentColor || currentColor === 'rgba(0, 0, 0, 0)' || currentColor === 'transparent';
+      if (isTransparent) {
+        clonedEl.style.setProperty('background-color', solidFallbackFor(clonedEl));
+      }
+    }
   });
-  clonedDoc.querySelectorAll<HTMLElement>('.card-floating-note').forEach((el) => {
-    el.style.setProperty('animation', 'none');
+
+  clonedCard.querySelectorAll<HTMLElement>('.card-floating-note').forEach((el) => {
     el.style.setProperty('opacity', '0.35');
+  });
+}
+
+/** Swaps live canvases for PNG snapshots so html2canvas never reads a 0×0 canvas. */
+function replaceCanvasesWithImages(clonedCard: HTMLElement, sourceCard: HTMLElement): void {
+  const sourceCanvases = Array.from(sourceCard.querySelectorAll('canvas'));
+  const clonedCanvases = Array.from(clonedCard.querySelectorAll('canvas'));
+
+  clonedCanvases.forEach((clonedCanvas, index) => {
+    const sourceCanvas = sourceCanvases[index];
+    if (!sourceCanvas || sourceCanvas.width === 0 || sourceCanvas.height === 0) {
+      clonedCanvas.remove();
+      return;
+    }
+
+    const img = clonedCanvas.ownerDocument.createElement('img');
+    img.src = sourceCanvas.toDataURL('image/png');
+    img.width = sourceCanvas.width;
+    img.height = sourceCanvas.height;
+    img.style.display = 'block';
+    img.style.width = `${sourceCanvas.clientWidth || sourceCanvas.width}px`;
+    img.style.height = `${sourceCanvas.clientHeight || sourceCanvas.height}px`;
+    clonedCanvas.replaceWith(img);
   });
 }
 
@@ -161,6 +264,36 @@ export default function HonorableGuestCard({
     return () => retryTimers.forEach((timer) => window.clearTimeout(timer));
   }, [showQr, compact, cardUrl, qrSize]);
 
+  const renderCardCanvas = async (mode: CaptureMode) => {
+    const sourceRoot = cardRef.current;
+    if (!sourceRoot) return null;
+
+    const rect = sourceRoot.getBoundingClientRect();
+    let scale = 3;
+    while ((rect.height * scale > 12000 || rect.width * scale > 12000) && scale > 1) {
+      scale -= 0.5;
+    }
+
+    const sourceById = tagSourceElements(sourceRoot);
+    try {
+      return await html2canvas(sourceRoot, {
+        scale,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#1a0a14',
+        logging: false,
+        imageTimeout: 15000,
+        onclone: (_clonedDoc, clonedCard) => {
+          const clonedElement = clonedCard as HTMLElement;
+          prepareCardClone(clonedElement, sourceById, mode);
+          replaceCanvasesWithImages(clonedElement, sourceRoot);
+        },
+      });
+    } finally {
+      untagSourceElements(sourceById);
+    }
+  };
+
   const captureCard = async () => {
     if (!cardRef.current) return null;
 
@@ -178,29 +311,17 @@ export default function HonorableGuestCard({
 
     cardRef.current.scrollIntoView({ block: 'center', behavior: 'auto' });
     await waitForImages(cardRef.current);
+    await document.fonts?.ready?.catch(() => undefined);
     await new Promise<void>((resolve) => {
       window.requestAnimationFrame(() => window.requestAnimationFrame(() => resolve()));
     });
 
-    const rect = cardRef.current.getBoundingClientRect();
-    let scale = 3;
-    while ((rect.height * scale > 12000 || rect.width * scale > 12000) && scale > 1) {
-      scale -= 0.5;
+    try {
+      return await renderCardCanvas('rich');
+    } catch (error) {
+      console.warn('[Guest card] Rich capture failed, retrying without backgrounds:', error);
+      return renderCardCanvas('safe');
     }
-
-    const sourceRoot = cardRef.current;
-
-    return html2canvas(sourceRoot, {
-      scale,
-      useCORS: true,
-      allowTaint: true,
-      backgroundColor: '#1a0a14',
-      logging: false,
-      imageTimeout: 15000,
-      onclone: (clonedDoc) => {
-        prepareCardClone(clonedDoc);
-      },
-    });
   };
 
   const handleDownloadPNG = async () => {
@@ -222,9 +343,7 @@ export default function HonorableGuestCard({
       triggerFileDownload(blob, `Honorable_Guest_${ticket.ticketId}.png`);
     } catch (error) {
       console.error('[Guest card] PNG download failed:', error);
-      setDownloadError(
-        error instanceof Error ? error.message : 'PNG ডাউনলোড করা যায়নি — আবার চেষ্টা করুন'
-      );
+      setDownloadError(describeExportError(error, 'PNG ডাউনলোড করা যায়নি — আবার চেষ্টা করুন'));
     } finally {
       setIsGenerating(false);
     }
@@ -247,9 +366,7 @@ export default function HonorableGuestCard({
       pdf.save(`Honorable_Guest_${ticket.ticketId}.pdf`);
     } catch (error) {
       console.error('[Guest card] PDF download failed:', error);
-      setDownloadError(
-        error instanceof Error ? error.message : 'PDF ডাউনলোড করা যায়নি — আবার চেষ্টা করুন'
-      );
+      setDownloadError(describeExportError(error, 'PDF ডাউনলোড করা যায়নি — আবার চেষ্টা করুন'));
     } finally {
       setIsGenerating(false);
     }
