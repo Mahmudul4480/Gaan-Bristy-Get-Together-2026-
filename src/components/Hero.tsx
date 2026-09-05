@@ -17,7 +17,7 @@ export default function Hero({ onOpenRegister, onExploreSchedule }: HeroProps) {
   return (
     <section id="hero" className="hero-with-falling relative overflow-hidden bg-[#0F0C1A] text-[#F6EFE0] pt-6 pb-14 sm:pt-8 sm:pb-16 md:pt-12 md:pb-20 border-b border-[#D4AF37]/20 midnight-bg-glow">
 
-      <div className="relative max-w-4xl mx-auto px-3 sm:px-6 z-10">
+      <div className="relative max-w-4xl mx-auto px-3 sm:px-6 z-20">
         
         {/* INVITATION CARD FRAME WITH THIN GOLD DOUBLE-LINE BORDER & CORNER DIAMONDS */}
         <div className="hero-invitation-card relative bg-[#1C1730]/90 border border-[#D4AF37]/60 rounded-2xl sm:rounded-3xl p-5 sm:p-10 md:p-12 shadow-[0_0_50px_rgba(212,175,55,0.15)] backdrop-blur-md">

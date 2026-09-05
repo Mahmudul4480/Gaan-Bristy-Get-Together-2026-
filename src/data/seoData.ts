@@ -10,7 +10,7 @@ export const SEO_TITLE =
   'Gaan Bristy Get Together 2026 | StarMaker Family — গান বৃষ্টি, ঢাকা';
 export const SEO_TITLE_SHORT = 'Gaan Bristy Get Together 2026';
 export const SEO_DESCRIPTION =
-  'Gaan Bristy (গান বৃষ্টি) StarMaker-এর জনপ্রিয় মিউজিক ফ্যামিলি। Artist Agun, নৃত্যশিল্পী Dolly Iqbal, Tanna Khanসহ শিল্পী, পেশাজীবী ও গানপ্রেমীদের পরিবার। ১৯ সেপ্টেম্বর ২০২৬, গুলশান ক্লাব, ঢাকায় Grand Get Together।';
+  'Gaan Bristy (গান বৃষ্টি) StarMaker-এর জনপ্রিয় মিউজিক ফ্যামিলি। Agoon Khan Asifur Rahman (Artist Agun), নৃত্যশিল্পী Dolly Iqbal ও Tanna Khanসহ শিল্পী, পেশাজীবী ও গানপ্রেমীদের পরিবার। ১৯ সেপ্টেম্বর ২০২৬, গুলশান ক্লাব, ঢাকায় Grand Get Together।';
 export const SEO_KEYWORDS = [
   'Gaan Bristy',
   'গান বৃষ্টি',
@@ -19,6 +19,7 @@ export const SEO_KEYWORDS = [
   'StarMaker Bangladesh',
   'StarMaker Family',
   'Artist Agun',
+  'Agoon Khan Asifur Rahman',
   'Agun StarMaker',
   'Dolly Iqbal',
   'Tanna Khan',
@@ -29,10 +30,10 @@ export const SEO_KEYWORDS = [
   'StarMaker ID',
 ].join(', ');
 
-export const FAMILY_STORY_BN = `গান বৃষ্টি (Gaan Bristy) StarMaker অ্যাপের একটি জনপ্রিয় ফ্যামিলি। এখানে সোশ্যাল মিডিয়ার জনপ্রিয় ব্যক্তিত্ব ও মিউজিক আর্টিস্টরা সদস্য হিসেবে আছেন। উল্লেখযোগ্যদের মধ্যে আছেন শিল্পী আগুন (Artist Agun, StarMaker ID 78003563297), বিশিষ্ট নৃত্যশিল্পী ডলি ইকবাল (Dolly Iqbal) এবং তান্না খান (Tanna Khan)। এছাড়াও আছেন অনেক পেশাজীবী, ব্যবসায়ী ও চাকরিজীবী ব্যক্তিত্ব, যাঁরা নিজ নিজ ক্ষেত্রে প্রতিষ্ঠিত—কিন্তু তাঁরা প্রচণ্ড গান ভালোবাসেন। তাঁদের নিয়েই এই ফ্যামিলি গঠিত। এরকম কিছু গানপ্রিয় মানুষকে নিয়ে গড়ে উঠেছে আমাদের Gaan Bristy।`;
+export const FAMILY_STORY_BN = `গান বৃষ্টি (Gaan Bristy) StarMaker অ্যাপের একটি জনপ্রিয় ফ্যামিলি। এখানে সোশ্যাল মিডিয়ার জনপ্রিয় ব্যক্তিত্ব ও মিউজিক আর্টিস্টরা সদস্য হিসেবে আছেন। উল্লেখযোগ্যদের মধ্যে আছেন শিল্পী আগুন — Agoon Khan Asifur Rahman (StarMaker ID 78003563297), বিশিষ্ট নৃত্যশিল্পী ডলি ইকবাল (Dolly Iqbal) এবং বিশিষ্ট নৃত্যশিল্পী তান্না খান (Tanna Khan, StarMaker ID 62127262968)। এছাড়াও আছেন অনেক পেশাজীবী, ব্যবসায়ী ও চাকরিজীবী ব্যক্তিত্ব, যাঁরা নিজ নিজ ক্ষেত্রে প্রতিষ্ঠিত—কিন্তু তাঁরা প্রচণ্ড গান ভালোবাসেন। তাঁদের নিয়েই এই ফ্যামিলি গঠিত। এরকম কিছু গানপ্রিয় মানুষকে নিয়ে গড়ে উঠেছে আমাদের Gaan Bristy।`;
 
 export const FAMILY_STORY_EN =
-  'Gaan Bristy is a popular StarMaker family where social-media personalities and music artists gather. Notable members include Artist Agun (StarMaker ID 78003563297), distinguished dancer Dolly Iqbal, and Tanna Khan, alongside professionals, entrepreneurs, and music lovers across Bangladesh.';
+  'Gaan Bristy is a popular StarMaker family where social-media personalities and music artists gather. Notable members include Agoon Khan Asifur Rahman (Artist Agun, StarMaker ID 78003563297), distinguished dancers Dolly Iqbal and Tanna Khan (StarMaker ID 62127262968), alongside professionals, entrepreneurs, and music lovers across Bangladesh.';
 
 export const NOTABLE_MEMBERS: Array<{
   name: string;
@@ -40,30 +41,35 @@ export const NOTABLE_MEMBERS: Array<{
   role: string;
   roleBengali: string;
   starMakerId?: string;
+  image: string;
   note: string;
 }> = [
   {
-    name: 'Artist Agun',
+    name: 'Agoon Khan Asifur Rahman',
     nameBengali: 'শিল্পী আগুন',
-    role: 'Featured Music Artist',
+    role: 'Real World Star · Music Artist',
     roleBengali: 'বিশিষ্ট সঙ্গীতশিল্পী',
     starMakerId: '78003563297',
+    image: 'https://i.postimg.cc/j2fDC9t1/583339215-25299362949675364-1080041592358759651-n.jpg',
     note: 'বাংলাদেশের পরিচিত মিউজিক আর্টিস্ট; Gaan Bristy ফ্যামিলির উল্লেখযোগ্য সদস্য।',
   },
   {
     name: 'Dolly Iqbal',
     nameBengali: 'ডলি ইকবাল',
-    role: 'Dance Artist · Co-Captain',
+    role: 'Real World Star · Dance Artist',
     roleBengali: 'বিশিষ্ট নৃত্যশিল্পী · কো-ক্যাপ্টেন',
     starMakerId: '62011290458',
+    image: 'https://i.postimg.cc/VLq2NvYh/Enhancing-and-combining-photos-f-202608081311.jpg',
     note: 'বিশিষ্ট নৃত্যশিল্পী এবং Gaan Bristy Family-র কো-ক্যাপ্টেন।',
   },
   {
     name: 'Tanna Khan',
     nameBengali: 'তান্না খান',
-    role: 'Featured Family Member',
-    roleBengali: 'ফ্যামিলি সদস্য',
-    note: 'Gaan Bristy ফ্যামিলির বিশিষ্ট সদস্য।',
+    role: 'Real World Star · Dance Artist',
+    roleBengali: 'বিশিষ্ট নৃত্যশিল্পী',
+    starMakerId: '62127262968',
+    image: 'https://i.postimg.cc/V6CfFCpt/Whats-App-Image-2026-09-05-at-18-42-49.jpg',
+    note: 'বিশিষ্ট নৃত্যশিল্পী এবং Gaan Bristy ফ্যামিলির উল্লেখযোগ্য সদস্য।',
   },
 ];
 
@@ -117,6 +123,7 @@ export function buildOrganizationJsonLd() {
       name: member.name,
       alternateName: member.nameBengali,
       jobTitle: member.role,
+      image: member.image,
       description: member.note,
       ...(member.starMakerId
         ? {

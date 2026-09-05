@@ -481,17 +481,20 @@ section#hero {
 }
 
 .hero-brand-year {
+  position: relative;
+  z-index: 3;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  margin-top: 0.55rem;
-  padding: 0.2rem 1.1rem;
+  margin-top: 0.75rem;
+  padding: 0.28rem 1.2rem;
   border-radius: 9999px;
   font-family: ui-serif, Georgia, serif;
-  font-size: clamp(1rem, 3.2vw, 1.35rem);
+  font-size: clamp(1.05rem, 3.4vw, 1.45rem);
   font-weight: 800;
   letter-spacing: 0.28em;
   color: #0F0C1A;
+  -webkit-text-fill-color: #0F0C1A;
   background: linear-gradient(135deg, #F0D78C 0%, #D4AF37 55%, #F0D78C 100%);
   border: 1px solid rgba(255, 255, 255, 0.35);
   box-shadow: 0 6px 22px rgba(212, 175, 55, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.35);
@@ -578,7 +581,7 @@ section#hero {
     inset: auto 0 auto 0;
     top: 0;
     height: min(62vh, 560px);
-    z-index: 15;
+    z-index: 1;
   }
 
   #hero.hero-with-falling {
@@ -696,4 +699,33 @@ select::-webkit-calendar-picker-indicator {
 }
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #D4AF37;
+}
+
+@keyframes realWorldRibbonShine {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+
+.real-world-star-ribbon {
+  position: absolute;
+  top: 0.7rem;
+  right: -0.15rem;
+  z-index: 2;
+  padding: 0.32rem 0.7rem 0.32rem 0.75rem;
+  border-radius: 999px 0 0 999px;
+  background: linear-gradient(90deg, #7A1F3D 0%, #D4AF37 40%, #F0D78C 50%, #D4AF37 60%, #7A1F3D 100%);
+  background-size: 200% 100%;
+  box-shadow: 0 4px 12px rgba(15, 12, 26, 0.4);
+  animation: realWorldRibbonShine 2.8s linear infinite;
+  pointer-events: none;
+}
+
+.real-world-star-ribbon-text {
+  display: block;
+  color: #0F0C1A;
+  font-size: 0.58rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
 }
