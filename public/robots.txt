@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://gaanbristy.site/sitemap.xml
+Host: https://gaanbristy.site

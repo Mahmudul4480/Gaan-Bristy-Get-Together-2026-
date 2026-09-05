@@ -108,6 +108,14 @@ export default function AgencyFooter() {
         </div>
 
         {/* Footer Bottom Copyright */}
+        <nav className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs font-semibold text-[#B3A6C9]">
+          <a href="#about" className="hover:text-[#F0D78C]">আমাদের কথা</a>
+          <a href="#details" className="hover:text-[#F0D78C]">রেজিস্ট্রেশন</a>
+          <a href="#team" className="hover:text-[#F0D78C]">ফ্যামিলি টিম</a>
+          <a href="#venue" className="hover:text-[#F0D78C]">ভেন্যু</a>
+          <a href="/sitemap.xml" className="hover:text-[#F0D78C]">Sitemap</a>
+        </nav>
+
         <div className="pt-8 border-t border-[#D4AF37]/20 flex flex-col sm:flex-row items-center justify-between text-xs text-[#B3A6C9] gap-4 font-body">
           <p className="flex items-center gap-1.5">
             <span>© ২০২৬ Gaan Bristy Family • সর্বস্বত্ব সংরক্ষিত।</span>

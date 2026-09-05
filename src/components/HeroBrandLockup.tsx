@@ -22,6 +22,7 @@ export default function HeroBrandLockup() {
       <p className="hero-brand-family">Gaan Bristy Family Presents</p>
 
       <h1 className="hero-brand-title">
+        <span className="sr-only">Gaan Bristy Grand Get Together 2026 — </span>
         <span className="hero-brand-get">GET</span>
         <span className="hero-brand-together">TOGETHER</span>
         <span className="hero-brand-year">2026</span>

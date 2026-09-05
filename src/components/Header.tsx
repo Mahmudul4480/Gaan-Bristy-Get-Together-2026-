@@ -49,6 +49,14 @@ export default function Header({
         {/* Desktop Navigation */}
         <nav id="desktop-nav" className="hidden md:flex items-center justify-center flex-1 gap-3 md:gap-5 lg:gap-8 xl:gap-10 text-xs md:text-sm lg:text-base font-semibold whitespace-nowrap">
           <a 
+            href="#about"
+            onClick={(e) => { e.preventDefault(); scrollToSection('about'); }} 
+            className={`shrink-0 cursor-pointer no-underline hover:text-[#F0D78C] transition ${activeSection === 'about' ? 'text-[#D4AF37] font-bold border-b-2 border-[#D4AF37] pb-0.5' : 'text-[#B3A6C9]'}`}
+          >
+            আমাদের কথা
+          </a>
+
+          <a 
             href="#schedule"
             onClick={(e) => { e.preventDefault(); scrollToSection('schedule'); }} 
             className={`shrink-0 cursor-pointer no-underline hover:text-[#F0D78C] transition ${activeSection === 'schedule' ? 'text-[#D4AF37] font-bold border-b-2 border-[#D4AF37] pb-0.5' : 'text-[#B3A6C9]'}`}
@@ -143,6 +151,14 @@ export default function Header({
       {/* Mobile Menu Drawer */}
       {mobileMenuOpen && (
         <div id="mobile-menu" className="md:hidden bg-[#1C1730] border-b border-[#D4AF37]/30 px-4 pt-3 pb-6 space-y-3">
+          <button 
+            onClick={() => scrollToSection('about')} 
+            className="w-full flex items-center gap-3 px-3 py-2 text-left text-[#F6EFE0] hover:bg-[#0F0C1A] rounded-lg font-medium"
+          >
+            <Users className="w-5 h-5 text-[#D4AF37]" />
+            আমাদের কথা — Gaan Bristy
+          </button>
+
           <button 
             onClick={() => scrollToSection('schedule')} 
             className="w-full flex items-center gap-3 px-3 py-2 text-left text-[#F6EFE0] hover:bg-[#0F0C1A] rounded-lg font-medium"

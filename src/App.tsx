@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import Header from './components/Header';
 import Hero from './components/Hero';
+import AboutFamilySection from './components/AboutFamilySection';
 import EventDetails from './components/EventDetails';
 import Schedule from './components/Schedule';
 import TeamShowcase from './components/TeamShowcase';
+import SiteSeo from './components/SiteSeo';
 import GallerySection from './components/GallerySection';
 import DigitalGuestbook from './components/DigitalGuestbook';
 import HonorableGuestSection from './components/HonorableGuestSection';
@@ -17,6 +19,7 @@ import { Ticket } from './types';
 import { subscribeToHonorableGuests, isFirebaseConfigured } from './utils/guestStorage';
 import { isAdminUrlMatch } from './utils/adminStorage';
 import { bindHashNavigation, navigateToSection } from './utils/scrollToSection';
+import { trackGuestbookOpen, trackRegisterOpen, trackSectionView } from './utils/analytics';
 import { MessageSquare, Ticket as TicketIcon } from 'lucide-react';
 
 function getGuestIdFromUrl(): string | null {
@@ -73,15 +76,23 @@ export default function App() {
   };
 
   const handleExploreSchedule = () => {
+    trackSectionView('schedule');
     navigateToSection('schedule');
   };
 
   const handleOpenGuestbook = () => {
+    trackGuestbookOpen('announcement_bar');
     navigateToSection('guestbook');
+  };
+
+  const handleOpenRegister = (source: string) => {
+    trackRegisterOpen(source);
+    setIsRegisterOpen(true);
   };
 
   return (
     <div id="app-root" className="relative min-h-screen bg-[#0F0C1A] text-[#F6EFE0] font-sans antialiased selection:bg-[#D4AF37] selection:text-[#0F0C1A] midnight-bg-glow overflow-x-hidden">
+      <SiteSeo />
 
       <div id="top-announcement-bar" className="bg-[#7A1F3D] text-[#F6EFE0] py-2 px-3 sm:px-4 border-b border-[#D4AF37]/30 text-xs sm:text-sm font-semibold flex items-center justify-between gap-2 shadow-lg z-50 relative">
         <div className="max-w-7xl mx-auto w-full flex items-center justify-between gap-2 sm:gap-3">
@@ -97,7 +108,7 @@ export default function App() {
               <span className="hidden sm:inline">গেস্টবুকে কল করুন</span>
               <span className="sm:hidden">গেস্টবুক</span>
             </button>
-            <button onClick={() => setIsRegisterOpen(true)} className="btn-lighting px-3.5 py-1.5 rounded-full text-xs font-black bg-gradient-to-r from-[#F0D78C] via-[#D4AF37] to-[#F0D78C] cursor-pointer hidden md:flex items-center gap-1.5 shadow-[0_0_12px_rgba(212,175,55,0.4)] border border-[#F0D78C]">
+            <button onClick={() => handleOpenRegister('announcement_bar')} className="btn-lighting px-3.5 py-1.5 rounded-full text-xs font-black bg-gradient-to-r from-[#F0D78C] via-[#D4AF37] to-[#F0D78C] cursor-pointer hidden md:flex items-center gap-1.5 shadow-[0_0_12px_rgba(212,175,55,0.4)] border border-[#F0D78C]">
               <TicketIcon className="w-3.5 h-3.5" />
               <span className="font-black font-bangla">রেজিস্ট্রেশন</span>
             </button>
@@ -108,15 +119,16 @@ export default function App() {
       <FallingMusicNotes />
 
       <Header
-        onOpenRegister={() => setIsRegisterOpen(true)}
+        onOpenRegister={() => handleOpenRegister('header')}
         onOpenAdminVerify={() => setIsAdminVerifyOpen(true)}
         onOpenCanvaGuide={() => setIsCanvaGuideOpen(true)}
         activeSection={activeSection}
       />
 
       <main id="main-content">
-        <Hero onOpenRegister={() => setIsRegisterOpen(true)} onExploreSchedule={handleExploreSchedule} />
-        <EventDetails onOpenRegister={() => setIsRegisterOpen(true)} />
+        <Hero onOpenRegister={() => handleOpenRegister('hero')} onExploreSchedule={handleExploreSchedule} />
+        <AboutFamilySection />
+        <EventDetails onOpenRegister={() => handleOpenRegister('event_details')} />
         <Schedule />
         <TeamShowcase />
         <GallerySection />

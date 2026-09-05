@@ -1,5 +1,6 @@
 export const SITE_SECTION_IDS = [
   'hero',
+  'about',
   'schedule',
   'details',
   'team',

@@ -1,0 +1,25 @@
+{
+  "name": "Gaan Bristy Get Together 2026",
+  "short_name": "Gaan Bristy",
+  "description": "StarMaker-এর জনপ্রিয় গান বৃষ্টি ফ্যামিলি — Artist Agun, Dolly Iqbal, Tanna Khanসহ গানপ্রেমীদের ঢাকা মিলনমেলা।",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0F0C1A",
+  "theme_color": "#0F0C1A",
+  "lang": "bn-BD",
+  "icons": [
+    {
+      "src": "/assets/gaan-bristy-icon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/gaan-bristy-icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
