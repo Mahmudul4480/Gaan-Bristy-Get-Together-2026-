@@ -130,6 +130,17 @@ function prepareCardClone(
       return;
     }
 
+    if (clonedEl.classList.contains('honorable-guest-pass-badge')) {
+      clonedEl.style.setProperty('display', 'inline-block');
+      clonedEl.style.setProperty('text-align', 'center');
+      clonedEl.style.setProperty('letter-spacing', '0');
+      clonedEl.style.setProperty('text-transform', 'none');
+      clonedEl.style.setProperty('line-height', '1.2');
+      clonedEl.style.setProperty('padding-left', '20px');
+      clonedEl.style.setProperty('padding-right', '20px');
+      clonedEl.style.setProperty('white-space', 'nowrap');
+    }
+
     if (!hasBackgroundImage) return;
 
     const rect = sourceEl.getBoundingClientRect();
@@ -170,6 +181,82 @@ function replaceCanvasesWithImages(clonedCard: HTMLElement, sourceCard: HTMLElem
     img.style.width = `${sourceCanvas.clientWidth || sourceCanvas.width}px`;
     img.style.height = `${sourceCanvas.clientHeight || sourceCanvas.height}px`;
     clonedCanvas.replaceWith(img);
+  });
+}
+
+function roundRectPath(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  radius: number
+): void {
+  const r = Math.max(0, Math.min(radius, width / 2, height / 2));
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + width, y, x + width, y + height, r);
+  ctx.arcTo(x + width, y + height, x, y + height, r);
+  ctx.arcTo(x, y + height, x, y, r);
+  ctx.arcTo(x, y, x + width, y, r);
+  ctx.closePath();
+}
+
+/**
+ * html2canvas mis-places letter-spaced / flex / uppercase text inside pills.
+ * Paint the pass badge ourselves so PNG and PDF both get true centered text.
+ */
+function rasterizePassBadges(clonedCard: HTMLElement, sourceById: Map<string, HTMLElement>): void {
+  clonedCard.querySelectorAll<HTMLElement>('.honorable-guest-pass-badge').forEach((clonedBadge) => {
+    const exportId = clonedBadge.getAttribute(EXPORT_ID_ATTR);
+    const sourceBadge = exportId ? sourceById.get(exportId) : undefined;
+    const measureEl = sourceBadge ?? clonedBadge;
+    const rect = measureEl.getBoundingClientRect();
+    const text = (clonedBadge.textContent || '').replace(/\s+/g, ' ').trim();
+    if (!text) return;
+
+    const width = Math.max(Math.round(rect.width) || clonedBadge.offsetWidth, 200);
+    const height = Math.max(Math.round(rect.height) || clonedBadge.offsetHeight, 32);
+    const dpr = 2;
+    const sourceStyle = sourceBadge ? window.getComputedStyle(sourceBadge) : null;
+    const fontSize = sourceStyle?.fontSize || '11px';
+    const fontFamily = sourceStyle?.fontFamily || 'sans-serif';
+    const font = `700 ${fontSize} ${fontFamily}`;
+
+    const canvas = clonedBadge.ownerDocument.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    ctx.font = font;
+    const drawWidth = Math.max(width, Math.ceil(ctx.measureText(text).width + 44));
+    canvas.width = Math.round(drawWidth * dpr);
+    canvas.height = Math.round(height * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    roundRectPath(ctx, 0, 0, drawWidth, height, height / 2);
+    ctx.fillStyle = '#7A1F3D';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(212, 175, 55, 0.55)';
+    ctx.lineWidth = 1;
+    roundRectPath(ctx, 0.5, 0.5, drawWidth - 1, height - 1, Math.max(0, height / 2 - 0.5));
+    ctx.stroke();
+
+    ctx.fillStyle = '#F0D78C';
+    ctx.font = font;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(text, drawWidth / 2, height / 2);
+
+    const img = clonedBadge.ownerDocument.createElement('img');
+    img.src = canvas.toDataURL('image/png');
+    img.alt = text;
+    img.width = drawWidth;
+    img.height = height;
+    img.style.display = 'block';
+    img.style.margin = '0 auto';
+    img.style.width = `${drawWidth}px`;
+    img.style.height = `${height}px`;
+    clonedBadge.replaceWith(img);
   });
 }
 
@@ -224,7 +311,7 @@ export default function HonorableGuestCard({
   const cardUrl = getGuestCardUrl(ticket.ticketId);
   const paymentKind = getPaymentKind(ticket);
   const passLabel =
-    paymentKind === 'complimentary' ? 'VIP সম্মানী অতিথি পাস' : 'VIP Honorable Guest Pass';
+    paymentKind === 'complimentary' ? 'VIP সম্মানী অতিথি পাস' : 'VIP HONORABLE GUEST PASS';
   const compactLabel = paymentKind === 'complimentary' ? 'সম্মানী অতিথি' : 'Honorable Guest';
 
   useEffect(() => {
@@ -292,6 +379,7 @@ export default function HonorableGuestCard({
           const clonedElement = clonedCard as HTMLElement;
           prepareCardClone(clonedElement, sourceById, mode);
           replaceCanvasesWithImages(clonedElement, sourceRoot);
+          rasterizePassBadges(clonedElement, sourceById);
         },
       });
     } finally {
@@ -493,10 +581,8 @@ export default function HonorableGuestCard({
             </>
           )}
 
-          <div className="flex justify-center mt-4">
-            <div className="flex items-center justify-center bg-[#7A1F3D] border border-[#D4AF37]/50 text-[#F0D78C] px-5 py-2 rounded-full text-[10px] sm:text-xs font-black uppercase tracking-wide text-center leading-none">
-              {passLabel}
-            </div>
+          <div className="mt-4 w-full" style={{ textAlign: 'center' }}>
+            <span className="honorable-guest-pass-badge">{passLabel}</span>
           </div>
 
           <div className="flex items-center justify-center gap-3 my-4 text-[#D4AF37]">
