@@ -111,8 +111,9 @@ export default function AdminBudgetPanel({ tickets, actorName }: AdminBudgetPane
     <div className="space-y-5 font-body">
       <p className="text-xs text-[#B3A6C9] bg-[#0F0C1A] border border-[#D4AF37]/30 rounded-xl p-3">
         শুধুমাত্র <span className="text-[#F0D78C] font-bold">Super Admin</span> এই হিসাব দেখতে
-        পারবেন। রেজিস্ট্রেশন থেকে Approved পেমেন্ট অটো আয় হিসেবে যোগ হবে; পেন্ডিং আলাদা
-        দেখানো হবে। উপরে সেটার বাইরে ম্যানুয়াল আয়/খরচ এন্ট্রি দিতে পারবেন।
+        পারবেন। আয় হিসেবে শুধু <span className="text-[#F0D78C] font-bold">আসল Transaction ID</span> ওয়ালা
+        Approved পেমেন্ট ধরা হয়। সম্মানী কার্ড টাকা যোগ করে না; ডিউ আলাদা দেখানো হয় — পরে TrxID দিলে আয়ে
+        যাবে।
       </p>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -156,17 +157,25 @@ export default function AdminBudgetPanel({ tickets, actorName }: AdminBudgetPane
           <p className="text-sm font-bold text-[#F0D78C] mb-3">অটো আয় — রেজিস্ট্রেশন</p>
           <ul className="space-y-2 text-xs">
             <li className="flex items-center justify-between bg-[#1C1730] rounded-xl px-3 py-2">
-              <span className="text-[#F6EFE0]">Approved ({summary.confirmedCount} জন)</span>
+              <span className="text-[#F6EFE0]">সংগ্রহ (আসল TrxID, {summary.paidCollectedCount} জন)</span>
               <span className="font-bold text-[#F0D78C]">{formatBdt(summary.registrationConfirmedIncome)}</span>
             </li>
             <li className="flex items-center justify-between bg-[#1C1730] rounded-xl px-3 py-2">
-              <span className="text-[#B3A6C9]">Pending ({summary.pendingCount} জন)</span>
+              <span className="text-[#B3A6C9]">Pending পেইড ({summary.pendingCount} জন)</span>
               <span className="font-bold text-[#B3A6C9]">{formatBdt(summary.registrationPendingIncome)}</span>
+            </li>
+            <li className="flex items-center justify-between bg-[#1C1730] rounded-xl px-3 py-2">
+              <span className="text-[#F6EFE0]">ডিউ বকেয়া ({summary.dueCount} জন)</span>
+              <span className="font-bold text-[#FFB4C4]">{formatBdt(summary.dueOutstanding)}</span>
+            </li>
+            <li className="flex items-center justify-between bg-[#1C1730] rounded-xl px-3 py-2">
+              <span className="text-[#B3A6C9]">সম্মানী কার্ড ({summary.complimentaryCount} জন)</span>
+              <span className="font-bold text-[#B3A6C9]">০/-</span>
             </li>
           </ul>
           <p className="text-[10px] text-[#B3A6C9] mt-3">
-            Pending টাকা মোট আয়/ব্যালেন্সে যোগ হয় না — Super Admin অ্যাপ্রুভ করলে Approved-এ চলে
-            যাবে।
+            মোট আয়/ব্যালেন্সে শুধু আসল TrxID-এর টাকা যোগ হয়। ডিউ ও সম্মানী কার্ড গেস্ট লিস্টে থাকবে কিন্তু
+            ক্যাশে যোগ হবে না। Pending পেইড Super Admin অ্যাপ্রুভ করলে সংগ্রহে যাবে।
           </p>
         </div>
 

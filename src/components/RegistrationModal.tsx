@@ -173,6 +173,7 @@ export default function RegistrationModal({ isOpen, onClose, existingGuests }: R
       issueDate: new Date().toISOString(),
       seatNumbers: Array.from({ length: adultCount }, (_, i) => `VIP-${seatBase + i}`),
       songRequest: songRequest.trim() || undefined,
+      paymentKind: 'paid',
     };
 
     setIsSubmitting(true);

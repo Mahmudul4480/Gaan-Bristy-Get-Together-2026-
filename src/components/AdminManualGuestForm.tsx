@@ -4,6 +4,7 @@ import { EVENT_DETAILS } from '../data/eventData';
 import { buildGuestTicket } from '../utils/createGuestTicket';
 import { findDuplicateTransactionId } from '../utils/guestExport';
 import { saveHonorableGuest, getGuestCardUrl } from '../utils/guestStorage';
+import { paymentKindLabel, isRealTransactionId, type PaymentKind } from '../utils/paymentKind';
 import { sendRegistrationConfirmationSms } from '../utils/sendConfirmationSms';
 import { validatePhotoFile } from '../utils/photoUpload';
 import HonorableGuestCard from './HonorableGuestCard';
@@ -23,6 +24,9 @@ import {
   AlertTriangle,
   Crop,
   ShieldAlert,
+  Gift,
+  Clock,
+  Wallet,
 } from 'lucide-react';
 
 interface AdminManualGuestFormProps {
@@ -44,6 +48,7 @@ const emptyForm = () => ({
   paymentMethod: 'bKash' as Ticket['paymentMethod'],
   transactionId: '',
   songRequest: '',
+  paymentKind: 'paid' as PaymentKind,
 });
 
 export default function AdminManualGuestForm({
@@ -62,7 +67,9 @@ export default function AdminManualGuestForm({
   const [cropSrc, setCropSrc] = useState<string | null>(null);
   const [rawPhotoSrc, setRawPhotoSrc] = useState<string | null>(null);
 
-  const totalAmount = form.adultCount * EVENT_DETAILS.feeAdult;
+  const feeAmount = form.adultCount * EVENT_DETAILS.feeAdult;
+  const totalAmount = form.paymentKind === 'complimentary' ? 0 : feeAmount;
+  const issuesCardNow = form.paymentKind !== 'paid' || isSuperAdmin;
 
   const resetForm = () => {
     if (rawPhotoSrc?.startsWith('blob:')) URL.revokeObjectURL(rawPhotoSrc);
@@ -99,11 +106,15 @@ export default function AdminManualGuestForm({
     if (!form.fullName.trim()) newErrors.fullName = 'পূর্ণ নাম প্রয়োজন';
     if (!form.familyName.trim()) newErrors.familyName = 'Family Name প্রয়োজন';
     if (!form.phone.trim() || form.phone.length < 11) newErrors.phone = 'সঠিক মোবাইল নম্বর দিন';
-    if (!form.transactionId.trim()) newErrors.transactionId = 'Transaction ID প্রয়োজন';
-
-    const duplicate = findDuplicateTransactionId(existingGuests, form.transactionId);
-    if (duplicate) {
-      newErrors.transactionId = `এই TrxID ইতিমধ্যে ব্যবহার হয়েছে (${duplicate.ticketId})`;
+    if (form.paymentKind === 'paid') {
+      if (!isRealTransactionId(form.transactionId)) {
+        newErrors.transactionId = 'আসল Transaction ID দিন';
+      } else {
+        const duplicate = findDuplicateTransactionId(existingGuests, form.transactionId);
+        if (duplicate) {
+          newErrors.transactionId = `এই TrxID ইতিমধ্যে ব্যবহার হয়েছে (${duplicate.ticketId})`;
+        }
+      }
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -123,11 +134,12 @@ export default function AdminManualGuestForm({
       transactionId: form.transactionId,
       songRequest: form.songRequest || undefined,
       createdByAdmin: true,
+      paymentKind: form.paymentKind,
     });
 
-    // Payment verification is a Super Admin job — a Card Editor's manual entry
-    // is saved as Pending so a Super Admin still has to approve it.
-    const ticket: Ticket = isSuperAdmin
+    // Paid cards still need Super Admin verification. Due / honorary cards have
+    // no money to verify, so the QR card is issued immediately.
+    const ticket: Ticket = issuesCardNow
       ? {
           ...baseTicket,
           createdBy: actorName,
@@ -151,7 +163,7 @@ export default function AdminManualGuestForm({
       setSmsState('sending');
       sendRegistrationConfirmationSms(
         ticket.phone,
-        isSuperAdmin
+        ticket.status === 'Confirmed'
           ? { type: 'approved', cardUrl: getGuestCardUrl(ticket.ticketId) }
           : { type: 'pending' }
       ).then((result) => {
@@ -177,12 +189,12 @@ export default function AdminManualGuestForm({
       <div className="space-y-4 font-body">
         <div className="flex items-center gap-2 text-[#F0D78C] text-sm font-bold">
           <CheckCircle2 className="w-5 h-5" />
-          {isSuperAdmin
-            ? `Admin manual card তৈরি হয়েছে — ${createdTicket.ticketId}`
+          {createdTicket.status === 'Confirmed'
+            ? `${paymentKindLabel(createdTicket.paymentKind ?? 'paid')} কার্ড তৈরি হয়েছে — ${createdTicket.ticketId}`
             : `এন্ট্রি সংরক্ষিত হয়েছে — ${createdTicket.ticketId}`}
         </div>
 
-        {isSuperAdmin ? (
+        {createdTicket.status === 'Confirmed' ? (
           <HonorableGuestCard ticket={createdTicket} showQr />
         ) : (
           <div className="bg-[#0F0C1A] border border-[#D4AF37]/40 rounded-2xl p-4">
@@ -237,15 +249,44 @@ export default function AdminManualGuestForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4 font-body">
       <p className="text-xs text-[#B3A6C9] bg-[#0F0C1A] border border-[#D4AF37]/30 rounded-xl p-3">
-        যারা ওয়েবসাইট ব্যবহার করতে পারেন না — শুধু টাকা পাঠিয়েছেন — Admin এখানে তাদের Transaction ID, নাম ও
-        তথ্য দিয়ে Honorable Guest Card তৈরি করতে পারবেন।
+        তিন ধরনের কার্ড তৈরি করা যায়: <span className="text-[#F0D78C] font-semibold">পেইড</span> (আসল TrxID —
+        হিসাবে টাকা যোগ হবে), <span className="text-[#F0D78C] font-semibold">ডিউ</span> (আসবে কিন্তু পরে দিবে —
+        QR কার্ড যাবে, টাকা ডিউ থাকবে), আর <span className="text-[#F0D78C] font-semibold">সম্মানী</span> (টাকা
+        যোগ হবে না, সম্মানী QR কার্ড)।
         {!isSuperAdmin && (
           <span className="block mt-2 text-[#F0D78C] font-semibold">
-            আপনি Card Editor — আপনার এন্ট্রি Pending হিসেবে জমা হবে, পেমেন্ট ভেরিফাই করে Super Admin অ্যাপ্রুভ
-            করলে কার্ড তৈরি হবে।
+            পেইড এন্ট্রি Pending থাকবে — Super Admin TrxID ভেরিফাই করলে কার্ড তৈরি হবে। ডিউ ও সম্মানী কার্ড সাথে
+            সাথে QR সহ ইস্যু হবে।
           </span>
         )}
       </p>
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+        {(
+          [
+            { id: 'paid' as const, label: 'পেইড কার্ড', hint: 'আসল TrxID', Icon: Wallet },
+            { id: 'due' as const, label: 'ডিউ কার্ড', hint: 'পরে দিবে', Icon: Clock },
+            { id: 'complimentary' as const, label: 'সম্মানী কার্ড', hint: 'টাকা ০/-', Icon: Gift },
+          ] as const
+        ).map(({ id, label, hint, Icon }) => (
+          <button
+            key={id}
+            type="button"
+            onClick={() => setForm({ ...form, paymentKind: id, transactionId: id === 'paid' ? form.transactionId : '' })}
+            className={`rounded-xl border px-3 py-3 text-left cursor-pointer ${
+              form.paymentKind === id
+                ? 'bg-[#7A1F3D] border-[#D4AF37] text-[#F0D78C]'
+                : 'bg-[#0F0C1A] border-[#D4AF37]/30 text-[#B3A6C9]'
+            }`}
+          >
+            <span className="flex items-center gap-1.5 text-sm font-bold">
+              <Icon className="w-4 h-4" />
+              {label}
+            </span>
+            <span className="block text-[10px] mt-1 opacity-80">{hint}</span>
+          </button>
+        ))}
+      </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
@@ -295,6 +336,7 @@ export default function AdminManualGuestForm({
           {errors.phone && <p className="text-xs text-[#A52C54] mt-1">{errors.phone}</p>}
         </div>
 
+        {form.paymentKind === 'paid' && (
         <div className="sm:col-span-2">
           <label className="text-xs font-semibold text-[#F6EFE0] mb-1">Transaction ID (TrxID) *</label>
           <input
@@ -305,6 +347,7 @@ export default function AdminManualGuestForm({
           />
           {errors.transactionId && <p className="text-xs text-[#A52C54] mt-1">{errors.transactionId}</p>}
         </div>
+        )}
       </div>
 
       <div className="bg-[#0F0C1A] border border-[#D4AF37]/30 rounded-xl p-3">
@@ -341,6 +384,7 @@ export default function AdminManualGuestForm({
           <span className="font-bold text-[#F0D78C]">{form.adultCount}</span>
           <button type="button" onClick={() => setForm({ ...form, adultCount: form.adultCount + 1 })} className="w-7 h-7 rounded bg-[#1C1730] border border-[#D4AF37]/40 cursor-pointer">+</button>
         </div>
+        {form.paymentKind === 'paid' && (
         <div className="flex items-center gap-2">
           <span className="text-[#B3A6C9]">Payment:</span>
           {(['bKash', 'Nagad', 'Rocket'] as const).map((m) => (
@@ -354,7 +398,14 @@ export default function AdminManualGuestForm({
             </button>
           ))}
         </div>
-        <span className="font-bold text-[#F0D78C]">মোট: {totalAmount}/-</span>
+        )}
+        <span className="font-bold text-[#F0D78C]">
+          {form.paymentKind === 'complimentary'
+            ? 'সম্মানী — ০/- (হিসাবে যোগ হবে না)'
+            : form.paymentKind === 'due'
+              ? `ডিউ: ${feeAmount}/- (পরে দিবে, এখন হিসাবে যোগ নয়)`
+              : `মোট: ${totalAmount}/-`}
+        </span>
       </div>
 
       {errors.submit && (
@@ -369,7 +420,13 @@ export default function AdminManualGuestForm({
         className="w-full py-3 gold-gradient-btn text-[#0F0C1A] font-extrabold rounded-xl flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
       >
         <Save className="w-5 h-5" />
-        {isSubmitting ? 'সংরক্ষণ হচ্ছে...' : 'Manual Card তৈরি করুন'}
+        {isSubmitting
+          ? 'সংরক্ষণ হচ্ছে...'
+          : form.paymentKind === 'complimentary'
+            ? 'সম্মানী কার্ড তৈরি করুন'
+            : form.paymentKind === 'due'
+              ? 'ডিউ কার্ড তৈরি করুন'
+              : 'Manual Card তৈরি করুন'}
       </button>
 
       {cropSrc && (

@@ -9,6 +9,7 @@ import {
 } from 'firebase/firestore';
 import { ProgramLedgerEntry, ProgramLedgerKind, Ticket } from '../types';
 import { db } from '../config/firebase';
+import { getPaymentKind, hasCollectedPayment } from './paymentKind';
 
 const LEDGER_COLLECTION = 'programLedger';
 
@@ -93,6 +94,10 @@ export function formatBdt(amount: number): string {
 export interface ProgramBudgetSummary {
   registrationConfirmedIncome: number;
   registrationPendingIncome: number;
+  dueOutstanding: number;
+  complimentaryCount: number;
+  dueCount: number;
+  paidCollectedCount: number;
   manualIncome: number;
   manualExpense: number;
   totalIncome: number;
@@ -106,11 +111,22 @@ export function computeProgramBudget(
   tickets: Ticket[],
   manualEntries: ProgramLedgerEntry[]
 ): ProgramBudgetSummary {
+  const collected = tickets.filter(hasCollectedPayment);
+  const pendingPaid = tickets.filter(
+    (ticket) => ticket.status === 'Pending' && getPaymentKind(ticket) === 'paid'
+  );
+  const dueTickets = tickets.filter(
+    (ticket) => ticket.status !== 'Rejected' && getPaymentKind(ticket) === 'due'
+  );
+  const complimentaryTickets = tickets.filter(
+    (ticket) => ticket.status !== 'Rejected' && getPaymentKind(ticket) === 'complimentary'
+  );
   const confirmed = tickets.filter((ticket) => ticket.status === 'Confirmed');
   const pending = tickets.filter((ticket) => ticket.status === 'Pending');
 
-  const registrationConfirmedIncome = sumTicketAmounts(confirmed);
-  const registrationPendingIncome = sumTicketAmounts(pending);
+  const registrationConfirmedIncome = sumTicketAmounts(collected);
+  const registrationPendingIncome = sumTicketAmounts(pendingPaid);
+  const dueOutstanding = sumTicketAmounts(dueTickets);
   const manualIncome = manualEntries
     .filter((entry) => entry.kind === 'income')
     .reduce((total, entry) => total + entry.amount, 0);
@@ -124,6 +140,10 @@ export function computeProgramBudget(
   return {
     registrationConfirmedIncome,
     registrationPendingIncome,
+    dueOutstanding,
+    complimentaryCount: complimentaryTickets.length,
+    dueCount: dueTickets.length,
+    paidCollectedCount: collected.length,
     manualIncome,
     manualExpense,
     totalIncome,

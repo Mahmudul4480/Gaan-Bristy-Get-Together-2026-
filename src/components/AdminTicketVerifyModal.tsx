@@ -11,6 +11,7 @@ import AdminBudgetPanel from './AdminBudgetPanel';
 import AdminLoginGate from './AdminLoginGate';
 import { getAdminPanelUrl, ADMIN_PANEL_PIN } from '../config/adminConfig';
 import { getAdminActorName, getAdminRole, isAdminSessionActive, isSuperAdminSession } from '../utils/adminStorage';
+import { getPaymentKind, isRealTransactionId, paymentKindLabel } from '../utils/paymentKind';
 import { X, Search, ShieldCheck, CheckCircle2, User, Phone, Sparkles, AlertCircle, Camera, CameraOff, Upload, QrCode, RefreshCw, UserPlus, List, Pencil, Crown, Link2, Copy, Check, ImagePlus, Wallet, MessageSquarePlus } from 'lucide-react';
 
 interface AdminTicketVerifyModalProps {
@@ -582,7 +583,11 @@ export default function AdminTicketVerifyModal({ isOpen, onClose, registeredTick
 
               <div>
                 <span className="text-[#B3A6C9] block">TrxID:</span>
-                <span className="font-mono text-[#F6EFE0]">{searchedTicket.transactionId}</span>
+                <span className="font-mono text-[#F6EFE0]">
+                  {isRealTransactionId(searchedTicket.transactionId)
+                    ? searchedTicket.transactionId
+                    : paymentKindLabel(getPaymentKind(searchedTicket))}
+                </span>
               </div>
 
               {searchedTicket.starMakerId && (
@@ -604,8 +609,18 @@ export default function AdminTicketVerifyModal({ isOpen, onClose, registeredTick
             </div>
 
             <div className="p-3 bg-[#1C1730] border border-[#D4AF37]/20 rounded-xl flex items-center justify-between text-xs">
-              <span className="text-[#B3A6C9]">পরিশোধিত টাকা:</span>
-              <span className="font-extrabold text-[#F0D78C] font-serif text-sm">{searchedTicket.totalAmount}/- টাকা</span>
+              <span className="text-[#B3A6C9]">
+                {getPaymentKind(searchedTicket) === 'complimentary'
+                  ? 'সম্মানী'
+                  : getPaymentKind(searchedTicket) === 'due'
+                    ? 'ডিউ'
+                    : 'পরিশোধিত টাকা:'}
+              </span>
+              <span className="font-extrabold text-[#F0D78C] font-serif text-sm">
+                {getPaymentKind(searchedTicket) === 'complimentary'
+                  ? '০/-'
+                  : `${searchedTicket.totalAmount}/- টাকা`}
+              </span>
             </div>
 
             {/* Check-in Gate Action */}

@@ -1,5 +1,6 @@
 import { Ticket } from '../types';
 import { getGuestCardUrl } from './guestStorage';
+import { getPaymentKind, isRealTransactionId, paymentKindLabel } from './paymentKind';
 
 function escapeCsv(value: string): string {
   if (/[",\n]/.test(value)) {
@@ -17,6 +18,7 @@ export function downloadGuestsCsv(guests: Ticket[]): void {
     'Phone',
     'Email',
     'Transaction ID',
+    'Payment Kind',
     'Payment Method',
     'Adult Count',
     'Total Amount',
@@ -40,6 +42,7 @@ export function downloadGuestsCsv(guests: Ticket[]): void {
       g.phone,
       g.email ?? '',
       g.transactionId,
+      paymentKindLabel(getPaymentKind(g)),
       g.paymentMethod,
       String(g.adultCount),
       String(g.totalAmount),
@@ -85,9 +88,11 @@ function triggerDownload(blob: Blob, filename: string): void {
 }
 
 export function findDuplicateTransactionId(guests: Ticket[], transactionId: string, excludeTicketId?: string): Ticket | undefined {
+  if (!isRealTransactionId(transactionId)) return undefined;
   const normalized = transactionId.trim().toLowerCase();
   return guests.find(
     (g) =>
+      isRealTransactionId(g.transactionId) &&
       g.transactionId.trim().toLowerCase() === normalized &&
       g.ticketId !== excludeTicketId
   );

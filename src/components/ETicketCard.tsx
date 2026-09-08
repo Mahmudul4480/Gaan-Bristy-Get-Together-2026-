@@ -5,6 +5,7 @@ import { jsPDF } from 'jspdf';
 import { Ticket } from '../types';
 import { LOGO_URL, EVENT_DETAILS } from '../data/eventData';
 import { Printer, Share2, CheckCircle2, MapPin, Calendar, Clock, User, Phone, Sparkles, FileText, Loader2 } from 'lucide-react';
+import { getPaymentKind } from '../utils/paymentKind';
 
 interface ETicketCardProps {
   ticket: Ticket;
@@ -169,7 +170,12 @@ export default function ETicketCard({ ticket }: ETicketCardProps) {
             <div className="pt-2 border-t border-[#D4AF37]/20 flex flex-wrap gap-4 text-xs">
               <div>
                 <span className="text-[#B3A6C9]">Adult (জন): </span>
-                <span className="font-bold text-[#F6EFE0]">{ticket.adultCount} x ২০০০ = {ticket.adultCount * 2000} tk</span>
+                <span className="font-bold text-[#F6EFE0]">
+                  {ticket.adultCount}
+                  {getPaymentKind(ticket) === 'complimentary'
+                    ? ' · সম্মানী'
+                    : ` x ২০০০ = ${ticket.adultCount * 2000} tk`}
+                </span>
               </div>
               {ticket.kidCount > 0 && (
                 <div>
@@ -180,8 +186,16 @@ export default function ETicketCard({ ticket }: ETicketCardProps) {
             </div>
 
             <div className="pt-2 flex items-center justify-between bg-[#7A1F3D]/40 border border-[#D4AF37]/30 p-2.5 rounded-xl">
-              <span className="text-xs text-[#F6EFE0] font-bold">মোট পরিশোধিত টাকা:</span>
-              <span className="text-lg font-black text-[#F0D78C] font-serif">{ticket.totalAmount}/- টাকা</span>
+              <span className="text-xs text-[#F6EFE0] font-bold">
+                {getPaymentKind(ticket) === 'complimentary'
+                  ? 'সম্মানী কার্ড'
+                  : getPaymentKind(ticket) === 'due'
+                    ? 'ডিউ (পরে দিবে)'
+                    : 'মোট পরিশোধিত টাকা:'}
+              </span>
+              <span className="text-lg font-black text-[#F0D78C] font-serif">
+                {getPaymentKind(ticket) === 'complimentary' ? '০/-' : `${ticket.totalAmount}/- টাকা`}
+              </span>
             </div>
           </div>
 

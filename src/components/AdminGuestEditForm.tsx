@@ -3,6 +3,12 @@ import { AdminRole, CardDeleteRequest, Ticket } from '../types';
 import { EVENT_DETAILS } from '../data/eventData';
 import { findDuplicateTransactionId } from '../utils/guestExport';
 import { saveHonorableGuest } from '../utils/guestStorage';
+import {
+  getPaymentKind,
+  isRealTransactionId,
+  placeholderTransactionId,
+  type PaymentKind,
+} from '../utils/paymentKind';
 import { validatePhotoFile } from '../utils/photoUpload';
 import {
   deleteCardAsSuperAdmin,
@@ -110,14 +116,20 @@ export default function AdminGuestEditForm({
     if (!selected.fullName.trim()) newErrors.fullName = 'নাম প্রয়োজন';
     if (!selected.familyName.trim()) newErrors.familyName = 'Family Name প্রয়োজন';
     if (!selected.phone.trim() || selected.phone.length < 11) newErrors.phone = 'সঠিক মোবাইল দিন';
-    if (!selected.transactionId.trim()) newErrors.transactionId = 'TrxID প্রয়োজন';
 
-    const duplicate = findDuplicateTransactionId(
-      guests.filter((g) => g.ticketId !== selected.ticketId),
-      selected.transactionId
-    );
-    if (duplicate) {
-      newErrors.transactionId = `TrxID অন্য card-এ আছে (${duplicate.ticketId})`;
+    const paymentKind = getPaymentKind(selected);
+    if (paymentKind === 'paid') {
+      if (!isRealTransactionId(selected.transactionId)) {
+        newErrors.transactionId = 'আসল Transaction ID দিন';
+      } else {
+        const duplicate = findDuplicateTransactionId(
+          guests.filter((g) => g.ticketId !== selected.ticketId),
+          selected.transactionId
+        );
+        if (duplicate) {
+          newErrors.transactionId = `TrxID অন্য card-এ আছে (${duplicate.ticketId})`;
+        }
+      }
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -133,10 +145,11 @@ export default function AdminGuestEditForm({
       starMakerId: selected.starMakerId?.trim() || undefined,
       phone: selected.phone.trim(),
       email: selected.email?.trim() || undefined,
-      transactionId: selected.transactionId.trim(),
+      transactionId: paymentKind === 'paid' ? selected.transactionId.trim() : placeholderTransactionId(paymentKind),
       songRequest: selected.songRequest?.trim() || undefined,
       adultCount,
-      totalAmount: adultCount * EVENT_DETAILS.feeAdult,
+      totalAmount: paymentKind === 'complimentary' ? 0 : adultCount * EVENT_DETAILS.feeAdult,
+      paymentKind,
       seatNumbers:
         selected.seatNumbers.length >= adultCount
           ? selected.seatNumbers.slice(0, adultCount)
@@ -173,7 +186,8 @@ export default function AdminGuestEditForm({
   return (
     <div className="space-y-4 font-body">
       <p className="text-xs text-[#B3A6C9] bg-[#0F0C1A] border border-[#D4AF37]/30 rounded-xl p-3">
-        যেকোনো Guest Card-এর সব তথ্য এখান থেকে Edit করুন — নাম, Family, StarMaker ID, Mobile, ছবি, TrxID, Payment ইত্যাদি।
+        যেকোনো Guest Card-এর সব তথ্য এখান থেকে Edit করুন — নাম, Family, StarMaker ID, Mobile, ছবি, পেমেন্ট ধরন
+        (পেইড / ডিউ / সম্মানী), TrxID ইত্যাদি। ডিউ থেকে পেইডে বদলাতে আসল TrxID দিন — তখনই টাকা হিসাবে যোগ হবে।
       </p>
 
       <div className="relative">
@@ -279,6 +293,46 @@ export default function AdminGuestEditForm({
             </div>
 
             <div>
+              <label className="text-xs font-semibold text-[#F6EFE0] mb-2">কার্ডের ধরন</label>
+              <div className="flex flex-wrap gap-2">
+                {([
+                  { id: 'paid' as const, label: 'পেইড' },
+                  { id: 'due' as const, label: 'ডিউ' },
+                  { id: 'complimentary' as const, label: 'সম্মানী' },
+                ] as const).map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => {
+                      const nextKind: PaymentKind = item.id;
+                      const nextTrx =
+                        nextKind === 'paid'
+                          ? isRealTransactionId(selected.transactionId)
+                            ? selected.transactionId
+                            : ''
+                          : placeholderTransactionId(nextKind);
+                      setSelected({
+                        ...selected,
+                        paymentKind: nextKind,
+                        transactionId: nextTrx,
+                        totalAmount: nextKind === 'complimentary' ? 0 : selected.adultCount * EVENT_DETAILS.feeAdult,
+                      });
+                      setSaved(false);
+                    }}
+                    className={`px-3 py-1.5 rounded-full text-xs font-bold cursor-pointer border ${
+                      getPaymentKind(selected) === item.id
+                        ? 'bg-[#7A1F3D] text-[#F0D78C] border-[#D4AF37]'
+                        : 'bg-[#0F0C1A] text-[#B3A6C9] border-[#D4AF37]/30'
+                    }`}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {getPaymentKind(selected) === 'paid' ? (
+            <div>
               <label className="text-xs font-semibold text-[#F6EFE0] mb-1">Transaction ID (TrxID) *</label>
               <input
                 value={selected.transactionId}
@@ -287,6 +341,13 @@ export default function AdminGuestEditForm({
               />
               {errors.transactionId && <p className="text-xs text-[#A52C54] mt-1">{errors.transactionId}</p>}
             </div>
+            ) : (
+            <p className="text-xs text-[#B3A6C9] bg-[#0F0C1A] border border-[#D4AF37]/25 rounded-xl px-3 py-2">
+              {getPaymentKind(selected) === 'complimentary'
+                ? 'সম্মানী কার্ড — টাকা ০/-, হিসাবে যোগ হবে না।'
+                : `ডিউ ${selected.adultCount * EVENT_DETAILS.feeAdult}/- — কার্ড চলবে, টাকা পরে দিলে পেইডে বদলে আসল TrxID দিন।`}
+            </p>
+            )}
 
             <div className="grid grid-cols-2 gap-3">
               <div>

@@ -5,6 +5,7 @@ import { jsPDF } from 'jspdf';
 import { Ticket } from '../types';
 import { LOGO_URL, EVENT_DETAILS } from '../data/eventData';
 import { getGuestCardUrl } from '../utils/guestStorage';
+import { getPaymentKind } from '../utils/paymentKind';
 import { Download, FileText, Loader2, ShieldCheck, Shirt } from 'lucide-react';
 
 interface HonorableGuestCardProps {
@@ -221,6 +222,10 @@ export default function HonorableGuestCard({
   const [qrImageUrl, setQrImageUrl] = useState('');
 
   const cardUrl = getGuestCardUrl(ticket.ticketId);
+  const paymentKind = getPaymentKind(ticket);
+  const passLabel =
+    paymentKind === 'complimentary' ? 'VIP সম্মানী অতিথি পাস' : 'VIP Honorable Guest Pass';
+  const compactLabel = paymentKind === 'complimentary' ? 'সম্মানী অতিথি' : 'Honorable Guest';
 
   useEffect(() => {
     if (compact || !showQr) return;
@@ -391,7 +396,7 @@ export default function HonorableGuestCard({
               )}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-[10px] text-[#D4AF37] font-black uppercase tracking-wider">Honorable Guest</p>
+              <p className="text-[10px] text-[#D4AF37] font-black uppercase tracking-wider">{compactLabel}</p>
               <p className="font-bold text-[#F0D78C] text-sm truncate">{ticket.familyName}</p>
               <p className="text-xs text-[#F6EFE0] truncate">{ticket.fullName}</p>
               <p className="text-[10px] font-mono text-[#B3A6C9]">{ticket.ticketId}</p>
@@ -439,7 +444,7 @@ export default function HonorableGuestCard({
           </div>
 
           <p className="text-[10px] sm:text-xs tracking-[0.35em] text-[#D4AF37] font-black uppercase mb-1">
-            Honorable Guest
+            {paymentKind === 'complimentary' ? 'সম্মানী অতিথি' : 'Honorable Guest'}
           </p>
           <h3 className="text-xl sm:text-2xl font-black font-serif royal-title-effect leading-tight px-2">
             Gaan Bristy Grand Get Together 2026
@@ -490,7 +495,7 @@ export default function HonorableGuestCard({
 
           <div className="flex justify-center mt-4">
             <div className="flex items-center justify-center bg-[#7A1F3D] border border-[#D4AF37]/50 text-[#F0D78C] px-5 py-2 rounded-full text-[10px] sm:text-xs font-black uppercase tracking-wide text-center leading-none">
-              VIP Honorable Guest Pass
+              {passLabel}
             </div>
           </div>
 

@@ -10,6 +10,7 @@ import {
 } from 'firebase/firestore';
 import { Ticket } from '../types';
 import { db, isFirebaseConfigured } from '../config/firebase';
+import { getPaymentKind } from './paymentKind';
 
 const GUESTS_COLLECTION = 'honorableGuests';
 
@@ -21,6 +22,7 @@ function normalizeGuest(g: Ticket): Ticket {
     familyName: g.familyName || 'Gaan Bristy Family',
     kidCount: g.kidCount ?? 0,
     status: g.status === 'Pending' || g.status === 'Rejected' ? g.status : 'Confirmed',
+    paymentKind: getPaymentKind(g),
   };
 }
 

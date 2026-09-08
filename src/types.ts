@@ -41,6 +41,8 @@ export interface Ticket {
   approvedAt?: string;
   rejectedBy?: string;
   rejectedAt?: string;
+  /** paid = real TrxID counted in budget; due = will pay later; complimentary = honorary, ৳0 */
+  paymentKind?: 'paid' | 'due' | 'complimentary';
 }
 
 export interface AppointedAdmin {

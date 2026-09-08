@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { AdminRole, CardDeleteRequest, Ticket } from '../types';
 import { downloadGuestsCsv, downloadGuestsJson } from '../utils/guestExport';
 import { getGuestCardUrl, saveHonorableGuest } from '../utils/guestStorage';
+import { getPaymentKind, isRealTransactionId, paymentKindLabel, type PaymentKind } from '../utils/paymentKind';
 import { sendRegistrationConfirmationSms } from '../utils/sendConfirmationSms';
 import { getGuestCardWhatsAppUrl } from '../utils/whatsappShare';
 import {
@@ -39,6 +40,7 @@ interface AdminGuestListProps {
 }
 
 type StatusFilter = 'all' | 'Pending' | 'Confirmed' | 'Rejected';
+type PaymentFilter = 'all' | PaymentKind;
 type RowActionState = 'idle' | 'saving' | 'sms-sending' | 'sms-sent' | 'sms-failed';
 
 interface VerificationLogEntry {
@@ -71,6 +73,7 @@ function formatLogTime(iso?: string): string {
 export default function AdminGuestList({ guests, adminRole, actorName, onEditGuest }: AdminGuestListProps) {
   const [query, setQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+  const [paymentFilter, setPaymentFilter] = useState<PaymentFilter>('all');
   const [previewTicket, setPreviewTicket] = useState<Ticket | null>(null);
   const [rowState, setRowState] = useState<Record<string, RowActionState>>({});
   const [rowError, setRowError] = useState<Record<string, string>>({});
@@ -131,6 +134,7 @@ export default function AdminGuestList({ guests, adminRole, actorName, onEditGue
     const q = query.trim().toLowerCase();
     return guests
       .filter((g) => (statusFilter === 'all' ? true : g.status === statusFilter))
+      .filter((g) => (paymentFilter === 'all' ? true : getPaymentKind(g) === paymentFilter))
       .filter((g) => {
         if (!q) return true;
         return (
@@ -143,7 +147,7 @@ export default function AdminGuestList({ guests, adminRole, actorName, onEditGue
         );
       })
       .sort((a, b) => statusRank(a.status) - statusRank(b.status));
-  }, [guests, query, statusFilter]);
+  }, [guests, query, statusFilter, paymentFilter]);
 
   const setStateFor = (ticketId: string, state: RowActionState, error?: string) => {
     setRowState((prev) => ({ ...prev, [ticketId]: state }));
@@ -430,6 +434,28 @@ export default function AdminGuestList({ guests, adminRole, actorName, onEditGue
         ))}
       </div>
 
+      <div className="flex flex-wrap gap-2">
+        {([
+          { id: 'all' as const, label: 'সব পেমেন্ট' },
+          { id: 'paid' as const, label: 'পেইড' },
+          { id: 'due' as const, label: 'ডিউ' },
+          { id: 'complimentary' as const, label: 'সম্মানী' },
+        ]).map((item) => (
+          <button
+            key={item.id}
+            type="button"
+            onClick={() => setPaymentFilter(item.id)}
+            className={`px-3 py-1.5 rounded-full text-[11px] font-bold cursor-pointer border ${
+              paymentFilter === item.id
+                ? 'bg-[#7A1F3D] text-[#F0D78C] border-[#D4AF37]'
+                : 'bg-[#0F0C1A] text-[#B3A6C9] border-[#D4AF37]/30'
+            }`}
+          >
+            {item.label}
+          </button>
+        ))}
+      </div>
+
       <div className="relative">
         <Search className="absolute left-3 top-3 w-4 h-4 text-[#B3A6C9]" />
         <input
@@ -461,6 +487,7 @@ export default function AdminGuestList({ guests, adminRole, actorName, onEditGue
                 const action = rowState[g.ticketId] || 'idle';
                 const busy = action === 'saving' || action === 'sms-sending';
                 const whatsappUrl = g.status === 'Confirmed' ? getGuestCardWhatsAppUrl(g.phone, g.ticketId, g.fullName) : null;
+                const kind = getPaymentKind(g);
 
                 return (
                   <tr key={g.ticketId} className="border-t border-[#D4AF37]/15 hover:bg-[#0F0C1A]/50 align-top">
@@ -469,10 +496,29 @@ export default function AdminGuestList({ guests, adminRole, actorName, onEditGue
                       <p className="text-[#F6EFE0] font-semibold">{g.fullName}</p>
                       <p className="text-[10px] text-[#B3A6C9]">{g.familyName}</p>
                     </td>
-                    <td className="px-3 py-2 font-mono text-[#F6EFE0]">{g.transactionId}</td>
+                    <td className="px-3 py-2 font-mono text-[#F6EFE0]">
+                      {isRealTransactionId(g.transactionId) ? g.transactionId : '—'}
+                    </td>
                     <td className="px-3 py-2 text-[#B3A6C9]">
-                      {g.paymentMethod}
-                      <span className="block text-[#F0D78C] font-bold">{g.totalAmount}/-</span>
+                      <span
+                        className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold mb-1 ${
+                          kind === 'complimentary'
+                            ? 'bg-[#1C1730] text-[#F0D78C] border border-[#D4AF37]/50'
+                            : kind === 'due'
+                              ? 'bg-[#7A1F3D]/70 text-[#F6EFE0] border border-[#A52C54]/50'
+                              : 'bg-[#0F0C1A] text-[#F0D78C] border border-[#D4AF37]/40'
+                        }`}
+                      >
+                        {paymentKindLabel(kind)}
+                      </span>
+                      {kind !== 'complimentary' && (
+                        <span className="block text-[#F0D78C] font-bold">
+                          {kind === 'due' ? `ডিউ ${g.totalAmount}/-` : `${g.totalAmount}/-`}
+                        </span>
+                      )}
+                      {kind === 'complimentary' && (
+                        <span className="block text-[#B3A6C9] font-bold">০/-</span>
+                      )}
                     </td>
                     <td className="px-3 py-2 font-mono">{g.phone}</td>
                     <td className="px-3 py-2">
