@@ -8,11 +8,12 @@ import AdminAssignPanel from './AdminAssignPanel';
 import AdminGalleryManager from './AdminGalleryManager';
 import AdminGuestbookManager from './AdminGuestbookManager';
 import AdminBudgetPanel from './AdminBudgetPanel';
+import AdminQuizPanel from './AdminQuizPanel';
 import AdminLoginGate from './AdminLoginGate';
 import { getAdminPanelUrl, ADMIN_PANEL_PIN } from '../config/adminConfig';
 import { getAdminActorName, getAdminRole, isAdminSessionActive, isSuperAdminSession } from '../utils/adminStorage';
 import { getPaymentKind, isRealTransactionId, paymentKindLabel } from '../utils/paymentKind';
-import { X, Search, ShieldCheck, CheckCircle2, User, Phone, Sparkles, AlertCircle, Camera, CameraOff, Upload, QrCode, RefreshCw, UserPlus, List, Pencil, Crown, Link2, Copy, Check, ImagePlus, Wallet, MessageSquarePlus } from 'lucide-react';
+import { X, Search, ShieldCheck, CheckCircle2, User, Phone, Sparkles, AlertCircle, Camera, CameraOff, Upload, QrCode, RefreshCw, UserPlus, List, Pencil, Crown, Link2, Copy, Check, ImagePlus, Wallet, MessageSquarePlus, Music2 } from 'lucide-react';
 
 interface AdminTicketVerifyModalProps {
   isOpen: boolean;
@@ -21,7 +22,7 @@ interface AdminTicketVerifyModalProps {
 }
 
 export default function AdminTicketVerifyModal({ isOpen, onClose, registeredTickets }: AdminTicketVerifyModalProps) {
-  const [panelTab, setPanelTab] = useState<'verify' | 'create' | 'list' | 'edit' | 'assign' | 'gallery' | 'guestbook' | 'budget'>('verify');
+  const [panelTab, setPanelTab] = useState<'verify' | 'create' | 'list' | 'edit' | 'assign' | 'gallery' | 'guestbook' | 'budget' | 'quiz'>('verify');
   const [isAuthenticated, setIsAuthenticated] = useState(() => isAdminSessionActive());
   const [linkCopied, setLinkCopied] = useState(false);
   const [activeTab, setActiveTab] = useState<'camera' | 'manual'>('camera');
@@ -179,7 +180,7 @@ export default function AdminTicketVerifyModal({ isOpen, onClose, registeredTick
     onClose();
   };
 
-  const switchPanelTab = (tab: 'verify' | 'create' | 'list' | 'edit' | 'assign' | 'gallery' | 'guestbook' | 'budget') => {
+  const switchPanelTab = (tab: 'verify' | 'create' | 'list' | 'edit' | 'assign' | 'gallery' | 'guestbook' | 'budget' | 'quiz') => {
     if (tab === 'budget' && !isSuperAdminSession()) return;
     if (tab !== 'verify') stopCameraScanner();
     if (tab !== 'edit') setEditTicketId(null);
@@ -238,6 +239,7 @@ export default function AdminTicketVerifyModal({ isOpen, onClose, registeredTick
     panelTab === 'edit' ||
     panelTab === 'gallery' ||
     panelTab === 'guestbook' ||
+    panelTab === 'quiz' ||
     (panelTab === 'budget' && isSuperAdminSession());
   const isSuperAdmin = isSuperAdminSession();
 
@@ -361,6 +363,13 @@ export default function AdminTicketVerifyModal({ isOpen, onClose, registeredTick
               <MessageSquarePlus className="w-4 h-4" />
               <span>গেস্টবুক</span>
             </button>
+            <button
+              onClick={() => switchPanelTab('quiz')}
+              className={`flex-1 min-w-[7rem] py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${panelTab === 'quiz' ? 'gold-gradient-btn text-[#0F0C1A] shadow-md' : 'text-[#B3A6C9] hover:text-[#F6EFE0]'}`}
+            >
+              <Music2 className="w-4 h-4" />
+              <span>কুইজ</span>
+            </button>
             {isSuperAdmin && (
               <button
                 onClick={() => switchPanelTab('budget')}
@@ -407,6 +416,8 @@ export default function AdminTicketVerifyModal({ isOpen, onClose, registeredTick
         {panelTab === 'gallery' && <AdminGalleryManager />}
 
         {panelTab === 'guestbook' && <AdminGuestbookManager />}
+
+        {panelTab === 'quiz' && <AdminQuizPanel actorName={getAdminActorName()} />}
 
         {panelTab === 'budget' && isSuperAdmin && (
           <AdminBudgetPanel tickets={registeredTickets} actorName={getAdminActorName()} />

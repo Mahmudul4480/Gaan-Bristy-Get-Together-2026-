@@ -56,3 +56,19 @@ export function placeholderTransactionId(kind: PaymentKind): string {
   if (kind === 'due') return DUE_TRX_PLACEHOLDER;
   return '';
 }
+
+/** Tag an existing card as due — QR stays, amount is outstanding, collected income does not include it. */
+export function applyDueTag(ticket: Ticket, feeAdult: number): Ticket {
+  const adultCount = Math.max(1, ticket.adultCount || 1);
+  const dueAmount = adultCount * feeAdult;
+  return {
+    ...ticket,
+    paymentKind: 'due',
+    adultCount,
+    totalAmount: dueAmount > 0 ? dueAmount : ticket.totalAmount || 0,
+    transactionId: isRealTransactionId(ticket.transactionId)
+      ? ticket.transactionId.trim()
+      : DUE_TRX_PLACEHOLDER,
+    status: ticket.status === 'Rejected' ? ticket.status : 'Confirmed',
+  };
+}

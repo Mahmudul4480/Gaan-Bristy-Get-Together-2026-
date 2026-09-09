@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { AdminRole, CardDeleteRequest, Ticket } from '../types';
+import { EVENT_DETAILS } from '../data/eventData';
 import { downloadGuestsCsv, downloadGuestsJson } from '../utils/guestExport';
 import { getGuestCardUrl, saveHonorableGuest } from '../utils/guestStorage';
-import { getPaymentKind, isRealTransactionId, paymentKindLabel, type PaymentKind } from '../utils/paymentKind';
+import { applyDueTag, getPaymentKind, isRealTransactionId, paymentKindLabel, type PaymentKind } from '../utils/paymentKind';
 import { sendRegistrationConfirmationSms } from '../utils/sendConfirmationSms';
 import { getGuestCardWhatsAppUrl } from '../utils/whatsappShare';
 import {
@@ -30,6 +31,7 @@ import {
   ShieldCheck,
   ScrollText,
   Pencil,
+  Clock,
 } from 'lucide-react';
 
 interface AdminGuestListProps {
@@ -209,6 +211,40 @@ export default function AdminGuestList({ guests, adminRole, actorName, onEditGue
     }
   };
 
+  const handleMarkDue = async (guest: Ticket) => {
+    if (guest.status === 'Rejected' || getPaymentKind(guest) === 'due') return;
+    setStateFor(guest.ticketId, 'saving');
+    const tagged = applyDueTag(guest, EVENT_DETAILS.feeAdult);
+    const wasPending = guest.status === 'Pending';
+    try {
+      await saveHonorableGuest({
+        ...tagged,
+        approvedBy: tagged.approvedBy || actorName,
+        approvedAt: tagged.approvedAt || new Date().toISOString(),
+      });
+      if (wasPending) {
+        setStateFor(guest.ticketId, 'sms-sending');
+        const sms = await sendRegistrationConfirmationSms(guest.phone, {
+          type: 'approved',
+          cardUrl: getGuestCardUrl(guest.ticketId),
+        });
+        if (sms.success) {
+          setStateFor(guest.ticketId, 'sms-sent');
+        } else {
+          setStateFor(guest.ticketId, 'sms-failed', sms.error || 'SMS পাঠানো যায়নি');
+        }
+      } else {
+        setStateFor(guest.ticketId, 'idle');
+      }
+    } catch (error) {
+      setStateFor(
+        guest.ticketId,
+        'idle',
+        error instanceof Error ? error.message : 'ডিউ ট্যাগ দেওয়া যায়নি'
+      );
+    }
+  };
+
   const handleDeleteCard = async (guest: Ticket) => {
     setRequestBusyId(guest.ticketId);
     try {
@@ -280,22 +316,28 @@ export default function AdminGuestList({ guests, adminRole, actorName, onEditGue
           {isSuperAdmin && ' নিচের তালিকা থেকে অ্যাপ্রুভ বা রিজেক্ট করুন।'}
         </div>
       )}
-      <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
-        <p className="text-sm text-[#B3A6C9]">
-          মোট <span className="text-[#F0D78C] font-bold">{guests.length}</span> টি রেজিস্ট্রেশন
-          {pendingCount > 0 && (
-            <>
-              {' '}
-              · <span className="text-[#F0D78C] font-bold">{pendingCount}</span> টি Pending Approval
-            </>
-          )}
-          {pendingDeleteRequests.length > 0 && (
-            <>
-              {' '}
-              · <span className="text-[#F0D78C] font-bold">{pendingDeleteRequests.length}</span> টি Delete Request
-            </>
-          )}
-        </p>
+      <div className="flex flex-col sm:flex-row gap-3 sm:items-start sm:justify-between">
+        <div>
+          <p className="text-sm text-[#B3A6C9]">
+            মোট <span className="text-[#F0D78C] font-bold">{guests.length}</span> টি রেজিস্ট্রেশন
+            {pendingCount > 0 && (
+              <>
+                {' '}
+                · <span className="text-[#F0D78C] font-bold">{pendingCount}</span> টি Pending Approval
+              </>
+            )}
+            {pendingDeleteRequests.length > 0 && (
+              <>
+                {' '}
+                · <span className="text-[#F0D78C] font-bold">{pendingDeleteRequests.length}</span> টি Delete Request
+              </>
+            )}
+          </p>
+          <p className="text-[11px] text-[#B3A6C9] mt-1">
+            পুরনো কার্ডে <span className="text-[#F0D78C] font-bold">ডিউ ট্যাগ</span> দিলে QR কার্ড থাকবে, টাকা হিসাব থেকে
+            সরে ডিউতে যাবে। পরে পেইড করতে Card Edit থেকে আসল TrxID দিন।
+          </p>
+        </div>
         <div className="flex flex-wrap gap-2">
           <button
             type="button"
@@ -571,6 +613,17 @@ export default function AdminGuestList({ guests, adminRole, actorName, onEditGue
                           >
                             <Pencil className="w-3.5 h-3.5" />
                             Edit
+                          </button>
+                        )}
+                        {kind !== 'due' && g.status !== 'Rejected' && (
+                          <button
+                            type="button"
+                            disabled={busy}
+                            onClick={() => handleMarkDue(g)}
+                            className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-[#7A1F3D]/80 border border-[#A52C54]/60 text-[#F6EFE0] font-bold cursor-pointer disabled:opacity-50"
+                          >
+                            {action === 'saving' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Clock className="w-3.5 h-3.5" />}
+                            ডিউ ট্যাগ
                           </button>
                         )}
                         {g.status === 'Pending' &&

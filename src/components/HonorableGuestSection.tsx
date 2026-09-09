@@ -1,7 +1,13 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
 import { Ticket } from '../types';
 import HonorableGuestCard from './HonorableGuestCard';
-import { Award, ChevronLeft, ChevronRight, Clock, QrCode, Search, Sparkles, XCircle } from 'lucide-react';
+import { Award, ChevronLeft, ChevronRight, Clock, QrCode, Search, Sparkles, XCircle, Music2 } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import {
+  IDLE_STATE,
+  getQuizPlayUrl,
+  isQuizJoinable,
+  subscribeToQuizState,
+} from '../utils/quizStorage';
 
 interface HonorableGuestSectionProps {
   guests: Ticket[];
@@ -25,12 +31,24 @@ export default function HonorableGuestSection({
   const selectedConfirmed = selectedGuest?.status === 'Confirmed' ? selectedGuest : undefined;
   const selectedPending = selectedGuest?.status === 'Pending';
   const selectedRejected = selectedGuest?.status === 'Rejected';
+  const [quizState, setQuizState] = useState(IDLE_STATE);
+
+  useEffect(() => subscribeToQuizState(setQuizState), []);
+
+  const quizJoinable = isQuizJoinable(quizState.phase);
 
   useEffect(() => {
     if ((selectedConfirmed || selectedPending || selectedRejected) && featuredRef.current) {
       featuredRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
   }, [selectedConfirmed, selectedPending, selectedRejected]);
+
+  useEffect(() => {
+    if (!selectedConfirmed || !quizJoinable) return;
+    const params = new URLSearchParams(window.location.search);
+    if (!params.get('guest') || params.get('quiz') === 'play') return;
+    window.location.replace(getQuizPlayUrl(selectedConfirmed.ticketId));
+  }, [selectedConfirmed, quizJoinable]);
 
   return (
     <section
@@ -58,6 +76,18 @@ export default function HonorableGuestSection({
               <QrCode className="w-4 h-4" />
               আপনার Honorable Guest Card
             </p>
+            {quizJoinable && (
+              <div className="max-w-md mx-auto mb-5 text-center">
+                <a
+                  href={getQuizPlayUrl(selectedConfirmed.ticketId)}
+                  className="inline-flex items-center justify-center gap-2 w-full sm:w-auto px-6 py-3 rounded-full gold-gradient-btn text-[#0F0C1A] font-black text-sm"
+                >
+                  <Music2 className="w-4 h-4" />
+                  কুইজে যোগ দিন
+                </a>
+                <p className="text-[11px] text-[#B3A6C9] mt-2">স্টেজ কুইজ চলছে — QR স্ক্যান করলে এখানেই খেলায় ঢুকবেন।</p>
+              </div>
+            )}
             <HonorableGuestCard ticket={selectedConfirmed} />
             {onSelectGuest && (
               <div className="text-center mt-4">

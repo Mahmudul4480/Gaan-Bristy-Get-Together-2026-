@@ -101,3 +101,51 @@ export interface ProgramLedgerEntry {
   createdBy: string;
   createdAt: string;
 }
+
+export type QuizPhase = 'idle' | 'lobby' | 'question' | 'reveal' | 'podium';
+export type QuizQuestionCount = 10 | 15;
+
+export interface QuizState {
+  phase: QuizPhase;
+  sessionId: string;
+  questionCount: QuizQuestionCount;
+  questionIndex: number;
+  questionStartedAt?: string;
+  timerSeconds: number;
+  updatedAt: string;
+  updatedBy?: string;
+}
+
+export interface QuizPlayer {
+  ticketId: string;
+  fullName: string;
+  familyName: string;
+  photoUrl?: string;
+  starMakerId?: string;
+  sessionId: string;
+  joinedAt: string;
+}
+
+export interface QuizAnswer {
+  id: string;
+  ticketId: string;
+  sessionId: string;
+  questionIndex: number;
+  choiceIndex: number;
+  submittedAt: string;
+  correct: boolean;
+  points: number;
+  elapsedMs: number;
+}
+
+export interface QuizLeaderboardRow {
+  ticketId: string;
+  fullName: string;
+  familyName: string;
+  photoUrl?: string;
+  starMakerId?: string;
+  totalPoints: number;
+  correctCount: number;
+  totalElapsedMs: number;
+  rank: number;
+}

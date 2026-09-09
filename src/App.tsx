@@ -21,9 +21,17 @@ import { isAdminUrlMatch } from './utils/adminStorage';
 import { bindHashNavigation, navigateToSection } from './utils/scrollToSection';
 import { trackGuestbookOpen, trackRegisterOpen, trackSectionView } from './utils/analytics';
 import { MessageSquare, Ticket as TicketIcon } from 'lucide-react';
+import QuizPlayer from './components/QuizPlayer';
+import QuizStageScreen from './components/QuizStageScreen';
 
 function getGuestIdFromUrl(): string | null {
   return new URLSearchParams(window.location.search).get('guest');
+}
+
+function getQuizMode(): 'play' | 'screen' | null {
+  const mode = new URLSearchParams(window.location.search).get('quiz');
+  if (mode === 'play' || mode === 'screen') return mode;
+  return null;
 }
 
 export default function App() {
@@ -31,8 +39,10 @@ export default function App() {
   const [isCanvaGuideOpen, setIsCanvaGuideOpen] = useState(false);
   const [isAdminVerifyOpen, setIsAdminVerifyOpen] = useState(false);
   const [honorableGuests, setHonorableGuests] = useState<Ticket[]>([]);
+  const [guestsReady, setGuestsReady] = useState(!isFirebaseConfigured);
   const [selectedGuestId, setSelectedGuestId] = useState<string | null>(() => getGuestIdFromUrl());
   const [activeSection] = useState('hero');
+  const quizMode = getQuizMode();
 
   // Live sync across every browser/device — Firestore pushes updates instantly
   // whenever any admin or guest creates/edits a Honorable Guest Card.
@@ -42,8 +52,14 @@ export default function App() {
       return;
     }
     const unsubscribe = subscribeToHonorableGuests(
-      (guests) => setHonorableGuests(guests),
-      (error) => console.error('[Gaan Bristy] Guest sync error:', error)
+      (guests) => {
+        setHonorableGuests(guests);
+        setGuestsReady(true);
+      },
+      (error) => {
+        console.error('[Gaan Bristy] Guest sync error:', error);
+        setGuestsReady(true);
+      }
     );
     return unsubscribe;
   }, []);
@@ -89,6 +105,18 @@ export default function App() {
     trackRegisterOpen(source);
     setIsRegisterOpen(true);
   };
+
+  if (quizMode === 'screen') {
+    return <QuizStageScreen />;
+  }
+
+  if (quizMode === 'play') {
+    const playGuestId = getGuestIdFromUrl();
+    const playTicket = playGuestId
+      ? honorableGuests.find((guest) => guest.ticketId === playGuestId)
+      : undefined;
+    return <QuizPlayer ticket={playTicket} guestsLoaded={guestsReady} />;
+  }
 
   return (
     <div id="app-root" className="relative min-h-screen bg-[#0F0C1A] text-[#F6EFE0] font-sans antialiased selection:bg-[#D4AF37] selection:text-[#0F0C1A] midnight-bg-glow overflow-x-hidden">

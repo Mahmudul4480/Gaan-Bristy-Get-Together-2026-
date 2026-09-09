@@ -114,6 +114,34 @@ service cloud.firestore {
       allow delete: if true;
     }
 
+    // Stage quiz (Kahoot-style). Reads are public so phones and the projector
+    // stay in sync. Answers are create-only so a guest cannot change a pick.
+    match /quizState/{stateId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    match /quizPlayers/{ticketId} {
+      allow read: if true;
+      allow create, update: if request.resource.data.ticketId == ticketId
+        && request.resource.data.fullName is string
+        && request.resource.data.fullName.size() > 0
+        && request.resource.data.sessionId is string
+        && request.resource.data.joinedAt is string;
+      allow delete: if true;
+    }
+
+    match /quizAnswers/{answerId} {
+      allow read: if true;
+      allow create: if request.resource.data.ticketId is string
+        && request.resource.data.sessionId is string
+        && request.resource.data.questionIndex is number
+        && request.resource.data.choiceIndex is number
+        && request.resource.data.submittedAt is string;
+      allow update: if false;
+      allow delete: if true;
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }

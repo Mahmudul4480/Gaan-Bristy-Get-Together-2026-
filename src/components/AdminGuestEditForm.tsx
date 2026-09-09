@@ -145,7 +145,12 @@ export default function AdminGuestEditForm({
       starMakerId: selected.starMakerId?.trim() || undefined,
       phone: selected.phone.trim(),
       email: selected.email?.trim() || undefined,
-      transactionId: paymentKind === 'paid' ? selected.transactionId.trim() : placeholderTransactionId(paymentKind),
+      transactionId:
+        paymentKind === 'paid'
+          ? selected.transactionId.trim()
+          : isRealTransactionId(selected.transactionId)
+            ? selected.transactionId.trim()
+            : placeholderTransactionId(paymentKind),
       songRequest: selected.songRequest?.trim() || undefined,
       adultCount,
       totalAmount: paymentKind === 'complimentary' ? 0 : adultCount * EVENT_DETAILS.feeAdult,
@@ -310,7 +315,9 @@ export default function AdminGuestEditForm({
                           ? isRealTransactionId(selected.transactionId)
                             ? selected.transactionId
                             : ''
-                          : placeholderTransactionId(nextKind);
+                          : isRealTransactionId(selected.transactionId)
+                            ? selected.transactionId
+                            : placeholderTransactionId(nextKind);
                       setSelected({
                         ...selected,
                         paymentKind: nextKind,
