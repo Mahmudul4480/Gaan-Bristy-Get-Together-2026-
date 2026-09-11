@@ -1,6 +1,6 @@
 import CountdownTimer from './CountdownTimer';
 import HeroBrandLockup from './HeroBrandLockup';
-import { EVENT_DETAILS } from '../data/eventData';
+import { EVENT_DETAILS, isRegistrationOpen } from '../data/eventData';
 import { Calendar, Clock, MapPin, Sparkles, AlertTriangle, ArrowRight, Music, Utensils, Award, Smile, Shirt } from 'lucide-react';
 import AddToCalendar from './AddToCalendar';
 import GaanBristyUmbrella from './GaanBristyUmbrella';
@@ -13,6 +13,7 @@ interface HeroProps {
 export default function Hero({ onOpenRegister, onExploreSchedule }: HeroProps) {
   const remainingSeats = EVENT_DETAILS.totalSeats - EVENT_DETAILS.reservedSeatsCount;
   const percentageFilled = Math.round((EVENT_DETAILS.reservedSeatsCount / EVENT_DETAILS.totalSeats) * 100);
+  const registrationOpen = isRegistrationOpen();
 
   return (
     <section id="hero" className="hero-with-falling relative overflow-hidden bg-[#0F0C1A] text-[#F6EFE0] pt-6 pb-14 sm:pt-8 sm:pb-16 md:pt-12 md:pb-20 border-b border-[#D4AF37]/20 midnight-bg-glow">
@@ -193,9 +194,10 @@ export default function Hero({ onOpenRegister, onExploreSchedule }: HeroProps) {
               <button
                 onClick={onOpenRegister}
                 id="hero-book-ticket-btn"
-                className="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-[#F0D78C] to-[#D4AF37] text-[#0F0C1A] font-black text-base sm:text-lg rounded-full shadow-[0_8px_24px_rgba(212,175,55,0.35)] hover:shadow-[0_12px_32px_rgba(212,175,55,0.5)] transform hover:scale-105 transition duration-200 flex items-center justify-center gap-2 cursor-pointer"
+                disabled={!registrationOpen}
+                className="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-[#F0D78C] to-[#D4AF37] text-[#0F0C1A] font-black text-base sm:text-lg rounded-full shadow-[0_8px_24px_rgba(212,175,55,0.35)] hover:shadow-[0_12px_32px_rgba(212,175,55,0.5)] transform hover:scale-105 transition duration-200 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:hover:scale-100 disabled:cursor-not-allowed"
               >
-                <span>রেজিস্ট্রেশন করুন</span>
+                <span>{registrationOpen ? 'রেজিস্ট্রেশন করুন' : 'রেজিস্ট্রেশন বন্ধ'}</span>
                 <ArrowRight className="w-5 h-5 text-[#0F0C1A]" />
               </button>
 

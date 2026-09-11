@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Ticket } from '../types';
-import { EVENT_DETAILS, LOGO_URL } from '../data/eventData';
+import { EVENT_DETAILS, LOGO_URL, isRegistrationOpen } from '../data/eventData';
+import { isRealTransactionId } from '../utils/paymentKind';
 import { createHonorableGuestRegistration, generateUniqueTicketId } from '../utils/guestStorage';
 import { notifyAdminPaymentComplete } from '../utils/notifyAdminPayment';
 import { sendRegistrationConfirmationSms } from '../utils/sendConfirmationSms';
@@ -130,6 +131,10 @@ export default function RegistrationModal({ isOpen, onClose, existingGuests }: R
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isRegistrationOpen()) {
+      setErrors({ submit: `রেজিস্ট্রেশন ${EVENT_DETAILS.registrationDeadlineBengali} পর্যন্ত খোলা ছিল।` });
+      return;
+    }
     const newErrors: Record<string, string> = {};
     const phoneDigits = phone.replace(/\D/g, '');
 
@@ -138,6 +143,9 @@ export default function RegistrationModal({ isOpen, onClose, existingGuests }: R
     if (!phone.trim()) newErrors.phone = 'এই ফিল্ড পূরণ হয়নি — Mobile No লিখুন';
     else if (phoneDigits.length < 11) newErrors.phone = 'সঠিক ১১ ডিজিটের মোবাইল নম্বর দিন';
     if (!transactionId.trim()) newErrors.transactionId = 'এই ফিল্ড পূরণ হয়নি — Transaction ID (TrxID) লিখুন';
+    else if (!isRealTransactionId(transactionId)) {
+      newErrors.transactionId = 'আসল bKash/Nagad/Rocket Transaction ID দিন — নাম বা নোট চলবে না';
+    }
 
     const duplicate = findDuplicateTransactionId(existingGuests, transactionId);
     if (duplicate) {
@@ -287,6 +295,22 @@ export default function RegistrationModal({ isOpen, onClose, existingGuests }: R
                 বন্ধ করুন
               </button>
             </div>
+          </div>
+        ) : !isRegistrationOpen() ? (
+          <div className="overflow-y-auto p-8 text-center">
+            <Clock className="w-12 h-12 text-[#D4AF37] mx-auto mb-3" />
+            <h2 className="text-2xl font-black font-serif text-[#F6EFE0]">রেজিস্ট্রেশন বন্ধ</h2>
+            <p className="text-sm text-[#B3A6C9] mt-3 leading-relaxed">
+              অনলাইন রেজিস্ট্রেশনের শেষ সময় ছিল {EVENT_DETAILS.registrationDeadlineBengali} (
+              {EVENT_DETAILS.registrationDeadlineTimeBengali})। নতুন রেজিস্ট্রেশনের জন্য অ্যাডমিনের সাথে যোগাযোগ করুন।
+            </p>
+            <button
+              type="button"
+              onClick={onClose}
+              className="mt-6 px-6 py-3 bg-[#0F0C1A] border border-[#D4AF37]/50 text-[#F6EFE0] rounded-full text-sm font-bold cursor-pointer"
+            >
+              বন্ধ করুন
+            </button>
           </div>
         ) : (
           <>

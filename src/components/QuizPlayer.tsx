@@ -19,7 +19,7 @@ import {
   subscribeToQuizPlayers,
   subscribeToQuizState,
 } from '../utils/quizStorage';
-import { Loader2, Music2, ShieldAlert, Trophy } from 'lucide-react';
+import { Loader2, Music2, ShieldAlert, Trophy, ChevronLeft } from 'lucide-react';
 
 interface QuizPlayerProps {
   ticket: Ticket | undefined;
@@ -106,6 +106,15 @@ export default function QuizPlayer({ ticket, guestsLoaded }: QuizPlayerProps) {
   return (
     <div className="min-h-dvh bg-[#0F0C1A] text-[#F6EFE0] midnight-bg-glow px-4 py-6 font-body">
       <div className="max-w-md mx-auto">
+        {ticket && (
+          <a
+            href={getGuestCardPageUrl(ticket.ticketId)}
+            className="mb-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#1C1730] border border-[#D4AF37]/60 text-[#F0D78C] font-bold text-sm"
+          >
+            <ChevronLeft className="w-4 h-4" />
+            গেস্ট কার্ডে ফিরুন
+          </a>
+        )}
         <p className="text-center text-[10px] uppercase tracking-[0.3em] text-[#D4AF37] font-black">Gaan Bristy Quiz</p>
         <h1 className="text-center text-xl font-black font-serif text-[#F0D78C] mt-1">স্টেজ কুইজ</h1>
 

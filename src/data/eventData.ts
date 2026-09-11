@@ -14,8 +14,8 @@ export const EVENT_DETAILS = {
   dateBengali: "১৯ সেপ্টেম্বর, ২০২৬",
   timeBengali: "সন্ধ্যা ৬.০০ টা",
   dateISO: "2026-09-19T18:00:00",
-  registrationDeadlineISO: "2026-09-10T23:59:59+06:00",
-  registrationDeadlineBengali: "১০ সেপ্টেম্বর, ২০২৬",
+  registrationDeadlineISO: "2026-09-15T23:59:59+06:00",
+  registrationDeadlineBengali: "১৫ সেপ্টেম্বর, ২০২৬",
   registrationDeadlineTimeBengali: "রাত ১১:৫৯ টা",
   venueNameBengali: "গুলশান ক্লাব, ঢাকা",
   venueNameEnglish: "Gulshan Club, Dhaka",
@@ -42,6 +42,11 @@ export const EVENT_DETAILS = {
   dressCodeMale: "Formal (Shirt, Pant, Shoe)",
   dressCodeFemale: "Casual",
 };
+
+export function isRegistrationOpen(now = Date.now()): boolean {
+  const end = Date.parse(EVENT_DETAILS.registrationDeadlineISO);
+  return Number.isFinite(end) && now <= end;
+}
 
 export const SCHEDULE_DATA: ScheduleItem[] = [
   {

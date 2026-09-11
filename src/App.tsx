@@ -91,6 +91,15 @@ export default function App() {
     window.history.replaceState({}, '', url.toString());
   };
 
+  const handleBackFromCard = () => {
+    setSelectedGuestId(null);
+    const url = new URL(window.location.href);
+    url.searchParams.delete('guest');
+    url.hash = '';
+    window.history.replaceState({}, '', `${url.pathname}${url.search}`);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const handleExploreSchedule = () => {
     trackSectionView('schedule');
     navigateToSection('schedule');
@@ -165,6 +174,7 @@ export default function App() {
           guests={honorableGuests}
           selectedGuestId={selectedGuestId}
           onSelectGuest={handleSelectGuest}
+          onBackFromCard={handleBackFromCard}
         />
         <VenueSection />
       </main>

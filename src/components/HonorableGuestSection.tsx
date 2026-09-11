@@ -13,12 +13,14 @@ interface HonorableGuestSectionProps {
   guests: Ticket[];
   selectedGuestId?: string | null;
   onSelectGuest?: (ticketId: string | null) => void;
+  onBackFromCard?: () => void;
 }
 
 export default function HonorableGuestSection({
   guests,
   selectedGuestId,
   onSelectGuest,
+  onBackFromCard,
 }: HonorableGuestSectionProps) {
   const featuredRef = useRef<HTMLDivElement>(null);
   const confirmedGuests = useMemo(
@@ -36,6 +38,13 @@ export default function HonorableGuestSection({
   useEffect(() => subscribeToQuizState(setQuizState), []);
 
   const quizJoinable = isQuizJoinable(quizState.phase);
+  const goBackFromCard = () => {
+    if (onBackFromCard) {
+      onBackFromCard();
+      return;
+    }
+    onSelectGuest?.(null);
+  };
 
   useEffect(() => {
     if ((selectedConfirmed || selectedPending || selectedRejected) && featuredRef.current) {
@@ -65,6 +74,16 @@ export default function HonorableGuestSection({
 
         {selectedConfirmed && (
           <div ref={featuredRef} className="mb-12">
+            <div className="flex flex-wrap items-center justify-center gap-2 mb-4">
+              <button
+                type="button"
+                onClick={goBackFromCard}
+                className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-full bg-[#1C1730] border border-[#D4AF37]/60 text-[#F0D78C] font-bold text-sm cursor-pointer shadow-[0_0_16px_rgba(212,175,55,0.15)]"
+              >
+                <ChevronLeft className="w-4 h-4" />
+                ফিরে যান
+              </button>
+            </div>
             <p className="text-center text-sm text-[#F0D78C] font-bold mb-4 flex items-center justify-center gap-2">
               <QrCode className="w-4 h-4" />
               আপনার Honorable Guest Card
@@ -84,17 +103,16 @@ export default function HonorableGuestSection({
               </div>
             )}
             <HonorableGuestCard ticket={selectedConfirmed} />
-            {onSelectGuest && (
-              <div className="text-center mt-4">
-                <button
-                  type="button"
-                  onClick={() => onSelectGuest(null)}
-                  className="text-xs text-[#B3A6C9] hover:text-[#F0D78C] underline cursor-pointer"
-                >
-                  সব অতিথি দেখুন
-                </button>
-              </div>
-            )}
+            <div className="text-center mt-5">
+              <button
+                type="button"
+                onClick={goBackFromCard}
+                className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full bg-[#1C1730] border border-[#D4AF37]/60 text-[#F0D78C] font-bold text-sm cursor-pointer"
+              >
+                <ChevronLeft className="w-4 h-4" />
+                হোমে ফিরে যান
+              </button>
+            </div>
           </div>
         )}
 
@@ -125,10 +143,11 @@ export default function HonorableGuestSection({
             {onSelectGuest && (
               <button
                 type="button"
-                onClick={() => onSelectGuest(null)}
-                className="mt-4 text-xs text-[#B3A6C9] hover:text-[#F0D78C] underline cursor-pointer"
+                onClick={goBackFromCard}
+                className="mt-5 inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full bg-[#1C1730] border border-[#D4AF37]/60 text-[#F0D78C] font-bold text-sm cursor-pointer"
               >
-                সব অতিথি দেখুন
+                <ChevronLeft className="w-4 h-4" />
+                ফিরে যান
               </button>
             )}
           </div>

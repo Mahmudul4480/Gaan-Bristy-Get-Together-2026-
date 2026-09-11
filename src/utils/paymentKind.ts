@@ -24,14 +24,25 @@ export function isPlaceholderTransactionId(transactionId?: string): boolean {
 }
 
 /**
- * bKash/Nagad/Rocket style IDs: 8+ letters/digits, no spaces or notes.
- * Name-like values ("Naz_apa_Guest", "Sahnaz Apa From Tutul v1") are not real payments.
+ * Real bKash / Nagad / Rocket TrxIDs only.
+ * Rejects notes and names: "shomaaaa", "Naz_apa_Guest", "Mahmud420".
  */
 export function isRealTransactionId(transactionId?: string): boolean {
   const value = transactionId?.trim() ?? '';
-  if (value.length < 8) return false;
+  if (value.length < 8 || value.length > 14) return false;
   if (isPlaceholderTransactionId(value)) return false;
-  return /^[A-Za-z0-9]+$/.test(value);
+  if (!/^[A-Za-z0-9]+$/.test(value)) return false;
+  if (/([A-Za-z])\1{3,}/.test(value)) return false;
+
+  const digits = (value.match(/\d/g) || []).length;
+  const letters = (value.match(/[A-Za-z]/g) || []).length;
+
+  if (letters === 0 && digits >= 8) return true;
+  if (letters >= 2 && digits >= 2) {
+    if (/^[A-Za-z]{5,}\d{1,4}$/.test(value)) return false;
+    return true;
+  }
+  return false;
 }
 
 export function visibleTransactionId(transactionId?: string): string | null {
@@ -52,19 +63,7 @@ export function getPaymentKind(ticket: Pick<Ticket, 'paymentKind' | 'transaction
     return 'complimentary';
   }
 
-  // Real TrxID always means collected payment — even if ডিউ ট্যাগ was clicked by mistake.
-  if (isRealTransactionId(trx)) {
-    return 'paid';
-  }
-
-  if (ticket.paymentKind === 'due' || idUpper === DUE_TRX_PLACEHOLDER) {
-    return 'due';
-  }
-
-  if (ticket.paymentKind === 'paid') {
-    return 'paid';
-  }
-
+  if (isRealTransactionId(trx)) return 'paid';
   return 'due';
 }
 
