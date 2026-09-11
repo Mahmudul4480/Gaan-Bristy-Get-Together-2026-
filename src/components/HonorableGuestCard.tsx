@@ -18,6 +18,8 @@ interface HonorableGuestCardProps {
 const CARD_NOTES = ['♪', '♫', '♬', '♩'];
 const MIN_QR_SIZE = 168;
 const MAX_QR_SIZE = 260;
+/** Past ~4.5 megapixels the PNG encode alone costs seconds on a phone. */
+const MAX_EXPORT_PIXELS = 4_500_000;
 
 async function waitForImages(root: HTMLElement): Promise<void> {
   const images = Array.from(root.querySelectorAll('img'));
@@ -80,6 +82,42 @@ function untagSourceElements(sourceById: Map<string, HTMLElement>): void {
   sourceById.forEach((el) => el.removeAttribute(EXPORT_ID_ATTR));
 }
 
+/**
+ * html2canvas copies the whole page into an offscreen iframe before it draws the
+ * card, so a heavy page (gallery, guest list, quiz) makes the export crawl.
+ * Keeping only <head>, the card and its ancestors cuts that copy down to the
+ * card itself — html2canvas measures the clone, so the crop still lines up.
+ */
+function buildCloneFilter(sourceRoot: HTMLElement): (element: Element) => boolean {
+  const keep = new Set<Element>();
+  for (let el: Element | null = sourceRoot; el; el = el.parentElement) keep.add(el);
+  const head = sourceRoot.ownerDocument.head;
+
+  return (element: Element) => {
+    if (keep.has(element)) return false;
+    if (head && (element === head || head.contains(element))) return false;
+    return !sourceRoot.contains(element);
+  };
+}
+
+/** Dropping the siblings can let a flex/grid ancestor resize, so lock the widths. */
+function pinCloneWidths(clonedCard: HTMLElement, sourceRoot: HTMLElement): void {
+  let clone: HTMLElement | null = clonedCard;
+  let source: HTMLElement | null = sourceRoot;
+
+  while (clone && source && source.tagName !== 'HTML') {
+    const width = source.getBoundingClientRect().width;
+    if (width > 0) {
+      clone.style.setProperty('width', `${width}px`);
+      clone.style.setProperty('min-width', '0');
+      clone.style.setProperty('max-width', 'none');
+      clone.style.setProperty('flex', 'none');
+    }
+    clone = clone.parentElement;
+    source = source.parentElement;
+  }
+}
+
 /** Solid stand-ins used when a gradient/background image can't be rasterized. */
 const SOLID_BACKGROUND_FALLBACKS: Array<[string, string]> = [
   ['honorable-guest-invite-card', '#1a0a14'],
@@ -87,6 +125,27 @@ const SOLID_BACKGROUND_FALLBACKS: Array<[string, string]> = [
   ['honorable-guest-photo-ring', '#D4AF37'],
   ['midnight-bg-glow', '#0F0C1A'],
 ];
+
+function exportScaleFor(rect: DOMRect): number {
+  let scale = 3;
+  while (
+    (rect.height * scale > 12000 ||
+      rect.width * scale > 12000 ||
+      rect.width * rect.height * scale * scale > MAX_EXPORT_PIXELS) &&
+    scale > 1.5
+  ) {
+    scale -= 0.5;
+  }
+  return scale;
+}
+
+/** Guards the isolated capture: a resized clone would export a cropped card. */
+function matchesSourceSize(canvas: HTMLCanvasElement, rect: DOMRect, scale: number): boolean {
+  if (!canvas.width || !canvas.height) return false;
+  const widthDrift = Math.abs(canvas.width / scale - rect.width) / Math.max(rect.width, 1);
+  const heightDrift = Math.abs(canvas.height / scale - rect.height) / Math.max(rect.height, 1);
+  return widthDrift < 0.05 && heightDrift < 0.15;
+}
 
 function solidFallbackFor(el: HTMLElement): string {
   const match = SOLID_BACKGROUND_FALLBACKS.find(([className]) => el.classList.contains(className));
@@ -356,32 +415,34 @@ export default function HonorableGuestCard({
     return () => retryTimers.forEach((timer) => window.clearTimeout(timer));
   }, [showQr, compact, cardUrl, qrSize]);
 
-  const renderCardCanvas = async (mode: CaptureMode) => {
+  const renderCardCanvas = async (mode: CaptureMode, isolate: boolean) => {
     const sourceRoot = cardRef.current;
     if (!sourceRoot) return null;
 
     const rect = sourceRoot.getBoundingClientRect();
-    let scale = 3;
-    while ((rect.height * scale > 12000 || rect.width * scale > 12000) && scale > 1) {
-      scale -= 0.5;
-    }
+    const scale = exportScaleFor(rect);
 
     const sourceById = tagSourceElements(sourceRoot);
     try {
-      return await html2canvas(sourceRoot, {
+      const canvas = await html2canvas(sourceRoot, {
         scale,
         useCORS: true,
         allowTaint: true,
         backgroundColor: '#1a0a14',
         logging: false,
-        imageTimeout: 15000,
+        imageTimeout: 8000,
+        ignoreElements: isolate ? buildCloneFilter(sourceRoot) : undefined,
         onclone: (_clonedDoc, clonedCard) => {
           const clonedElement = clonedCard as HTMLElement;
+          if (isolate) pinCloneWidths(clonedElement, sourceRoot);
           prepareCardClone(clonedElement, sourceById, mode);
           replaceCanvasesWithImages(clonedElement, sourceRoot);
           rasterizePassBadges(clonedElement, sourceById);
         },
       });
+
+      if (isolate && !matchesSourceSize(canvas, rect, scale)) return null;
+      return canvas;
     } finally {
       untagSourceElements(sourceById);
     }
@@ -410,10 +471,18 @@ export default function HonorableGuestCard({
     });
 
     try {
-      return await renderCardCanvas('rich');
+      const isolated = await renderCardCanvas('rich', true);
+      if (isolated) return isolated;
+      console.warn('[Guest card] Isolated capture came out the wrong size, using the full page.');
+    } catch (error) {
+      console.warn('[Guest card] Isolated capture failed, using the full page:', error);
+    }
+
+    try {
+      return await renderCardCanvas('rich', false);
     } catch (error) {
       console.warn('[Guest card] Rich capture failed, retrying without backgrounds:', error);
-      return renderCardCanvas('safe');
+      return renderCardCanvas('safe', false);
     }
   };
 
@@ -451,11 +520,13 @@ export default function HonorableGuestCard({
         throw new Error('কার্ড খুঁজে পাওয়া যায়নি');
       }
 
-      const imgData = canvas.toDataURL('image/png', 1);
+      // JPEG encodes several times faster than PNG and the card has no
+      // transparency, so the PDF looks identical at a fraction of the wait.
+      const imgData = canvas.toDataURL('image/jpeg', 0.94);
       const pdfWidth = 210;
       const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
       const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [pdfWidth, pdfHeight] });
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');
+      pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');
       pdf.save(`Honorable_Guest_${ticket.ticketId}.pdf`);
     } catch (error) {
       console.error('[Guest card] PDF download failed:', error);

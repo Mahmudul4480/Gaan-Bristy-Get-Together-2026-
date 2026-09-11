@@ -33,6 +33,7 @@ import {
   Pencil,
   Clock,
   BadgeCheck,
+  ChevronLeft,
 } from 'lucide-react';
 
 interface AdminGuestListProps {
@@ -90,6 +91,27 @@ export default function AdminGuestList({ guests, adminRole, actorName, onEditGue
   useEffect(() => {
     return subscribeToDeleteRequests(setDeleteRequests);
   }, []);
+
+  // Esc and the phone's back button should leave the card preview, not the panel.
+  useEffect(() => {
+    if (!previewTicket) return;
+
+    const closeOnEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setPreviewTicket(null);
+    };
+    const closeOnBack = () => setPreviewTicket(null);
+
+    window.history.pushState({ gbCardPreview: true }, '');
+    window.addEventListener('keydown', closeOnEscape);
+    window.addEventListener('popstate', closeOnBack);
+
+    return () => {
+      window.removeEventListener('keydown', closeOnEscape);
+      window.removeEventListener('popstate', closeOnBack);
+      // Closed with a button: drop the history entry we added.
+      if (window.history.state?.gbCardPreview) window.history.back();
+    };
+  }, [previewTicket]);
 
   const pendingCount = guests.filter((g) => g.status === 'Pending').length;
 
@@ -792,19 +814,50 @@ export default function AdminGuestList({ guests, adminRole, actorName, onEditGue
       )}
 
       {previewTicket && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-[#0F0C1A]/95 backdrop-blur-md overflow-y-auto">
-          <div className="relative w-full max-w-2xl my-8">
-            <button
-              type="button"
-              onClick={() => setPreviewTicket(null)}
-              className="absolute -top-2 -right-2 z-10 p-2 rounded-full bg-[#1C1730] border border-[#D4AF37] text-[#F6EFE0] cursor-pointer"
-            >
-              <X className="w-5 h-5" />
-            </button>
+        <div
+          className="fixed inset-0 z-[60] bg-[#0F0C1A]/95 backdrop-blur-md overflow-y-auto"
+          onClick={() => setPreviewTicket(null)}
+        >
+          <div
+            className="relative w-full max-w-2xl mx-auto px-4 pb-10"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="sticky top-0 z-10 -mx-4 px-4 py-3 mb-2 bg-[#0F0C1A]/95 backdrop-blur-md flex items-center justify-between gap-3">
+              <button
+                type="button"
+                onClick={() => setPreviewTicket(null)}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#7A1F3D] border border-[#D4AF37] text-[#F0D78C] font-bold text-sm cursor-pointer"
+              >
+                <ChevronLeft className="w-4 h-4" />
+                ফিরে যান
+              </button>
+              <span className="text-xs text-[#B3A6C9] font-mono truncate">{previewTicket.ticketId}</span>
+              <button
+                type="button"
+                onClick={() => setPreviewTicket(null)}
+                aria-label="বন্ধ করুন"
+                className="p-2 rounded-full bg-[#1C1730] border border-[#D4AF37] text-[#F6EFE0] cursor-pointer shrink-0"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
             <HonorableGuestCard ticket={previewTicket} showQr />
+
             <p className="text-center text-xs text-[#B3A6C9] mt-3 break-all">
               Card Link: {getGuestCardUrl(previewTicket.ticketId)}
             </p>
+
+            <div className="flex justify-center mt-4">
+              <button
+                type="button"
+                onClick={() => setPreviewTicket(null)}
+                className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full bg-[#1C1730] border border-[#D4AF37]/50 text-[#F0D78C] font-bold text-sm cursor-pointer"
+              >
+                <ChevronLeft className="w-4 h-4" />
+                Card List-এ ফিরে যান
+              </button>
+            </div>
           </div>
         </div>
       )}
