@@ -5,6 +5,7 @@ import { findDuplicateTransactionId } from '../utils/guestExport';
 import { saveHonorableGuest } from '../utils/guestStorage';
 import {
   getPaymentKind,
+  isPlaceholderTransactionId,
   isRealTransactionId,
   placeholderTransactionId,
   type PaymentKind,
@@ -148,7 +149,9 @@ export default function AdminGuestEditForm({
       transactionId:
         paymentKind === 'paid'
           ? selected.transactionId.trim()
-          : placeholderTransactionId(paymentKind),
+          : isRealTransactionId(selected.transactionId)
+            ? selected.transactionId.trim()
+            : placeholderTransactionId(paymentKind),
       songRequest: selected.songRequest?.trim() || undefined,
       adultCount,
       totalAmount: paymentKind === 'complimentary' ? 0 : adultCount * EVENT_DETAILS.feeAdult,
@@ -310,10 +313,12 @@ export default function AdminGuestEditForm({
                       const nextKind: PaymentKind = item.id;
                       const nextTrx =
                         nextKind === 'paid'
-                          ? isRealTransactionId(selected.transactionId)
+                          ? isPlaceholderTransactionId(selected.transactionId)
+                            ? ''
+                            : selected.transactionId
+                          : isRealTransactionId(selected.transactionId)
                             ? selected.transactionId
-                            : ''
-                          : placeholderTransactionId(nextKind);
+                            : placeholderTransactionId(nextKind);
                       setSelected({
                         ...selected,
                         paymentKind: nextKind,
@@ -334,23 +339,30 @@ export default function AdminGuestEditForm({
               </div>
             </div>
 
-            {getPaymentKind(selected) === 'paid' ? (
             <div>
-              <label className="text-xs font-semibold text-[#F6EFE0] mb-1">Transaction ID (TrxID) *</label>
+              <label className="text-xs font-semibold text-[#F6EFE0] mb-1">Transaction ID (TrxID)</label>
               <input
-                value={selected.transactionId}
+                value={isPlaceholderTransactionId(selected.transactionId) ? '' : selected.transactionId}
                 onChange={(e) => updateField('transactionId', e.target.value)}
+                placeholder={
+                  getPaymentKind(selected) === 'paid'
+                    ? 'bKash / Nagad / Rocket TrxID'
+                    : getPaymentKind(selected) === 'due'
+                      ? 'ডিউ — পরে আসল TrxID দিন, অথবা পেইডে বদলান'
+                      : 'সম্মানী — খালি রাখা যাবে'
+                }
                 className="w-full bg-[#0F0C1A] border border-[#D4AF37]/40 rounded-xl px-3 py-2 text-sm text-[#F6EFE0] font-mono outline-none"
               />
               {errors.transactionId && <p className="text-xs text-[#A52C54] mt-1">{errors.transactionId}</p>}
+              {getPaymentKind(selected) === 'complimentary' && (
+                <p className="text-[11px] text-[#B3A6C9] mt-1">সম্মানী কার্ড — টাকা ০/-, হিসাবে যোগ হবে না।</p>
+              )}
+              {getPaymentKind(selected) === 'due' && (
+                <p className="text-[11px] text-[#B3A6C9] mt-1">
+                  ডিউ {selected.adultCount * EVENT_DETAILS.feeAdult}/- — পেইড করতে উপরে পেইড চাপুন ও আসল TrxID সেভ করুন।
+                </p>
+              )}
             </div>
-            ) : (
-            <p className="text-xs text-[#B3A6C9] bg-[#0F0C1A] border border-[#D4AF37]/25 rounded-xl px-3 py-2">
-              {getPaymentKind(selected) === 'complimentary'
-                ? 'সম্মানী কার্ড — টাকা ০/-, হিসাবে যোগ হবে না।'
-                : `ডিউ ${selected.adultCount * EVENT_DETAILS.feeAdult}/- — কার্ড চলবে, টাকা পরে দিলে পেইডে বদলে আসল TrxID দিন।`}
-            </p>
-            )}
 
             <div className="grid grid-cols-2 gap-3">
               <div>

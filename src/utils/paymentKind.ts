@@ -23,26 +23,10 @@ export function isPlaceholderTransactionId(transactionId?: string): boolean {
   return false;
 }
 
-/**
- * Real bKash / Nagad / Rocket TrxIDs only.
- * Rejects notes and names: "shomaaaa", "Naz_apa_Guest", "Mahmud420".
- */
 export function isRealTransactionId(transactionId?: string): boolean {
   const value = transactionId?.trim() ?? '';
-  if (value.length < 8 || value.length > 14) return false;
-  if (isPlaceholderTransactionId(value)) return false;
-  if (!/^[A-Za-z0-9]+$/.test(value)) return false;
-  if (/([A-Za-z])\1{3,}/.test(value)) return false;
-
-  const digits = (value.match(/\d/g) || []).length;
-  const letters = (value.match(/[A-Za-z]/g) || []).length;
-
-  if (letters === 0 && digits >= 8) return true;
-  if (letters >= 2 && digits >= 2) {
-    if (/^[A-Za-z]{5,}\d{1,4}$/.test(value)) return false;
-    return true;
-  }
-  return false;
+  if (value.length < 4) return false;
+  return !isPlaceholderTransactionId(value);
 }
 
 export function visibleTransactionId(transactionId?: string): string | null {
@@ -52,19 +36,15 @@ export function visibleTransactionId(transactionId?: string): string | null {
 }
 
 export function getPaymentKind(ticket: Pick<Ticket, 'paymentKind' | 'transactionId'>): PaymentKind {
-  const trx = ticket.transactionId?.trim() ?? '';
-  const idUpper = trx.toUpperCase();
-
-  if (
-    ticket.paymentKind === 'complimentary' ||
-    idUpper === HONORARY_TRX_PLACEHOLDER ||
-    idUpper.startsWith('HONORARY')
-  ) {
-    return 'complimentary';
+  if (ticket.paymentKind === 'due' || ticket.paymentKind === 'complimentary' || ticket.paymentKind === 'paid') {
+    return ticket.paymentKind;
   }
-
-  if (isRealTransactionId(trx)) return 'paid';
-  return 'due';
+  if (!isRealTransactionId(ticket.transactionId)) {
+    const id = ticket.transactionId?.trim().toUpperCase() ?? '';
+    if (id === HONORARY_TRX_PLACEHOLDER || id.startsWith('HONORARY')) return 'complimentary';
+    if (id === DUE_TRX_PLACEHOLDER) return 'due';
+  }
+  return 'paid';
 }
 
 export function hasCollectedPayment(ticket: Ticket): boolean {
@@ -83,8 +63,36 @@ export function placeholderTransactionId(kind: PaymentKind): string {
   return '';
 }
 
-/** Tag a card as due — QR stays, amount is outstanding. Real TrxIDs are not cleared here. */
-export function applyDueTag(ticket: Ticket, feeAdult: number): Ticket {
+/** Only a Super Admin may confirm a card; everyone else keeps it waiting for approval. */
+function nextStatus(ticket: Ticket, confirm?: boolean): Ticket['status'] {
+  if (ticket.status === 'Rejected') return ticket.status;
+  return confirm ? 'Confirmed' : ticket.status;
+}
+
+/** Mark a card paid using the TrxID it already carries. */
+export function applyPaidTag(
+  ticket: Ticket,
+  feeAdult: number,
+  options?: { confirm?: boolean }
+): Ticket {
+  const adultCount = Math.max(1, ticket.adultCount || 1);
+  const amount = adultCount * feeAdult;
+  return {
+    ...ticket,
+    paymentKind: 'paid',
+    adultCount,
+    totalAmount: amount > 0 ? amount : ticket.totalAmount || 0,
+    transactionId: ticket.transactionId.trim(),
+    status: nextStatus(ticket, options?.confirm),
+  };
+}
+
+/** Tag a card as due — QR stays, amount is outstanding. Real TrxIDs are not cleared. */
+export function applyDueTag(
+  ticket: Ticket,
+  feeAdult: number,
+  options?: { confirm?: boolean }
+): Ticket {
   const adultCount = Math.max(1, ticket.adultCount || 1);
   const dueAmount = adultCount * feeAdult;
   return {
@@ -95,6 +103,6 @@ export function applyDueTag(ticket: Ticket, feeAdult: number): Ticket {
     transactionId: isRealTransactionId(ticket.transactionId)
       ? ticket.transactionId.trim()
       : DUE_TRX_PLACEHOLDER,
-    status: ticket.status === 'Rejected' ? ticket.status : 'Confirmed',
+    status: nextStatus(ticket, options?.confirm),
   };
 }

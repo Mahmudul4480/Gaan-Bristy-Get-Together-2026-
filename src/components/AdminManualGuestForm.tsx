@@ -4,7 +4,12 @@ import { EVENT_DETAILS } from '../data/eventData';
 import { buildGuestTicket } from '../utils/createGuestTicket';
 import { findDuplicateTransactionId } from '../utils/guestExport';
 import { saveHonorableGuest, getGuestCardUrl } from '../utils/guestStorage';
-import { paymentKindLabel, isRealTransactionId, type PaymentKind } from '../utils/paymentKind';
+import {
+  paymentKindLabel,
+  isRealTransactionId,
+  visibleTransactionId,
+  type PaymentKind,
+} from '../utils/paymentKind';
 import { sendRegistrationConfirmationSms } from '../utils/sendConfirmationSms';
 import { validatePhotoFile } from '../utils/photoUpload';
 import HonorableGuestCard from './HonorableGuestCard';
@@ -69,7 +74,8 @@ export default function AdminManualGuestForm({
 
   const feeAmount = form.adultCount * EVENT_DETAILS.feeAdult;
   const totalAmount = form.paymentKind === 'complimentary' ? 0 : feeAmount;
-  const issuesCardNow = form.paymentKind !== 'paid' || isSuperAdmin;
+  // Every entry an Admin makes is saved, but only a Super Admin can issue the card.
+  const issuesCardNow = isSuperAdmin;
 
   const resetForm = () => {
     if (rawPhotoSrc?.startsWith('blob:')) URL.revokeObjectURL(rawPhotoSrc);
@@ -137,8 +143,6 @@ export default function AdminManualGuestForm({
       paymentKind: form.paymentKind,
     });
 
-    // Paid cards still need Super Admin verification. Due / honorary cards have
-    // no money to verify, so the QR card is issued immediately.
     const ticket: Ticket = issuesCardNow
       ? {
           ...baseTicket,
@@ -203,12 +207,20 @@ export default function AdminManualGuestForm({
               Super Admin অ্যাপ্রুভাল পেন্ডিং
             </p>
             <p className="text-xs text-[#B3A6C9] mt-2">
-              পেমেন্ট ভেরিফাই করবেন শুধুমাত্র Super Admin। অ্যাপ্রুভ হলে অতিথির Honorable Guest Card তৈরি হবে
+              এন্ট্রি যাচাই করবেন শুধুমাত্র Super Admin। অ্যাপ্রুভ হলে অতিথির Honorable Guest Card তৈরি হবে
               এবং কার্ড লিংক SMS-এ চলে যাবে।
             </p>
             <p className="text-xs text-[#B3A6C9] mt-2">
-              অতিথি: <span className="text-[#F0D78C] font-bold">{createdTicket.fullName}</span> · TrxID:{' '}
-              <span className="font-mono text-[#F0D78C]">{createdTicket.transactionId}</span>
+              অতিথি: <span className="text-[#F0D78C] font-bold">{createdTicket.fullName}</span> ·{' '}
+              {paymentKindLabel(createdTicket.paymentKind ?? 'paid')}
+              {visibleTransactionId(createdTicket.transactionId) && (
+                <>
+                  {' '}· TrxID:{' '}
+                  <span className="font-mono text-[#F0D78C]">
+                    {visibleTransactionId(createdTicket.transactionId)}
+                  </span>
+                </>
+              )}
             </p>
           </div>
         )}
@@ -255,8 +267,8 @@ export default function AdminManualGuestForm({
         যোগ হবে না, সম্মানী QR কার্ড)।
         {!isSuperAdmin && (
           <span className="block mt-2 text-[#F0D78C] font-semibold">
-            পেইড এন্ট্রি Pending থাকবে — Super Admin TrxID ভেরিফাই করলে কার্ড তৈরি হবে। ডিউ ও সম্মানী কার্ড সাথে
-            সাথে QR সহ ইস্যু হবে।
+            আপনার এন্ট্রি সংরক্ষিত হবে, তবে তিন ধরনের কার্ডেই এখন থেকে Super Admin অ্যাপ্রুভাল লাগবে। অ্যাপ্রুভ হলে
+            QR কার্ড তৈরি হবে ও অতিথিকে SMS যাবে।
           </span>
         )}
       </p>
@@ -422,11 +434,13 @@ export default function AdminManualGuestForm({
         <Save className="w-5 h-5" />
         {isSubmitting
           ? 'সংরক্ষণ হচ্ছে...'
-          : form.paymentKind === 'complimentary'
-            ? 'সম্মানী কার্ড তৈরি করুন'
-            : form.paymentKind === 'due'
-              ? 'ডিউ কার্ড তৈরি করুন'
-              : 'Manual Card তৈরি করুন'}
+          : !issuesCardNow
+            ? 'এন্ট্রি জমা দিন — Super Admin অ্যাপ্রুভ করবেন'
+            : form.paymentKind === 'complimentary'
+              ? 'সম্মানী কার্ড তৈরি করুন'
+              : form.paymentKind === 'due'
+                ? 'ডিউ কার্ড তৈরি করুন'
+                : 'Manual Card তৈরি করুন'}
       </button>
 
       {cropSrc && (

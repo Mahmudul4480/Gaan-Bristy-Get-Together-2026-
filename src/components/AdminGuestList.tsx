@@ -3,7 +3,7 @@ import { AdminRole, CardDeleteRequest, Ticket } from '../types';
 import { EVENT_DETAILS } from '../data/eventData';
 import { downloadGuestsCsv, downloadGuestsJson } from '../utils/guestExport';
 import { getGuestCardUrl, saveHonorableGuest } from '../utils/guestStorage';
-import { applyDueTag, getPaymentKind, isRealTransactionId, paymentKindLabel, visibleTransactionId, type PaymentKind } from '../utils/paymentKind';
+import { applyDueTag, applyPaidTag, getPaymentKind, isRealTransactionId, paymentKindLabel, visibleTransactionId, type PaymentKind } from '../utils/paymentKind';
 import { sendRegistrationConfirmationSms } from '../utils/sendConfirmationSms';
 import { getGuestCardWhatsAppUrl } from '../utils/whatsappShare';
 import {
@@ -32,6 +32,7 @@ import {
   ScrollText,
   Pencil,
   Clock,
+  BadgeCheck,
 } from 'lucide-react';
 
 interface AdminGuestListProps {
@@ -211,18 +212,46 @@ export default function AdminGuestList({ guests, adminRole, actorName, onEditGue
     }
   };
 
+  const handleMarkPaid = async (guest: Ticket) => {
+    if (!isRealTransactionId(guest.transactionId)) return;
+    setStateFor(guest.ticketId, 'saving');
+    const tagged = applyPaidTag(guest, EVENT_DETAILS.feeAdult, { confirm: isSuperAdmin });
+    try {
+      await saveHonorableGuest(
+        tagged.status === 'Confirmed'
+          ? {
+              ...tagged,
+              approvedBy: guest.approvedBy || actorName,
+              approvedAt: guest.approvedAt || new Date().toISOString(),
+            }
+          : tagged
+      );
+      setStateFor(guest.ticketId, 'idle');
+    } catch (error) {
+      setStateFor(
+        guest.ticketId,
+        'idle',
+        error instanceof Error ? error.message : 'পেইড করা যায়নি'
+      );
+    }
+  };
+
   const handleMarkDue = async (guest: Ticket) => {
     if (guest.status === 'Rejected' || getPaymentKind(guest) === 'due') return;
     setStateFor(guest.ticketId, 'saving');
-    const tagged = applyDueTag(guest, EVENT_DETAILS.feeAdult);
-    const wasPending = guest.status === 'Pending';
+    const tagged = applyDueTag(guest, EVENT_DETAILS.feeAdult, { confirm: isSuperAdmin });
+    const justConfirmed = guest.status === 'Pending' && tagged.status === 'Confirmed';
     try {
-      await saveHonorableGuest({
-        ...tagged,
-        approvedBy: tagged.approvedBy || actorName,
-        approvedAt: tagged.approvedAt || new Date().toISOString(),
-      });
-      if (wasPending) {
+      await saveHonorableGuest(
+        tagged.status === 'Confirmed'
+          ? {
+              ...tagged,
+              approvedBy: tagged.approvedBy || actorName,
+              approvedAt: tagged.approvedAt || new Date().toISOString(),
+            }
+          : tagged
+      );
+      if (justConfirmed) {
         setStateFor(guest.ticketId, 'sms-sending');
         const sms = await sendRegistrationConfirmationSms(guest.phone, {
           type: 'approved',
@@ -334,8 +363,12 @@ export default function AdminGuestList({ guests, adminRole, actorName, onEditGue
             )}
           </p>
           <p className="text-[11px] text-[#B3A6C9] mt-1">
-            আসল bKash/Nagad TrxID থাকলে কার্ড <span className="text-[#F0D78C] font-bold">পেইড</span> — টাকা আয়ে যোগ হয়।
-            <span className="text-[#F0D78C] font-bold"> ডিউ ট্যাগ</span> শুধু যাদের পেমেন্ট হয়নি তাদের জন্য।
+            TrxID থাকলেও ভুলে ডিউ হয়ে গেলে <span className="text-[#F0D78C] font-bold">পেইড করুন</span> চাপুন — টাকা আয়ে
+            ফিরে যাবে। <span className="text-[#F0D78C] font-bold">ডিউ ট্যাগ</span> দিলে QR থাকবে, টাকা ডিউতে যাবে।
+          </p>
+          <p className="text-[11px] text-[#B3A6C9] mt-1">
+            গেস্টের রেজিস্ট্রেশন ও Admin-এর ম্যানুয়াল এন্ট্রি — দুটোই{' '}
+            <span className="text-[#F0D78C] font-bold">Super Admin অ্যাপ্রুভ</span> করলেই কার্ড ইস্যু হবে।
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -512,9 +545,10 @@ export default function AdminGuestList({ guests, adminRole, actorName, onEditGue
         <p className="text-center text-sm text-[#B3A6C9] py-8">কোনো card পাওয়া যায়নি</p>
       ) : (
         <div className="overflow-x-auto rounded-xl border border-[#D4AF37]/30">
-          <table className="w-full text-left text-xs min-w-[980px]">
+          <table className="w-full text-left text-xs min-w-[1020px]">
             <thead className="bg-[#0F0C1A] text-[#B3A6C9] uppercase tracking-wide">
               <tr>
+                <th className="px-3 py-2 w-12">ক্রম</th>
                 <th className="px-3 py-2">Ticket ID</th>
                 <th className="px-3 py-2">নাম</th>
                 <th className="px-3 py-2">TrxID</th>
@@ -525,7 +559,7 @@ export default function AdminGuestList({ guests, adminRole, actorName, onEditGue
               </tr>
             </thead>
             <tbody>
-              {filtered.map((g) => {
+              {filtered.map((g, index) => {
                 const action = rowState[g.ticketId] || 'idle';
                 const busy = action === 'saving' || action === 'sms-sending';
                 const whatsappUrl = g.status === 'Confirmed' ? getGuestCardWhatsAppUrl(g.phone, g.ticketId, g.fullName) : null;
@@ -533,6 +567,7 @@ export default function AdminGuestList({ guests, adminRole, actorName, onEditGue
 
                 return (
                   <tr key={g.ticketId} className="border-t border-[#D4AF37]/15 hover:bg-[#0F0C1A]/50 align-top">
+                    <td className="px-3 py-2 font-mono text-[#B3A6C9] font-bold">{index + 1}</td>
                     <td className="px-3 py-2 font-mono text-[#F0D78C]">{g.ticketId}</td>
                     <td className="px-3 py-2">
                       <p className="text-[#F6EFE0] font-semibold">{g.fullName}</p>
@@ -615,7 +650,18 @@ export default function AdminGuestList({ guests, adminRole, actorName, onEditGue
                             Edit
                           </button>
                         )}
-                        {kind !== 'due' && !isRealTransactionId(g.transactionId) && g.status !== 'Rejected' && (
+                        {kind !== 'paid' && isRealTransactionId(g.transactionId) && g.status !== 'Rejected' && (
+                          <button
+                            type="button"
+                            disabled={busy}
+                            onClick={() => handleMarkPaid(g)}
+                            className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-[#1C1730] border border-[#D4AF37]/60 text-[#F0D78C] font-bold cursor-pointer disabled:opacity-50"
+                          >
+                            {action === 'saving' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <BadgeCheck className="w-3.5 h-3.5" />}
+                            পেইড করুন
+                          </button>
+                        )}
+                        {kind !== 'due' && g.status !== 'Rejected' && (
                           <button
                             type="button"
                             disabled={busy}

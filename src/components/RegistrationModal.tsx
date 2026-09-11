@@ -144,7 +144,7 @@ export default function RegistrationModal({ isOpen, onClose, existingGuests }: R
     else if (phoneDigits.length < 11) newErrors.phone = 'সঠিক ১১ ডিজিটের মোবাইল নম্বর দিন';
     if (!transactionId.trim()) newErrors.transactionId = 'এই ফিল্ড পূরণ হয়নি — Transaction ID (TrxID) লিখুন';
     else if (!isRealTransactionId(transactionId)) {
-      newErrors.transactionId = 'আসল bKash/Nagad/Rocket Transaction ID দিন — নাম বা নোট চলবে না';
+      newErrors.transactionId = 'সম্পূর্ণ Transaction ID (TrxID) লিখুন';
     }
 
     const duplicate = findDuplicateTransactionId(existingGuests, transactionId);
