@@ -43,13 +43,6 @@ export default function HonorableGuestSection({
     }
   }, [selectedConfirmed, selectedPending, selectedRejected]);
 
-  useEffect(() => {
-    if (!selectedConfirmed || !quizJoinable) return;
-    const params = new URLSearchParams(window.location.search);
-    if (!params.get('guest') || params.get('quiz') === 'play') return;
-    window.location.replace(getQuizPlayUrl(selectedConfirmed.ticketId));
-  }, [selectedConfirmed, quizJoinable]);
-
   return (
     <section
       id="honorable-guests"
@@ -85,7 +78,9 @@ export default function HonorableGuestSection({
                   <Music2 className="w-4 h-4" />
                   কুইজে যোগ দিন
                 </a>
-                <p className="text-[11px] text-[#B3A6C9] mt-2">স্টেজ কুইজ চলছে — QR স্ক্যান করলে এখানেই খেলায় ঢুকবেন।</p>
+                <p className="text-[11px] text-[#B3A6C9] mt-2">
+                  অ্যাডমিন কুইজ চালু করেছেন — খেলতে চাইলে এই বাটন চাপুন। QR স্ক্যান শুধু কার্ডই খোলে।
+                </p>
               </div>
             )}
             <HonorableGuestCard ticket={selectedConfirmed} />

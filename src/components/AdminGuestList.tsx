@@ -3,7 +3,7 @@ import { AdminRole, CardDeleteRequest, Ticket } from '../types';
 import { EVENT_DETAILS } from '../data/eventData';
 import { downloadGuestsCsv, downloadGuestsJson } from '../utils/guestExport';
 import { getGuestCardUrl, saveHonorableGuest } from '../utils/guestStorage';
-import { applyDueTag, getPaymentKind, isRealTransactionId, paymentKindLabel, type PaymentKind } from '../utils/paymentKind';
+import { applyDueTag, getPaymentKind, isRealTransactionId, paymentKindLabel, visibleTransactionId, type PaymentKind } from '../utils/paymentKind';
 import { sendRegistrationConfirmationSms } from '../utils/sendConfirmationSms';
 import { getGuestCardWhatsAppUrl } from '../utils/whatsappShare';
 import {
@@ -334,8 +334,8 @@ export default function AdminGuestList({ guests, adminRole, actorName, onEditGue
             )}
           </p>
           <p className="text-[11px] text-[#B3A6C9] mt-1">
-            পুরনো কার্ডে <span className="text-[#F0D78C] font-bold">ডিউ ট্যাগ</span> দিলে QR কার্ড থাকবে, টাকা হিসাব থেকে
-            সরে ডিউতে যাবে। পরে পেইড করতে Card Edit থেকে আসল TrxID দিন।
+            আসল bKash/Nagad TrxID থাকলে কার্ড <span className="text-[#F0D78C] font-bold">পেইড</span> — টাকা আয়ে যোগ হয়।
+            <span className="text-[#F0D78C] font-bold"> ডিউ ট্যাগ</span> শুধু যাদের পেমেন্ট হয়নি তাদের জন্য।
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -539,7 +539,7 @@ export default function AdminGuestList({ guests, adminRole, actorName, onEditGue
                       <p className="text-[10px] text-[#B3A6C9]">{g.familyName}</p>
                     </td>
                     <td className="px-3 py-2 font-mono text-[#F6EFE0]">
-                      {isRealTransactionId(g.transactionId) ? g.transactionId : '—'}
+                      {visibleTransactionId(g.transactionId) ?? '—'}
                     </td>
                     <td className="px-3 py-2 text-[#B3A6C9]">
                       <span
@@ -615,7 +615,7 @@ export default function AdminGuestList({ guests, adminRole, actorName, onEditGue
                             Edit
                           </button>
                         )}
-                        {kind !== 'due' && g.status !== 'Rejected' && (
+                        {kind !== 'due' && !isRealTransactionId(g.transactionId) && g.status !== 'Rejected' && (
                           <button
                             type="button"
                             disabled={busy}

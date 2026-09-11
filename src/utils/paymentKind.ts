@@ -23,22 +23,49 @@ export function isPlaceholderTransactionId(transactionId?: string): boolean {
   return false;
 }
 
+/**
+ * bKash/Nagad/Rocket style IDs: 8+ letters/digits, no spaces or notes.
+ * Name-like values ("Naz_apa_Guest", "Sahnaz Apa From Tutul v1") are not real payments.
+ */
 export function isRealTransactionId(transactionId?: string): boolean {
   const value = transactionId?.trim() ?? '';
-  if (value.length < 4) return false;
-  return !isPlaceholderTransactionId(value);
+  if (value.length < 8) return false;
+  if (isPlaceholderTransactionId(value)) return false;
+  return /^[A-Za-z0-9]+$/.test(value);
+}
+
+export function visibleTransactionId(transactionId?: string): string | null {
+  const value = transactionId?.trim() ?? '';
+  if (!value || isPlaceholderTransactionId(value)) return null;
+  return value;
 }
 
 export function getPaymentKind(ticket: Pick<Ticket, 'paymentKind' | 'transactionId'>): PaymentKind {
-  if (ticket.paymentKind === 'due' || ticket.paymentKind === 'complimentary' || ticket.paymentKind === 'paid') {
-    return ticket.paymentKind;
+  const trx = ticket.transactionId?.trim() ?? '';
+  const idUpper = trx.toUpperCase();
+
+  if (
+    ticket.paymentKind === 'complimentary' ||
+    idUpper === HONORARY_TRX_PLACEHOLDER ||
+    idUpper.startsWith('HONORARY')
+  ) {
+    return 'complimentary';
   }
-  if (!isRealTransactionId(ticket.transactionId)) {
-    const id = ticket.transactionId.trim().toUpperCase();
-    if (id === HONORARY_TRX_PLACEHOLDER) return 'complimentary';
-    if (id === DUE_TRX_PLACEHOLDER) return 'due';
+
+  // Real TrxID always means collected payment — even if ডিউ ট্যাগ was clicked by mistake.
+  if (isRealTransactionId(trx)) {
+    return 'paid';
   }
-  return 'paid';
+
+  if (ticket.paymentKind === 'due' || idUpper === DUE_TRX_PLACEHOLDER) {
+    return 'due';
+  }
+
+  if (ticket.paymentKind === 'paid') {
+    return 'paid';
+  }
+
+  return 'due';
 }
 
 export function hasCollectedPayment(ticket: Ticket): boolean {
@@ -57,7 +84,7 @@ export function placeholderTransactionId(kind: PaymentKind): string {
   return '';
 }
 
-/** Tag an existing card as due — QR stays, amount is outstanding, collected income does not include it. */
+/** Tag a card as due — QR stays, amount is outstanding. Real TrxIDs are not cleared here. */
 export function applyDueTag(ticket: Ticket, feeAdult: number): Ticket {
   const adultCount = Math.max(1, ticket.adultCount || 1);
   const dueAmount = adultCount * feeAdult;

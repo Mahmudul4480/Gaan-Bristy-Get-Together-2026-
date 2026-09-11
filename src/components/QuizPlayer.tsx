@@ -35,11 +35,27 @@ export default function QuizPlayer({ ticket, guestsLoaded }: QuizPlayerProps) {
   const [joining, setJoining] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [now, setNow] = useState(Date.now());
+  const [stateReady, setStateReady] = useState(false);
   const joinKeyRef = useRef('');
 
-  useEffect(() => subscribeToQuizState(setState), []);
+  useEffect(
+    () =>
+      subscribeToQuizState((next) => {
+        setState(next);
+        setStateReady(true);
+      }),
+    []
+  );
   useEffect(() => subscribeToQuizPlayers(setPlayers), []);
   useEffect(() => subscribeToQuizAnswers(setAnswers), []);
+
+  useEffect(() => {
+    if (!stateReady) return;
+    if (isQuizJoinable(state.phase) || state.phase === 'podium') return;
+    const guestId = ticket?.ticketId || new URLSearchParams(window.location.search).get('guest');
+    if (!guestId) return;
+    window.location.replace(getGuestCardPageUrl(guestId));
+  }, [stateReady, state.phase, ticket]);
 
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 250);
@@ -93,7 +109,7 @@ export default function QuizPlayer({ ticket, guestsLoaded }: QuizPlayerProps) {
         <p className="text-center text-[10px] uppercase tracking-[0.3em] text-[#D4AF37] font-black">Gaan Bristy Quiz</p>
         <h1 className="text-center text-xl font-black font-serif text-[#F0D78C] mt-1">স্টেজ কুইজ</h1>
 
-        {!guestsLoaded ? (
+        {!guestsLoaded || !stateReady ? (
           <p className="mt-10 text-center text-sm text-[#B3A6C9] flex items-center justify-center gap-2">
             <Loader2 className="w-4 h-4 animate-spin" /> কার্ড খোঁজা হচ্ছে...
           </p>
@@ -127,7 +143,7 @@ export default function QuizPlayer({ ticket, guestsLoaded }: QuizPlayerProps) {
             {joinError && <p className="mt-3 text-xs text-[#FFB4C4]">{joinError}</p>}
 
             {state.phase === 'idle' && (
-              <p className="mt-8 text-center text-sm text-[#B3A6C9]">কুইজ এখন বন্ধ। স্টেজের ঘোষণার পর আবার QR স্ক্যান করুন।</p>
+              <p className="mt-8 text-center text-sm text-[#B3A6C9]">কুইজ বন্ধ — গেস্ট কার্ডে ফেরত যাচ্ছেন।</p>
             )}
 
             {(state.phase === 'lobby' || joining) && state.phase !== 'idle' && (

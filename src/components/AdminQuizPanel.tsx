@@ -81,8 +81,10 @@ export default function AdminQuizPanel({ actorName }: AdminQuizPanelProps) {
     <div className="space-y-4 font-body">
       <p className="text-xs text-[#B3A6C9] bg-[#0F0C1A] border border-[#D4AF37]/30 rounded-xl p-3">
         স্টেজ কুইজ Kahoot স্টাইল। প্রজেক্টরে{' '}
-        <span className="text-[#F0D78C] font-mono">?quiz=screen</span> খুলুন, অতিথিরা নিজের গেস্ট কার্ড QR
-        স্ক্যান করবে। সিস্টেম ১ম/২য়/৩য় ঠিক করবে — StarMaker কয়েন অ্যাপে হাতে গিফট করবেন।
+        <span className="text-[#F0D78C] font-mono">?quiz=screen</span> খুলুন। গেস্ট QR সবসময় কার্ডই খোলে —
+        কুইজ চলাকালীন কার্ডে <span className="text-[#F0D78C] font-bold">কুইজে যোগ দিন</span> বাটন আসবে।
+        শেষে <span className="text-[#F0D78C] font-bold">কুইজ রিসেট / বন্ধ</span> চাপুন, নাহলে লবি খোলা থেকে যায়।
+        সিস্টেম ১ম/২য়/৩য় ঠিক করবে — StarMaker কয়েন অ্যাপে হাতে গিফট করবেন।
       </p>
 
       <div className="flex flex-wrap gap-2">
