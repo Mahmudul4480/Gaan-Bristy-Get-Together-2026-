@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import Header from './components/Header';
 import Hero from './components/Hero';
 import AboutFamilySection from './components/AboutFamilySection';
@@ -10,9 +10,6 @@ import GallerySection from './components/GallerySection';
 import DigitalGuestbook from './components/DigitalGuestbook';
 import HonorableGuestSection from './components/HonorableGuestSection';
 import VenueSection from './components/VenueSection';
-import RegistrationModal from './components/RegistrationModal';
-import CanvaGuideModal from './components/CanvaGuideModal';
-import AdminTicketVerifyModal from './components/AdminTicketVerifyModal';
 import AgencyFooter from './components/AgencyFooter';
 import FallingMusicNotes from './components/FallingMusicNotes';
 import { Ticket } from './types';
@@ -21,8 +18,23 @@ import { isAdminUrlMatch } from './utils/adminStorage';
 import { bindHashNavigation, navigateToSection } from './utils/scrollToSection';
 import { trackGuestbookOpen, trackRegisterOpen, trackSectionView } from './utils/analytics';
 import { MessageSquare, Ticket as TicketIcon } from 'lucide-react';
-import QuizPlayer from './components/QuizPlayer';
-import QuizStageScreen from './components/QuizStageScreen';
+
+// Loaded only when actually opened, so a first-time visitor's homepage
+// doesn't have to download the admin panel, registration form, or quiz code.
+const RegistrationModal = lazy(() => import('./components/RegistrationModal'));
+const CanvaGuideModal = lazy(() => import('./components/CanvaGuideModal'));
+const AdminTicketVerifyModal = lazy(() => import('./components/AdminTicketVerifyModal'));
+const QuizPlayer = lazy(() => import('./components/QuizPlayer'));
+const QuizStageScreen = lazy(() => import('./components/QuizStageScreen'));
+
+/** Brief on-demand load feedback for lazy modals, in case the chunk takes a moment on a slow connection. */
+function ModalLoadingOverlay() {
+  return (
+    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-[#0F0C1A]/70 backdrop-blur-sm">
+      <div className="w-10 h-10 rounded-full border-2 border-[#D4AF37]/30 border-t-[#D4AF37] animate-spin" />
+    </div>
+  );
+}
 
 function getGuestIdFromUrl(): string | null {
   return new URLSearchParams(window.location.search).get('guest');
@@ -116,7 +128,11 @@ export default function App() {
   };
 
   if (quizMode === 'screen') {
-    return <QuizStageScreen />;
+    return (
+      <Suspense fallback={null}>
+        <QuizStageScreen />
+      </Suspense>
+    );
   }
 
   if (quizMode === 'play') {
@@ -124,7 +140,11 @@ export default function App() {
     const playTicket = playGuestId
       ? honorableGuests.find((guest) => guest.ticketId === playGuestId)
       : undefined;
-    return <QuizPlayer ticket={playTicket} guestsLoaded={guestsReady} />;
+    return (
+      <Suspense fallback={null}>
+        <QuizPlayer ticket={playTicket} guestsLoaded={guestsReady} />
+      </Suspense>
+    );
   }
 
   return (
@@ -181,19 +201,31 @@ export default function App() {
 
       <AgencyFooter />
 
-      <RegistrationModal
-        isOpen={isRegisterOpen}
-        onClose={() => setIsRegisterOpen(false)}
-        existingGuests={honorableGuests}
-      />
+      {isRegisterOpen && (
+        <Suspense fallback={<ModalLoadingOverlay />}>
+          <RegistrationModal
+            isOpen={isRegisterOpen}
+            onClose={() => setIsRegisterOpen(false)}
+            existingGuests={honorableGuests}
+          />
+        </Suspense>
+      )}
 
-      <CanvaGuideModal isOpen={isCanvaGuideOpen} onClose={() => setIsCanvaGuideOpen(false)} />
+      {isCanvaGuideOpen && (
+        <Suspense fallback={<ModalLoadingOverlay />}>
+          <CanvaGuideModal isOpen={isCanvaGuideOpen} onClose={() => setIsCanvaGuideOpen(false)} />
+        </Suspense>
+      )}
 
-      <AdminTicketVerifyModal
-        isOpen={isAdminVerifyOpen}
-        onClose={() => setIsAdminVerifyOpen(false)}
-        registeredTickets={honorableGuests}
-      />
+      {isAdminVerifyOpen && (
+        <Suspense fallback={<ModalLoadingOverlay />}>
+          <AdminTicketVerifyModal
+            isOpen={isAdminVerifyOpen}
+            onClose={() => setIsAdminVerifyOpen(false)}
+            registeredTickets={honorableGuests}
+          />
+        </Suspense>
+      )}
     </div>
   );
 }

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { AdminRole, CardDeleteRequest, Ticket } from '../types';
 import { EVENT_DETAILS } from '../data/eventData';
-import { downloadGuestsCsv, downloadGuestsJson } from '../utils/guestExport';
+import { downloadGuestsCsv, downloadGuestsJson, findDuplicateTransactionId } from '../utils/guestExport';
 import { getGuestCardUrl, saveHonorableGuest } from '../utils/guestStorage';
 import { applyDueTag, applyPaidTag, getPaymentKind, isRealTransactionId, paymentKindLabel, visibleTransactionId, type PaymentKind } from '../utils/paymentKind';
 import { sendRegistrationConfirmationSms } from '../utils/sendConfirmationSms';
@@ -85,6 +85,9 @@ export default function AdminGuestList({ guests, adminRole, actorName, onEditGue
   const [showAllLog, setShowAllLog] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [requestBusyId, setRequestBusyId] = useState<string | null>(null);
+  const [trxPromptId, setTrxPromptId] = useState<string | null>(null);
+  const [trxPromptValue, setTrxPromptValue] = useState('');
+  const [trxPromptError, setTrxPromptError] = useState('');
 
   const isSuperAdmin = adminRole === 'Super Admin';
 
@@ -234,10 +237,13 @@ export default function AdminGuestList({ guests, adminRole, actorName, onEditGue
     }
   };
 
-  const handleMarkPaid = async (guest: Ticket) => {
-    if (!isRealTransactionId(guest.transactionId)) return;
+  const handleMarkPaid = async (guest: Ticket, trxOverride?: string) => {
+    const trxToUse = trxOverride?.trim() || guest.transactionId;
+    if (!isRealTransactionId(trxToUse)) return;
     setStateFor(guest.ticketId, 'saving');
-    const tagged = applyPaidTag(guest, EVENT_DETAILS.feeAdult, { confirm: isSuperAdmin });
+    const tagged = applyPaidTag({ ...guest, transactionId: trxToUse }, EVENT_DETAILS.feeAdult, {
+      confirm: isSuperAdmin,
+    });
     try {
       await saveHonorableGuest(
         tagged.status === 'Confirmed'
@@ -249,6 +255,9 @@ export default function AdminGuestList({ guests, adminRole, actorName, onEditGue
           : tagged
       );
       setStateFor(guest.ticketId, 'idle');
+      setTrxPromptId(null);
+      setTrxPromptValue('');
+      setTrxPromptError('');
     } catch (error) {
       setStateFor(
         guest.ticketId,
@@ -256,6 +265,21 @@ export default function AdminGuestList({ guests, adminRole, actorName, onEditGue
         error instanceof Error ? error.message : 'পেইড করা যায়নি'
       );
     }
+  };
+
+  const handleConfirmTrxPrompt = (guest: Ticket) => {
+    const value = trxPromptValue.trim();
+    if (!isRealTransactionId(value)) {
+      setTrxPromptError('সঠিক Transaction ID দিন');
+      return;
+    }
+    const duplicate = findDuplicateTransactionId(guests, value, guest.ticketId);
+    if (duplicate) {
+      setTrxPromptError(`এই TrxID ইতিমধ্যে ব্যবহার হয়েছে (${duplicate.ticketId})`);
+      return;
+    }
+    setTrxPromptError('');
+    handleMarkPaid(guest, value);
   };
 
   const handleMarkDue = async (guest: Ticket) => {
@@ -386,7 +410,9 @@ export default function AdminGuestList({ guests, adminRole, actorName, onEditGue
           </p>
           <p className="text-[11px] text-[#B3A6C9] mt-1">
             TrxID থাকলেও ভুলে ডিউ হয়ে গেলে <span className="text-[#F0D78C] font-bold">পেইড করুন</span> চাপুন — টাকা আয়ে
-            ফিরে যাবে। <span className="text-[#F0D78C] font-bold">ডিউ ট্যাগ</span> দিলে QR থাকবে, টাকা ডিউতে যাবে।
+            ফিরে যাবে। TrxID না থাকলে <span className="text-[#F0D78C] font-bold">পেইড করুন</span> চাপলে TrxID লেখার
+            বক্স আসবে, লিখে ✓ চাপুন। <span className="text-[#F0D78C] font-bold">ডিউ ট্যাগ</span> দিলে QR থাকবে, টাকা
+            ডিউতে যাবে।
           </p>
           <p className="text-[11px] text-[#B3A6C9] mt-1">
             গেস্টের রেজিস্ট্রেশন ও Admin-এর ম্যানুয়াল এন্ট্রি — দুটোই{' '}
@@ -672,16 +698,69 @@ export default function AdminGuestList({ guests, adminRole, actorName, onEditGue
                             Edit
                           </button>
                         )}
-                        {kind !== 'paid' && isRealTransactionId(g.transactionId) && g.status !== 'Rejected' && (
-                          <button
-                            type="button"
-                            disabled={busy}
-                            onClick={() => handleMarkPaid(g)}
-                            className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-[#1C1730] border border-[#D4AF37]/60 text-[#F0D78C] font-bold cursor-pointer disabled:opacity-50"
-                          >
-                            {action === 'saving' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <BadgeCheck className="w-3.5 h-3.5" />}
-                            পেইড করুন
-                          </button>
+                        {kind !== 'paid' && g.status !== 'Rejected' && (
+                          isRealTransactionId(g.transactionId) ? (
+                            <button
+                              type="button"
+                              disabled={busy}
+                              onClick={() => handleMarkPaid(g)}
+                              className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-[#1C1730] border border-[#D4AF37]/60 text-[#F0D78C] font-bold cursor-pointer disabled:opacity-50"
+                            >
+                              {action === 'saving' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <BadgeCheck className="w-3.5 h-3.5" />}
+                              পেইড করুন
+                            </button>
+                          ) : trxPromptId === g.ticketId ? (
+                            <div className="flex items-center gap-1">
+                              <input
+                                autoFocus
+                                value={trxPromptValue}
+                                onChange={(e) => {
+                                  setTrxPromptValue(e.target.value);
+                                  setTrxPromptError('');
+                                }}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    e.preventDefault();
+                                    handleConfirmTrxPrompt(g);
+                                  }
+                                }}
+                                placeholder="TrxID লিখুন"
+                                className="w-28 bg-[#0F0C1A] border border-[#D4AF37]/40 rounded-lg px-2 py-1 text-[11px] text-[#F6EFE0] font-mono outline-none"
+                              />
+                              <button
+                                type="button"
+                                disabled={busy}
+                                onClick={() => handleConfirmTrxPrompt(g)}
+                                className="p-1.5 rounded-lg bg-[#1C1730] border border-[#D4AF37]/60 text-[#F0D78C] cursor-pointer disabled:opacity-50"
+                              >
+                                {action === 'saving' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <BadgeCheck className="w-3.5 h-3.5" />}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setTrxPromptId(null);
+                                  setTrxPromptValue('');
+                                  setTrxPromptError('');
+                                }}
+                                className="p-1.5 rounded-lg bg-[#0F0C1A] border border-[#A52C54]/40 text-[#B3A6C9] cursor-pointer"
+                              >
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setTrxPromptId(g.ticketId);
+                                setTrxPromptValue('');
+                                setTrxPromptError('');
+                              }}
+                              className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-[#1C1730] border border-[#D4AF37]/60 text-[#F0D78C] font-bold cursor-pointer"
+                            >
+                              <BadgeCheck className="w-3.5 h-3.5" />
+                              পেইড করুন
+                            </button>
+                          )
                         )}
                         {kind !== 'due' && g.status !== 'Rejected' && (
                           <button
@@ -789,6 +868,9 @@ export default function AdminGuestList({ guests, adminRole, actorName, onEditGue
                           </button>
                         )}
                       </div>
+                      {trxPromptId === g.ticketId && trxPromptError && (
+                        <p className="mt-1 text-[10px] text-[#A52C54] font-semibold">{trxPromptError}</p>
+                      )}
                       {action === 'sms-sending' && (
                         <p className="mt-1 text-[10px] text-[#B3A6C9] flex items-center gap-1">
                           <Loader2 className="w-3 h-3 animate-spin" />

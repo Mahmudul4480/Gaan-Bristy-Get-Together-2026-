@@ -1,7 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 import { QRCodeCanvas } from 'qrcode.react';
-import html2canvas from 'html2canvas';
-import { jsPDF } from 'jspdf';
 import { Ticket } from '../types';
 import { LOGO_URL, EVENT_DETAILS } from '../data/eventData';
 import { getGuestCardUrl } from '../utils/guestStorage';
@@ -360,6 +358,10 @@ export default function HonorableGuestCard({
     const sourceRoot = cardRef.current;
     if (!sourceRoot) return null;
 
+    // Downloaded only occasionally, so html2canvas is fetched on demand instead
+    // of weighing down every visitor's first page load.
+    const { default: html2canvas } = await import('html2canvas');
+
     const rect = sourceRoot.getBoundingClientRect();
     let scale = 3;
     while ((rect.height * scale > 12000 || rect.width * scale > 12000) && scale > 1) {
@@ -451,6 +453,7 @@ export default function HonorableGuestCard({
         throw new Error('কার্ড খুঁজে পাওয়া যায়নি');
       }
 
+      const { jsPDF } = await import('jspdf');
       const imgData = canvas.toDataURL('image/png', 1);
       const pdfWidth = 210;
       const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
