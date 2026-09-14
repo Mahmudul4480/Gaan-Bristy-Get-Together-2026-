@@ -1,5 +1,5 @@
 import { SCHEDULE_DATA } from '../data/eventData';
-import { Calendar, Clock, Sparkles, Mic, Music, Utensils, Award, Camera } from 'lucide-react';
+import { Calendar, Clock, Sparkles, Mic, Music, Utensils, Gift, Camera } from 'lucide-react';
 
 export default function Schedule() {
   const getIcon = (iconName: string) => {
@@ -8,7 +8,7 @@ export default function Schedule() {
       case 'Mic': return <Mic className="w-5 h-5 text-[#D4AF37]" />;
       case 'Music': return <Music className="w-5 h-5 text-[#D4AF37]" />;
       case 'Utensils': return <Utensils className="w-5 h-5 text-[#D4AF37]" />;
-      case 'Award': return <Award className="w-5 h-5 text-[#D4AF37]" />;
+      case 'Gift': return <Gift className="w-5 h-5 text-[#D4AF37]" />;
       case 'Camera': return <Camera className="w-5 h-5 text-[#D4AF37]" />;
       default: return <Clock className="w-5 h-5 text-[#D4AF37]" />;
     }
@@ -22,7 +22,7 @@ export default function Schedule() {
         <div className="text-center max-w-3xl mx-auto mb-14">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#7A1F3D] border border-[#D4AF37]/50 text-[#F0D78C] text-xs font-bold mb-3 shadow-md">
             <Calendar className="w-3.5 h-3.5 text-[#D4AF37]" />
-            <span>অভিজাত সময়সূচী (Schedule)</span>
+            <span>সময়সূচী (Schedule)</span>
           </div>
           <h2 className="text-3xl sm:text-5xl font-extrabold font-english-heading text-[#F6EFE0] tracking-tight">
             Event Schedule

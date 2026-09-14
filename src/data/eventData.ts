@@ -51,8 +51,8 @@ export function isRegistrationOpen(now = Date.now()): boolean {
 export const SCHEDULE_DATA: ScheduleItem[] = [
   {
     time: "০৬:০০ PM – ০৬:৩০ PM",
-    title: "Red Carpet Welcome",
-    titleBengali: "লাল গালিচায় অভ্যর্থনা ও নেটওয়ার্কিং",
+    title: "Welcome Reception",
+    titleBengali: "অভ্যর্থনা ও নেটওয়ার্কিং",
     description: "অতিথিদের শুভ আগমন, ওয়েলকাম ড্রিংকস গ্রহণ এবং স্টারমেকার ফ্যামিলি মেম্বারদের সাথে কুশল বিনিময়।",
     iconName: "Sparkles"
   },
@@ -72,17 +72,17 @@ export const SCHEDULE_DATA: ScheduleItem[] = [
   },
   {
     time: "০৮:১৫ PM – ০৯:১৫ PM",
-    title: "Royal Buffet Dinner",
-    titleBengali: "রয়্যাল বুফে ডিনার",
+    title: "Royal Dinner",
+    titleBengali: "রয়্যাল ডিনার",
     description: "গুলশান ক্লাবের ঐতিহ্যবাহী ও সুস্বাদু খাবারের সাথে ব্যাকগ্রাউন্ডে মনমুগ্ধকর আবহ সঙ্গীত।",
     iconName: "Utensils"
   },
   {
     time: "০৯:১৫ PM – ০৯:৪৫ PM",
-    title: "Awards & Recognition",
+    title: "Recognition Ceremony",
     titleBengali: "গুণীজন সম্মাননা ও উপহার বিতরণ",
     description: "স্টারমেকার ফ্যামিলির সক্রিয় সদস্য ও বিশিষ্ট অতিথিদের বিশেষ ক্রেস্ট ও সম্মাননা প্রদান।",
-    iconName: "Award"
+    iconName: "Gift"
   },
   {
     time: "০৯:৪৫ PM – ১০:০০ PM",

@@ -1,7 +1,7 @@
 import CountdownTimer from './CountdownTimer';
 import HeroBrandLockup from './HeroBrandLockup';
 import { EVENT_DETAILS, isRegistrationOpen } from '../data/eventData';
-import { Calendar, Clock, MapPin, Sparkles, AlertTriangle, ArrowRight, Music, Utensils, Award, Smile, Shirt } from 'lucide-react';
+import { Calendar, Clock, MapPin, Sparkles, AlertTriangle, ArrowRight, Music, Utensils, Gift, Smile, Shirt } from 'lucide-react';
 import AddToCalendar from './AddToCalendar';
 import GaanBristyUmbrella from './GaanBristyUmbrella';
 
@@ -106,7 +106,7 @@ export default function Hero({ onOpenRegister, onExploreSchedule }: HeroProps) {
                   <div className="p-2 rounded-full border border-[#D4AF37]/40 bg-[#D4AF37]/10">
                     <Smile className="w-5 h-5 text-[#D4AF37]" />
                   </div>
-                  <span className="text-xs font-bold text-[#F6EFE0]">Red Carpet Welcome</span>
+                  <span className="text-xs font-bold text-[#F6EFE0]">Welcome Reception</span>
                 </div>
                 <div className="bg-[#1C1730] border border-[#D4AF37]/30 p-3.5 rounded-xl flex flex-col items-center justify-center space-y-1.5">
                   <div className="p-2 rounded-full border border-[#D4AF37]/40 bg-[#D4AF37]/10">
@@ -118,13 +118,13 @@ export default function Hero({ onOpenRegister, onExploreSchedule }: HeroProps) {
                   <div className="p-2 rounded-full border border-[#D4AF37]/40 bg-[#D4AF37]/10">
                     <Utensils className="w-5 h-5 text-[#D4AF37]" />
                   </div>
-                  <span className="text-xs font-bold text-[#F6EFE0]">Royal Buffet Dinner</span>
+                  <span className="text-xs font-bold text-[#F6EFE0]">Royal Dinner</span>
                 </div>
                 <div className="bg-[#1C1730] border border-[#D4AF37]/30 p-3.5 rounded-xl flex flex-col items-center justify-center space-y-1.5">
                   <div className="p-2 rounded-full border border-[#D4AF37]/40 bg-[#D4AF37]/10">
-                    <Award className="w-5 h-5 text-[#D4AF37]" />
+                    <Gift className="w-5 h-5 text-[#D4AF37]" />
                   </div>
-                  <span className="text-xs font-bold text-[#F6EFE0]">Awards & Recognition</span>
+                  <span className="text-xs font-bold text-[#F6EFE0]">Recognition Ceremony</span>
                 </div>
               </div>
             </div>

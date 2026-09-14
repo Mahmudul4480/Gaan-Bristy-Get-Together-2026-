@@ -1,5 +1,5 @@
 import { EVENT_DETAILS } from '../data/eventData';
-import { Ticket, Users, Sparkles, AlertCircle, Utensils, Music, Award, CheckCircle2, Calendar, Shirt } from 'lucide-react';
+import { Ticket, Users, Sparkles, AlertCircle, Utensils, Music, Gift, CheckCircle2, Calendar, Shirt } from 'lucide-react';
 import AddToCalendar from './AddToCalendar';
 import SocialShareWidget from './SocialShareWidget';
 
@@ -39,7 +39,7 @@ export default function EventDetails({ onOpenRegister }: EventDetailsProps) {
                 সঙ্গীতের সুর যেখানে আত্মাকে ছুঁয়ে যায়, সেখানেই গড়ে ওঠে আত্মিক বন্ধন। স্টারমেকারের সুপরিচিত ও জনপ্রিয় মিউজিক পরিবার <span className="text-[#F0D78C] font-black font-serif">"গান বৃষ্টি"</span> আয়োজন করতে যাচ্ছে বছরের সবচেয়ে জাকজমকপূর্ণ ও মার্জিত মিলনমেলা—<span className="text-[#D4AF37] font-extrabold font-serif">"Gaan Bristy Grand Get-Together 2026: Melody at Gulshan Club"</span>। 
               </p>
               <p className="text-sm sm:text-base text-[#B3A6C9] leading-relaxed font-body">
-                দিনের পর দিন ভার্চুয়াল জগতে যাদের মিষ্টি সুর ও গানে আমাদের মন জুড়িয়েছে, এবার গুলশান ক্লাবের অভিজাত আবহে তাদের সাথে সামনাসামনি আড্ডা, সুরের ঝংকার, রাজকীয় বুফে নৈশভোজ এবং গুণীজন সম্মাননার এক অবিস্মরণীয় সন্ধ্যা কাটাতে আসুন এক ছাদের নিচে। এটি শুধুই একটি গেট-টুগেদার নয়, এটি আমাদের পরিবারটির ঐক্য, প্রীতি ও ভালোবাসার এক অমর উদ্যাপন।
+                দিনের পর দিন ভার্চুয়াল জগতে যাদের মিষ্টি সুর ও গানে আমাদের মন জুড়িয়েছে, এবার গুলশান ক্লাবের রাজকীয় আবহে তাদের সাথে সামনাসামনি আড্ডা, সুরের ঝংকার, রাজকীয় নৈশভোজ এবং গুণীজন সম্মাননার এক অবিস্মরণীয় সন্ধ্যা কাটাতে আসুন এক ছাদের নিচে। এটি শুধুই একটি গেট-টুগেদার নয়, এটি আমাদের পরিবারটির ঐক্য, প্রীতি ও ভালোবাসার এক অমর উদ্যাপন।
               </p>
             </div>
 
@@ -101,11 +101,11 @@ export default function EventDetails({ onOpenRegister }: EventDetailsProps) {
               <ul className="space-y-3.5 text-sm text-[#F6EFE0] mb-6 font-body">
                 <li className="flex items-start gap-2.5">
                   <CheckCircle2 className="w-5 h-5 text-[#D4AF37] shrink-0 mt-0.5" />
-                  <span>গুলশান ক্লাবে রেড কার্পেট ভিআইপি অভ্যর্থনা (Red Carpet Welcome)</span>
+                  <span>গুলশান ক্লাবে ভিআইপি অভ্যর্থনা (Welcome Reception)</span>
                 </li>
                 <li className="flex items-start gap-2.5">
                   <CheckCircle2 className="w-5 h-5 text-[#D4AF37] shrink-0 mt-0.5" />
-                  <span>ঐতিহ্যবাহী রাজকীয় বুফে নৈশভোজ (Royal Buffet Dinner)</span>
+                  <span>ঐতিহ্যবাহী রাজকীয় নৈশভোজ (Royal Dinner)</span>
                 </li>
                 <li className="flex items-start gap-2.5">
                   <CheckCircle2 className="w-5 h-5 text-[#D4AF37] shrink-0 mt-0.5" />
@@ -113,7 +113,7 @@ export default function EventDetails({ onOpenRegister }: EventDetailsProps) {
                 </li>
                 <li className="flex items-start gap-2.5">
                   <CheckCircle2 className="w-5 h-5 text-[#D4AF37] shrink-0 mt-0.5" />
-                  <span>বিশেষ ক্রেস্ট, ফটো সেশন ও ফ্যামিলি মেমেন্টো (Awards & Recognition)</span>
+                  <span>বিশেষ ক্রেস্ট, ফটো সেশন ও ফ্যামিলি মেমেন্টো (Recognition Ceremony)</span>
                 </li>
                 <li className="flex items-start gap-2.5">
                   <Shirt className="w-5 h-5 text-[#D4AF37] shrink-0 mt-0.5" />
@@ -161,14 +161,14 @@ export default function EventDetails({ onOpenRegister }: EventDetailsProps) {
               <div className="space-y-3 pt-4 border-t border-[#D4AF37]/20 text-xs text-[#F6EFE0]">
                 <div className="flex items-center gap-2 font-semibold">
                   <Utensils className="w-4 h-4 text-[#D4AF37]" />
-                  <span>রয়্যাল বুফে ডিনার প্যাকেজ অন্তর্ভুক্ত</span>
+                  <span>রয়্যাল ডিনার প্যাকেজ অন্তর্ভুক্ত</span>
                 </div>
                 <div className="flex items-center gap-2 font-semibold">
                   <Music className="w-4 h-4 text-[#D4AF37]" />
                   <span>লাইভ আনপ্লাগড পারফরম্যান্স</span>
                 </div>
                 <div className="flex items-center gap-2 font-semibold">
-                  <Award className="w-4 h-4 text-[#D4AF37]" />
+                  <Gift className="w-4 h-4 text-[#D4AF37]" />
                   <span>গুণীজন সম্মাননা ও বিশেষ শুভেচ্ছা মেমেন্টো</span>
                 </div>
               </div>

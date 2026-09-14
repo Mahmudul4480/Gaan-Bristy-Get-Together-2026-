@@ -219,7 +219,7 @@ export default function ETicketCard({ ticket }: ETicketCardProps) {
 
         {/* Ticket Footer Instructions */}
         <div className="pt-4 border-t border-dashed border-[#D4AF37]/30 flex flex-col sm:flex-row items-center justify-between text-[11px] text-[#B3A6C9] gap-2">
-          <p>📌 অনুগ্রহ করে ইভেন্টের দিন সন্ধ্যা ৭:০০ টার মধ্যে লাল গালিচায় উপস্থিত থাকুন।</p>
+          <p>📌 অনুগ্রহ করে ইভেন্টের দিন সন্ধ্যা ৭:০০ টার মধ্যে ভেন্যুতে উপস্থিত থাকুন।</p>
           <p className="font-mono text-[#F0D78C]">SocialMediaCareing.com</p>
         </div>
 

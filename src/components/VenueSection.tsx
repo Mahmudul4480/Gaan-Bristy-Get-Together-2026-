@@ -10,7 +10,7 @@ export default function VenueSection() {
         <div className="text-center max-w-3xl mx-auto mb-12">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#7A1F3D]/60 border border-[#D4AF37]/40 text-[#F0D78C] text-xs font-semibold mb-3">
             <MapPin className="w-3.5 h-3.5 text-[#D4AF37]" />
-            <span>অভিজাত ভেন্যু নির্দেশিকা</span>
+            <span>ভেন্যু নির্দেশিকা</span>
           </div>
           <h2 className="text-3xl sm:text-5xl font-extrabold font-english-heading text-[#F0D78C] tracking-tight">
             Venue Location
@@ -36,7 +36,7 @@ export default function VenueSection() {
               </p>
 
               <p className="text-sm text-[#F6EFE0] leading-relaxed mb-6 font-body">
-                ঢাকার অন্যতম শীর্ষ ও আন্তর্জাতিক মানের সামাজিক ক্লাব 'গুলশান ক্লাব'। দৃষ্টিনন্দন আধুনিক স্থাপত্য, লাল গালিচা রিসেপশন হল, সুসজ্জিত মাল্টি-কুইজিন বুফে ডাইনিং এবং পর্যাপ্ত কার পার্কিং ব্যবস্থার জন্য এটি বিশ্বমানের।
+                ঢাকার অন্যতম শীর্ষ ও আন্তর্জাতিক মানের সামাজিক ক্লাব 'গুলশান ক্লাব'। দৃষ্টিনন্দন আধুনিক স্থাপত্য, সুসজ্জিত রিসেপশন হল, মাল্টি-কুইজিন ডাইনিং এবং পর্যাপ্ত কার পার্কিং ব্যবস্থার জন্য এটি বিশ্বমানের।
               </p>
 
               <div className="space-y-3 border-t border-[#D4AF37]/20 pt-4 text-xs font-body">
