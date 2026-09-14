@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Ticket } from '../types';
-import { checkedInGuests, formatCheckInTime, headcount, invitedGuests, sortByCheckInTimeDesc } from '../utils/checkInStats';
+import { checkedInGuests, formatCheckInTime, invitedGuests, sortByCheckInTimeDesc } from '../utils/checkInStats';
 import { getGateAppUrl } from '../config/adminConfig';
 import { Users, Bell, BellOff, Copy, Check, ScanLine, Clock } from 'lucide-react';
 
@@ -13,10 +13,9 @@ interface AdminGateLogProps {
 export default function AdminGateLog({ guests, notificationPermission, onEnableNotifications }: AdminGateLogProps) {
   const [linkCopied, setLinkCopied] = useState(false);
 
+  // Counted per card (ticket), not by adult headcount.
   const invited = useMemo(() => invitedGuests(guests), [guests]);
   const entered = useMemo(() => sortByCheckInTimeDesc(checkedInGuests(guests)), [guests]);
-  const invitedHeadcount = useMemo(() => headcount(invited), [invited]);
-  const enteredHeadcount = useMemo(() => headcount(entered), [entered]);
 
   const gateLink = getGateAppUrl();
 
@@ -81,18 +80,17 @@ export default function AdminGateLog({ guests, notificationPermission, onEnableN
         <div className="flex items-center justify-between mb-1">
           <span className="text-xs text-[#B3A6C9] flex items-center gap-1.5">
             <Users className="w-3.5 h-3.5 text-[#D4AF37]" />
-            প্রবেশ করেছেন
+            প্রবেশ করেছে
           </span>
-          <span className="text-[10px] text-[#B3A6C9]">{entered.length} টি কার্ড</span>
         </div>
         <p className="text-2xl font-black text-[#F0D78C] font-serif">
-          {enteredHeadcount}
-          <span className="text-sm text-[#B3A6C9] font-body font-normal"> / {invitedHeadcount} জন আমন্ত্রিত</span>
+          {entered.length}
+          <span className="text-sm text-[#B3A6C9] font-body font-normal"> / {invited.length} টি কার্ড আমন্ত্রিত</span>
         </p>
         <div className="w-full h-1.5 bg-[#0F0C1A] rounded-full mt-2 overflow-hidden">
           <div
             className="h-full bg-gradient-to-r from-[#D4AF37] to-[#F0D78C] rounded-full transition-all"
-            style={{ width: `${invitedHeadcount > 0 ? Math.min(100, (enteredHeadcount / invitedHeadcount) * 100) : 0}%` }}
+            style={{ width: `${invited.length > 0 ? Math.min(100, (entered.length / invited.length) * 100) : 0}%` }}
           />
         </div>
       </div>

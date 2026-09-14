@@ -5,7 +5,7 @@ import GateLoginGate from './GateLoginGate';
 import { getGateActorName, isGateSessionActive, setGateSession } from '../utils/gateStorage';
 import { saveHonorableGuest } from '../utils/guestStorage';
 import { getPaymentKind, paymentKindLabel } from '../utils/paymentKind';
-import { checkedInGuests, formatCheckInTime, headcount, invitedGuests } from '../utils/checkInStats';
+import { checkedInGuests, formatCheckInTime, invitedGuests } from '../utils/checkInStats';
 import {
   Camera,
   CameraOff,
@@ -43,10 +43,10 @@ export default function GateScannerApp({ guests, guestsLoaded }: GateScannerAppP
 
   const actorName = getGateActorName();
 
+  // Counted per card (ticket), not by adult headcount — a family card with
+  // 4 adults still counts as 1 entry here.
   const invited = useMemo(() => invitedGuests(guests), [guests]);
   const enteredList = useMemo(() => checkedInGuests(guests), [guests]);
-  const invitedHeadcount = useMemo(() => headcount(invited), [invited]);
-  const enteredHeadcount = useMemo(() => headcount(enteredList), [enteredList]);
 
   const playBeep = (ok: boolean) => {
     try {
@@ -244,19 +244,18 @@ export default function GateScannerApp({ guests, guestsLoaded }: GateScannerAppP
           <div className="flex items-center justify-between mb-1">
             <span className="text-xs text-[#B3A6C9] flex items-center gap-1.5">
               <Users className="w-3.5 h-3.5 text-[#D4AF37]" />
-              প্রবেশ করেছেন
+              প্রবেশ করেছে
             </span>
-            <span className="text-[10px] text-[#B3A6C9]">{enteredList.length} টি কার্ড</span>
           </div>
           <p className="text-2xl font-black text-[#F0D78C] font-serif">
-            {enteredHeadcount}
-            <span className="text-sm text-[#B3A6C9] font-body font-normal"> / {invitedHeadcount} জন</span>
+            {enteredList.length}
+            <span className="text-sm text-[#B3A6C9] font-body font-normal"> / {invited.length} টি কার্ড</span>
           </p>
           <div className="w-full h-1.5 bg-[#0F0C1A] rounded-full mt-2 overflow-hidden">
             <div
               className="h-full bg-gradient-to-r from-[#D4AF37] to-[#F0D78C] rounded-full transition-all"
               style={{
-                width: `${invitedHeadcount > 0 ? Math.min(100, (enteredHeadcount / invitedHeadcount) * 100) : 0}%`,
+                width: `${invited.length > 0 ? Math.min(100, (enteredList.length / invited.length) * 100) : 0}%`,
               }}
             />
           </div>
