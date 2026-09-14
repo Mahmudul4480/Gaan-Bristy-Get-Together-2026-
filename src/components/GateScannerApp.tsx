@@ -73,6 +73,18 @@ export default function GateScannerApp({ guests, guestsLoaded }: GateScannerAppP
     setEntryError('');
 
     let codeToSearch = rawCode.trim();
+
+    // Guest card QR codes encode a full page URL like
+    // "https://gaanbristy.site/?guest=GB2026-1234#honorable-guests".
+    // Pull the ticket id out of the `guest` query param when present.
+    try {
+      const url = new URL(codeToSearch);
+      const guestParam = url.searchParams.get('guest');
+      if (guestParam) codeToSearch = guestParam;
+    } catch {
+      // Not a URL — fall through to other formats below.
+    }
+
     try {
       const parsed = JSON.parse(rawCode);
       if (parsed && parsed.ticketId) codeToSearch = parsed.ticketId;
