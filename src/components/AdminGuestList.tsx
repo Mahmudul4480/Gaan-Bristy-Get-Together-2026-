@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { AdminRole, CardDeleteRequest, Ticket } from '../types';
 import { EVENT_DETAILS } from '../data/eventData';
 import { downloadGuestsCsv, downloadGuestsJson, findDuplicateTransactionId } from '../utils/guestExport';
+import { downloadGuestsPdf } from '../utils/guestListPdf';
 import { getGuestCardUrl, saveHonorableGuest } from '../utils/guestStorage';
 import { applyDueTag, applyPaidTag, getPaymentKind, isRealTransactionId, paymentKindLabel, visibleTransactionId, type PaymentKind } from '../utils/paymentKind';
 import { sendRegistrationConfirmationSms } from '../utils/sendConfirmationSms';
@@ -17,6 +18,7 @@ import HonorableGuestCard from './HonorableGuestCard';
 import {
   FileSpreadsheet,
   FileJson,
+  FileText,
   Search,
   Eye,
   X,
@@ -88,6 +90,8 @@ export default function AdminGuestList({ guests, adminRole, actorName, onEditGue
   const [trxPromptId, setTrxPromptId] = useState<string | null>(null);
   const [trxPromptValue, setTrxPromptValue] = useState('');
   const [trxPromptError, setTrxPromptError] = useState('');
+  const [isExportingPdf, setIsExportingPdf] = useState(false);
+  const [pdfExportError, setPdfExportError] = useState('');
 
   const isSuperAdmin = adminRole === 'Super Admin';
 
@@ -282,6 +286,19 @@ export default function AdminGuestList({ guests, adminRole, actorName, onEditGue
     handleMarkPaid(guest, value);
   };
 
+  const handleDownloadPdf = async () => {
+    setIsExportingPdf(true);
+    setPdfExportError('');
+    try {
+      await downloadGuestsPdf(guests);
+    } catch (error) {
+      console.error('[Admin guest list] PDF export failed:', error);
+      setPdfExportError('PDF তৈরি করা যায়নি — আবার চেষ্টা করুন');
+    } finally {
+      setIsExportingPdf(false);
+    }
+  };
+
   const handleMarkDue = async (guest: Ticket) => {
     if (guest.status === 'Rejected' || getPaymentKind(guest) === 'due') return;
     setStateFor(guest.ticketId, 'saving');
@@ -438,8 +455,26 @@ export default function AdminGuestList({ guests, adminRole, actorName, onEditGue
             <FileJson className="w-4 h-4 text-[#D4AF37]" />
             সব List JSON ডাউনলোড
           </button>
+          <button
+            type="button"
+            disabled={guests.length === 0 || isExportingPdf}
+            onClick={handleDownloadPdf}
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#7A1F3D] border border-[#D4AF37]/50 text-[#F0D78C] text-xs font-bold cursor-pointer disabled:opacity-40"
+          >
+            {isExportingPdf ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <FileText className="w-4 h-4" />
+            )}
+            {isExportingPdf ? 'PDF তৈরি হচ্ছে...' : 'সব List PDF ডাউনলোড'}
+          </button>
         </div>
       </div>
+      {pdfExportError && (
+        <p className="text-xs text-[#F6EFE0] bg-[#7A1F3D]/60 border border-[#A52C54]/50 rounded-xl px-3 py-2">
+          {pdfExportError}
+        </p>
+      )}
 
       <div className="flex flex-wrap items-center gap-2 text-[11px]">
         <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#0F0C1A] border border-[#D4AF37]/40 text-[#F0D78C] font-bold">
