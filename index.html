@@ -24,6 +24,18 @@
     <link rel="alternate" hrefLang="bn-BD" href="https://gaanbristy.site/" />
     <link rel="alternate" hrefLang="x-default" href="https://gaanbristy.site/" />
     <link rel="manifest" href="/manifest.webmanifest" />
+    <script>
+      // Opened via the Gate Scanner link (?gate=gbgate2026)? Swap in a
+      // manifest whose start_url points straight back to the scanner, so
+      // "Add to Home Screen" on Android creates an icon that opens the
+      // scanner directly instead of the homepage.
+      (function () {
+        if (new URLSearchParams(window.location.search).get('gate') === 'gbgate2026') {
+          var link = document.querySelector('link[rel="manifest"]');
+          if (link) link.setAttribute('href', '/manifest-gate.webmanifest');
+        }
+      })();
+    </script>
     <link rel="icon" type="image/png" href="/assets/gaan-bristy-icon.png" />
     <link rel="apple-touch-icon" href="/assets/gaan-bristy-icon.png" />
     <link rel="sitemap" type="application/xml" title="Sitemap" href="/sitemap.xml" />

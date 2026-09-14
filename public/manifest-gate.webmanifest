@@ -1,0 +1,25 @@
+{
+  "name": "Gaan Bristy Gate Scanner",
+  "short_name": "GB Gate",
+  "description": "গেট QR স্ক্যানার — Gaan Bristy Get Together 2026",
+  "start_url": "/?gate=gbgate2026",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0F0C1A",
+  "theme_color": "#0F0C1A",
+  "lang": "bn-BD",
+  "icons": [
+    {
+      "src": "/assets/gaan-bristy-icon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/gaan-bristy-icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -15,6 +15,7 @@ import FallingMusicNotes from './components/FallingMusicNotes';
 import { Ticket } from './types';
 import { subscribeToHonorableGuests, isFirebaseConfigured } from './utils/guestStorage';
 import { isAdminUrlMatch } from './utils/adminStorage';
+import { isGateUrlMatch } from './utils/gateStorage';
 import { bindHashNavigation, navigateToSection } from './utils/scrollToSection';
 import { trackGuestbookOpen, trackRegisterOpen, trackSectionView } from './utils/analytics';
 import { MessageSquare, Ticket as TicketIcon } from 'lucide-react';
@@ -26,6 +27,7 @@ const CanvaGuideModal = lazy(() => import('./components/CanvaGuideModal'));
 const AdminTicketVerifyModal = lazy(() => import('./components/AdminTicketVerifyModal'));
 const QuizPlayer = lazy(() => import('./components/QuizPlayer'));
 const QuizStageScreen = lazy(() => import('./components/QuizStageScreen'));
+const GateScannerApp = lazy(() => import('./components/GateScannerApp'));
 
 /** Brief on-demand load feedback for lazy modals, in case the chunk takes a moment on a slow connection. */
 function ModalLoadingOverlay() {
@@ -55,6 +57,7 @@ export default function App() {
   const [selectedGuestId, setSelectedGuestId] = useState<string | null>(() => getGuestIdFromUrl());
   const [activeSection] = useState('hero');
   const quizMode = getQuizMode();
+  const isGateApp = isGateUrlMatch(window.location.search);
 
   // Live sync across every browser/device — Firestore pushes updates instantly
   // whenever any admin or guest creates/edits a Honorable Guest Card.
@@ -126,6 +129,14 @@ export default function App() {
     trackRegisterOpen(source);
     setIsRegisterOpen(true);
   };
+
+  if (isGateApp) {
+    return (
+      <Suspense fallback={null}>
+        <GateScannerApp guests={honorableGuests} guestsLoaded={guestsReady} />
+      </Suspense>
+    );
+  }
 
   if (quizMode === 'screen') {
     return (

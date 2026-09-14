@@ -9,11 +9,14 @@ import AdminGalleryManager from './AdminGalleryManager';
 import AdminGuestbookManager from './AdminGuestbookManager';
 import AdminBudgetPanel from './AdminBudgetPanel';
 import AdminQuizPanel from './AdminQuizPanel';
+import AdminGateLog from './AdminGateLog';
 import AdminLoginGate from './AdminLoginGate';
 import { getAdminPanelUrl, ADMIN_PANEL_PIN } from '../config/adminConfig';
 import { getAdminActorName, getAdminRole, isAdminSessionActive, isSuperAdminSession } from '../utils/adminStorage';
 import { getPaymentKind, isRealTransactionId, paymentKindLabel } from '../utils/paymentKind';
-import { X, Search, ShieldCheck, CheckCircle2, User, Phone, Sparkles, AlertCircle, Camera, CameraOff, Upload, QrCode, RefreshCw, UserPlus, List, Pencil, Crown, Link2, Copy, Check, ImagePlus, Wallet, MessageSquarePlus, Music2 } from 'lucide-react';
+import { saveHonorableGuest } from '../utils/guestStorage';
+import { checkedInGuests } from '../utils/checkInStats';
+import { X, Search, ShieldCheck, CheckCircle2, User, Phone, Sparkles, AlertCircle, Camera, CameraOff, Upload, QrCode, RefreshCw, UserPlus, List, Pencil, Crown, Link2, Copy, Check, ImagePlus, Wallet, MessageSquarePlus, Music2, ScanLine, Bell } from 'lucide-react';
 
 interface AdminTicketVerifyModalProps {
   isOpen: boolean;
@@ -21,27 +24,46 @@ interface AdminTicketVerifyModalProps {
   registeredTickets: Ticket[];
 }
 
+type PanelTab =
+  | 'verify'
+  | 'create'
+  | 'list'
+  | 'edit'
+  | 'assign'
+  | 'gallery'
+  | 'guestbook'
+  | 'budget'
+  | 'quiz'
+  | 'gate';
+
 export default function AdminTicketVerifyModal({ isOpen, onClose, registeredTickets }: AdminTicketVerifyModalProps) {
-  const [panelTab, setPanelTab] = useState<'verify' | 'create' | 'list' | 'edit' | 'assign' | 'gallery' | 'guestbook' | 'budget' | 'quiz'>('verify');
+  const [panelTab, setPanelTab] = useState<PanelTab>('verify');
   const [isAuthenticated, setIsAuthenticated] = useState(() => isAdminSessionActive());
   const [linkCopied, setLinkCopied] = useState(false);
   const [activeTab, setActiveTab] = useState<'camera' | 'manual'>('camera');
   const [searchQuery, setSearchQuery] = useState('');
   const [searchedTicket, setSearchedTicket] = useState<Ticket | null>(null);
-  const [entryChecked, setEntryChecked] = useState(false);
+  const [entrySaving, setEntrySaving] = useState(false);
+  const [entryError, setEntryError] = useState('');
   const [searchError, setSearchError] = useState('');
   const [editTicketId, setEditTicketId] = useState<string | null>(null);
   const [isScanning, setIsScanning] = useState(false);
   const [cameraError, setCameraError] = useState('');
+  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission | 'unsupported'>(
+    () => (typeof Notification !== 'undefined' ? Notification.permission : 'unsupported')
+  );
+  const [gateToast, setGateToast] = useState<{ name: string; by: string } | null>(null);
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const seenCheckInsRef = useRef<Set<string> | null>(null);
 
   const allTickets = registeredTickets;
+  const checkedInCount = checkedInGuests(registeredTickets).length;
 
   const verifyTicketId = (rawCode: string) => {
     setSearchError('');
     setCameraError('');
-    setEntryChecked(false);
+    setEntryError('');
 
     let codeToSearch = rawCode.trim();
 
@@ -180,12 +202,37 @@ export default function AdminTicketVerifyModal({ isOpen, onClose, registeredTick
     onClose();
   };
 
-  const switchPanelTab = (tab: 'verify' | 'create' | 'list' | 'edit' | 'assign' | 'gallery' | 'guestbook' | 'budget' | 'quiz') => {
+  const switchPanelTab = (tab: PanelTab) => {
     if (tab === 'budget' && !isSuperAdminSession()) return;
     if (tab !== 'verify') stopCameraScanner();
     if (tab !== 'edit') setEditTicketId(null);
     setPanelTab(tab);
     setSearchError('');
+  };
+
+  const handleMarkEntrance = async () => {
+    if (!searchedTicket) return;
+    setEntrySaving(true);
+    setEntryError('');
+    try {
+      const updated: Ticket = {
+        ...searchedTicket,
+        checkedInAt: new Date().toISOString(),
+        checkedInBy: getAdminActorName(),
+      };
+      await saveHonorableGuest(updated);
+      setSearchedTicket(updated);
+    } catch (error) {
+      setEntryError(error instanceof Error ? error.message : 'এন্ট্রি সেভ করা যায়নি — আবার চেষ্টা করুন');
+    } finally {
+      setEntrySaving(false);
+    }
+  };
+
+  const handleEnableNotifications = async () => {
+    if (typeof Notification === 'undefined') return;
+    const result = await Notification.requestPermission();
+    setNotificationPermission(result);
   };
 
   const openGuestEdit = (ticket: Ticket) => {
@@ -219,6 +266,44 @@ export default function AdminTicketVerifyModal({ isOpen, onClose, registeredTick
     }
   }, [isOpen, isAuthenticated, pendingCount]);
 
+  // Watches every guest for a new gate check-in and alerts whoever has this
+  // panel open — a toast always, plus an OS notification if permitted.
+  // Works no matter which tab is active, since check-ins can arrive anytime.
+  useEffect(() => {
+    if (!isOpen || !isAuthenticated) {
+      seenCheckInsRef.current = null;
+      return;
+    }
+    if (!seenCheckInsRef.current) {
+      // First pass after opening — remember existing check-ins silently.
+      seenCheckInsRef.current = new Set(
+        registeredTickets.filter((g) => g.checkedInAt).map((g) => g.ticketId)
+      );
+      return;
+    }
+    registeredTickets.forEach((g) => {
+      if (!g.checkedInAt || seenCheckInsRef.current!.has(g.ticketId)) return;
+      seenCheckInsRef.current!.add(g.ticketId);
+      setGateToast({ name: g.fullName, by: g.checkedInBy || 'গেট' });
+      if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+        try {
+          new Notification('গেটে প্রবেশ করেছেন', {
+            body: `${g.fullName} (${g.checkedInBy || 'গেট'})`,
+            icon: '/assets/gaan-bristy-icon.png',
+          });
+        } catch {
+          // Notification blocked/unsupported — the in-panel toast still shows.
+        }
+      }
+    });
+  }, [registeredTickets, isOpen, isAuthenticated]);
+
+  useEffect(() => {
+    if (!gateToast) return;
+    const timer = window.setTimeout(() => setGateToast(null), 5000);
+    return () => window.clearTimeout(timer);
+  }, [gateToast]);
+
   useEffect(() => {
     if (panelTab === 'budget' && !isSuperAdminSession()) {
       setPanelTab('verify');
@@ -245,6 +330,12 @@ export default function AdminTicketVerifyModal({ isOpen, onClose, registeredTick
 
   return (
     <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center p-2 sm:p-4 bg-[#0F0C1A]/90 backdrop-blur-md overflow-y-auto">
+      {gateToast && (
+        <div className="fixed top-3 left-1/2 -translate-x-1/2 z-[80] bg-[#7A1F3D] border border-[#D4AF37] text-[#F0D78C] text-xs font-bold px-4 py-2.5 rounded-full shadow-2xl flex items-center gap-2 font-body">
+          <Bell className="w-3.5 h-3.5 text-[#D4AF37]" />
+          {gateToast.name} গেটে প্রবেশ করেছেন ({gateToast.by})
+        </div>
+      )}
       <div className={`relative w-full bg-[#1C1730] border-2 border-[#D4AF37] rounded-3xl shadow-2xl text-[#F6EFE0] my-2 sm:my-8 max-h-[min(96dvh,920px)] flex flex-col overflow-hidden ${widePanel ? 'max-w-5xl' : panelTab === 'assign' ? 'max-w-3xl' : 'max-w-xl'}`}>
 
         {/* Header — logo/title + close button (always visible, never scrolls away) */}
@@ -315,6 +406,18 @@ export default function AdminTicketVerifyModal({ isOpen, onClose, registeredTick
             >
               <ShieldCheck className="w-4 h-4" />
               <span>গেট ভেরিফাই</span>
+            </button>
+            <button
+              onClick={() => switchPanelTab('gate')}
+              className={`flex-1 min-w-[7rem] py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${panelTab === 'gate' ? 'gold-gradient-btn text-[#0F0C1A] shadow-md' : 'text-[#B3A6C9] hover:text-[#F6EFE0]'}`}
+            >
+              <ScanLine className="w-4 h-4" />
+              <span>গেট এন্ট্রি</span>
+              {checkedInCount > 0 && (
+                <span className="min-w-[1.15rem] h-5 px-1.5 rounded-full bg-[#7A1F3D] text-[#F0D78C] text-[10px] font-black leading-5">
+                  {checkedInCount}
+                </span>
+              )}
             </button>
             <button
               onClick={() => switchPanelTab('create')}
@@ -418,6 +521,14 @@ export default function AdminTicketVerifyModal({ isOpen, onClose, registeredTick
         {panelTab === 'guestbook' && <AdminGuestbookManager />}
 
         {panelTab === 'quiz' && <AdminQuizPanel actorName={getAdminActorName()} />}
+
+        {panelTab === 'gate' && (
+          <AdminGateLog
+            guests={registeredTickets}
+            notificationPermission={notificationPermission}
+            onEnableNotifications={handleEnableNotifications}
+          />
+        )}
 
         {panelTab === 'budget' && isSuperAdmin && (
           <AdminBudgetPanel tickets={registeredTickets} actorName={getAdminActorName()} />
@@ -634,18 +745,27 @@ export default function AdminTicketVerifyModal({ isOpen, onClose, registeredTick
               </span>
             </div>
 
+            {entryError && (
+              <p className="text-xs text-[#A52C54] font-semibold">{entryError}</p>
+            )}
+
             {/* Check-in Gate Action */}
             <div className="pt-2 flex gap-3">
-              {entryChecked ? (
+              {searchedTicket.checkedInAt ? (
                 <div className="w-full p-3 bg-[#7A1F3D]/60 text-[#F0D78C] border border-[#D4AF37]/50 rounded-xl text-xs font-bold text-center flex items-center justify-center gap-2">
                   <CheckCircle2 className="w-5 h-5 text-[#D4AF37]" />
-                  <span>গেটে প্রবেশ সম্পন্ন হয়েছে! (ENTRY GRANTED)</span>
+                  <span>
+                    প্রবেশ সম্পন্ন — {new Date(searchedTicket.checkedInAt).toLocaleString('bn-BD', { dateStyle: 'short', timeStyle: 'short' })}
+                    {searchedTicket.checkedInBy ? ` (${searchedTicket.checkedInBy})` : ''}
+                  </span>
                 </div>
               ) : (
                 <button
-                  onClick={() => setEntryChecked(true)}
-                  className="w-full py-3.5 gold-gradient-btn text-[#0F0C1A] font-black rounded-xl text-xs transition shadow-md cursor-pointer"
+                  onClick={handleMarkEntrance}
+                  disabled={entrySaving}
+                  className="w-full py-3.5 gold-gradient-btn text-[#0F0C1A] font-black rounded-xl text-xs transition shadow-md cursor-pointer disabled:opacity-60 flex items-center justify-center gap-2"
                 >
+                  {entrySaving && <span className="w-3.5 h-3.5 rounded-full border-2 border-[#0F0C1A]/40 border-t-[#0F0C1A] animate-spin" />}
                   গেটে প্রবেশ নিশ্চিত করুন (MARK ENTRANCE)
                 </button>
               )}

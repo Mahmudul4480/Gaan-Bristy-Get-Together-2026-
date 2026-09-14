@@ -43,6 +43,10 @@ export interface Ticket {
   rejectedAt?: string;
   /** paid = real TrxID counted in budget; due = will pay later; complimentary = honorary, ৳0 */
   paymentKind?: 'paid' | 'due' | 'complimentary';
+  /** Set when a gate scanner (or admin) scans this guest in at the venue. */
+  checkedInAt?: string;
+  /** Name of the gate scanner / admin who granted entry. */
+  checkedInBy?: string;
 }
 
 export interface AppointedAdmin {
