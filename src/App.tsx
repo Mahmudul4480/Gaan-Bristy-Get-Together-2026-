@@ -153,7 +153,7 @@ export default function App() {
       : undefined;
     return (
       <Suspense fallback={null}>
-        <QuizPlayer ticket={playTicket} guestsLoaded={guestsReady} />
+        <QuizPlayer ticket={playTicket} guests={honorableGuests} guestsLoaded={guestsReady} />
       </Suspense>
     );
   }

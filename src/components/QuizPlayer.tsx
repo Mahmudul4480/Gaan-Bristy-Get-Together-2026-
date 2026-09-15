@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Ticket } from '../types';
 import {
   DEFAULT_QUIZ_TIMER_SECONDS,
@@ -19,14 +19,108 @@ import {
   subscribeToQuizPlayers,
   subscribeToQuizState,
 } from '../utils/quizStorage';
-import { Loader2, Music2, ShieldAlert, Trophy, ChevronLeft } from 'lucide-react';
+import { playJoinChime, startQuestionCountdownMusic, unlockQuizAudio } from '../utils/quizAudio';
+import { Loader2, Music2, Search, ShieldAlert, Trophy, ChevronLeft } from 'lucide-react';
+
+const SELF_ID_STORAGE_KEY = 'gb2026-quiz-self-ticket';
+
+function readCachedSelfTicketId(): string | null {
+  try {
+    return window.localStorage.getItem(SELF_ID_STORAGE_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function cacheSelfTicketId(ticketId: string): void {
+  try {
+    window.localStorage.setItem(SELF_ID_STORAGE_KEY, ticketId);
+  } catch {
+    // Private mode / storage full — not fatal, they'll just search again next time.
+  }
+}
+
+function clearCachedSelfTicketId(): void {
+  try {
+    window.localStorage.removeItem(SELF_ID_STORAGE_KEY);
+  } catch {
+    // ignore
+  }
+}
 
 interface QuizPlayerProps {
+  /** Set only when this device opened a guest-specific link (`?guest=<id>`), e.g. from the card's own "join quiz" button. */
   ticket: Ticket | undefined;
+  /** Full guest list — needed so a bare `?quiz=play` link (posted once in WhatsApp) can let anyone self-identify. */
+  guests: Ticket[];
   guestsLoaded: boolean;
 }
 
-export default function QuizPlayer({ ticket, guestsLoaded }: QuizPlayerProps) {
+/** Search-your-own-name screen shown when this device has no guest-specific ticket yet. */
+function QuizSelfIdentify({ guests, onIdentified }: { guests: Ticket[]; onIdentified: (ticket: Ticket) => void }) {
+  const [query, setQuery] = useState('');
+  const trimmed = query.trim();
+
+  const matches = useMemo(() => {
+    if (trimmed.length < 3) return [];
+    const q = trimmed.toLowerCase();
+    return guests
+      .filter((g) => g.status === 'Confirmed')
+      .filter(
+        (g) =>
+          g.phone.includes(trimmed) ||
+          g.fullName.toLowerCase().includes(q) ||
+          g.familyName.toLowerCase().includes(q) ||
+          (g.starMakerId || '').toLowerCase().includes(q)
+      )
+      .slice(0, 8);
+  }, [guests, trimmed]);
+
+  return (
+    <div className="mt-6">
+      <div className="rounded-2xl border border-[#D4AF37]/40 bg-[#1C1730] p-5 text-center">
+        <Search className="w-8 h-8 text-[#D4AF37] mx-auto mb-2" />
+        <p className="text-sm font-bold">নিজেকে চিহ্নিত করুন</p>
+        <p className="text-xs text-[#B3A6C9] mt-1">আপনার মোবাইল নাম্বার, নাম বা StarMaker ID লিখুন</p>
+      </div>
+      <input
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        placeholder="যেমনঃ 017... বা আপনার নাম"
+        autoFocus
+        className="mt-4 w-full bg-[#1C1730] border border-[#D4AF37]/40 rounded-xl px-4 py-3 text-sm text-[#F6EFE0] outline-none"
+      />
+      {trimmed.length > 0 && trimmed.length < 3 && (
+        <p className="mt-2 text-[11px] text-[#B3A6C9] text-center">কমপক্ষে ৩ অক্ষর লিখুন</p>
+      )}
+      <div className="mt-3 space-y-2 max-h-72 overflow-y-auto">
+        {matches.map((g) => (
+          <button
+            key={g.ticketId}
+            type="button"
+            onClick={() => {
+              unlockQuizAudio();
+              onIdentified(g);
+            }}
+            className="w-full text-left rounded-xl border border-[#D4AF37]/30 bg-[#1C1730] px-4 py-3 hover:border-[#D4AF37] transition cursor-pointer"
+          >
+            <p className="font-bold text-[#F6EFE0]">{g.fullName}</p>
+            <p className="text-[11px] text-[#B3A6C9]">
+              {g.familyName} · ফোন শেষে {g.phone.slice(-3)}
+            </p>
+          </button>
+        ))}
+        {trimmed.length >= 3 && matches.length === 0 && (
+          <p className="text-center text-xs text-[#B3A6C9] mt-3 px-2">
+            কোনো অ্যাপ্রুভড কার্ড পাওয়া যায়নি। বানান/নাম্বার আবার চেক করুন, অথবা নিজের গেস্ট কার্ডের QR স্ক্যান করুন।
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export default function QuizPlayer({ ticket, guests, guestsLoaded }: QuizPlayerProps) {
   const [state, setState] = useState(IDLE_STATE);
   const [players, setPlayers] = useState<import('../types').QuizPlayer[]>([]);
   const [answers, setAnswers] = useState<import('../types').QuizAnswer[]>([]);
@@ -36,7 +130,9 @@ export default function QuizPlayer({ ticket, guestsLoaded }: QuizPlayerProps) {
   const [submitting, setSubmitting] = useState(false);
   const [now, setNow] = useState(Date.now());
   const [stateReady, setStateReady] = useState(false);
+  const [selfTicketId, setSelfTicketId] = useState<string | null>(() => readCachedSelfTicketId());
   const joinKeyRef = useRef('');
+  const joinedChimeRef = useRef('');
 
   useEffect(
     () =>
@@ -49,12 +145,34 @@ export default function QuizPlayer({ ticket, guestsLoaded }: QuizPlayerProps) {
   useEffect(() => subscribeToQuizPlayers(setPlayers), []);
   useEffect(() => subscribeToQuizAnswers(setAnswers), []);
 
+  // The one specific ticket came from a personal QR link; otherwise fall back
+  // to whatever this device self-identified as (fresh search or cached).
+  const resolvedTicket = ticket || (selfTicketId ? guests.find((g) => g.ticketId === selfTicketId) : undefined);
+
+  const handleIdentified = (guest: Ticket) => {
+    cacheSelfTicketId(guest.ticketId);
+    setSelfTicketId(guest.ticketId);
+    const url = new URL(window.location.href);
+    url.searchParams.set('guest', guest.ticketId);
+    window.history.replaceState({}, '', url.toString());
+  };
+
+  const handleForgetIdentity = () => {
+    clearCachedSelfTicketId();
+    setSelfTicketId(null);
+    const url = new URL(window.location.href);
+    url.searchParams.delete('guest');
+    window.history.replaceState({}, '', url.toString());
+  };
+
   useEffect(() => {
     if (!stateReady) return;
     if (isQuizJoinable(state.phase) || state.phase === 'podium') return;
-    const guestId = ticket?.ticketId || new URLSearchParams(window.location.search).get('guest');
-    if (!guestId) return;
-    window.location.replace(getGuestCardPageUrl(guestId));
+    // Only bounce guest-specific-link visitors back to their card. Anyone who
+    // arrived via the bare WhatsApp link should stay here and wait — the join
+    // effect below fires automatically the moment the host opens the lobby.
+    if (!ticket) return;
+    window.location.replace(getGuestCardPageUrl(ticket.ticketId));
   }, [stateReady, state.phase, ticket]);
 
   useEffect(() => {
@@ -62,40 +180,55 @@ export default function QuizPlayer({ ticket, guestsLoaded }: QuizPlayerProps) {
     return () => window.clearInterval(timer);
   }, []);
 
+  // 20s (or whatever the host set) suspense pulse for every question — this
+  // is the "মিউজিক সহ" countdown, synthesized so it works with zero assets.
+  useEffect(() => {
+    if (state.phase !== 'question') return;
+    const stop = startQuestionCountdownMusic(state.timerSeconds || DEFAULT_QUIZ_TIMER_SECONDS);
+    return stop;
+  }, [state.phase, state.sessionId, state.questionIndex, state.timerSeconds]);
+
   const questions = getQuizQuestions(state.questionCount);
   const question = questions[state.questionIndex];
   const myAnswer = answers.find(
     (answer) =>
-      answer.ticketId === ticket?.ticketId &&
+      answer.ticketId === resolvedTicket?.ticketId &&
       answer.sessionId === state.sessionId &&
       answer.questionIndex === state.questionIndex
   );
   const board = leaderboardForSession(players, answers, state.sessionId);
-  const myRow = board.find((row) => row.ticketId === ticket?.ticketId);
+  const myRow = board.find((row) => row.ticketId === resolvedTicket?.ticketId);
   const remainingMs = remainingQuestionMs(state.questionStartedAt, state.timerSeconds || DEFAULT_QUIZ_TIMER_SECONDS, now);
   const remainingSec = Math.ceil(remainingMs / 1000);
   const timeUp = state.phase === 'question' && remainingMs <= 0;
 
   useEffect(() => {
-    if (!ticket || ticket.status !== 'Confirmed') return;
+    if (!resolvedTicket || resolvedTicket.status !== 'Confirmed') return;
     if (!isQuizJoinable(state.phase) && state.phase !== 'podium') return;
     if (!state.sessionId) return;
-    const key = `${state.sessionId}:${ticket.ticketId}`;
+    const key = `${state.sessionId}:${resolvedTicket.ticketId}`;
     if (joinKeyRef.current === key) return;
     joinKeyRef.current = key;
     setJoining(true);
     setJoinError('');
-    joinQuiz(ticket, state)
+    joinQuiz(resolvedTicket, state)
+      .then(() => {
+        if (joinedChimeRef.current !== key) {
+          joinedChimeRef.current = key;
+          playJoinChime();
+        }
+      })
       .catch((error) => setJoinError(error instanceof Error ? error.message : 'যোগ দেওয়া যায়নি'))
       .finally(() => setJoining(false));
-  }, [ticket, state]);
+  }, [resolvedTicket, state]);
 
   const handleChoice = async (choiceIndex: number) => {
-    if (!ticket || submitting || myAnswer || state.phase !== 'question' || timeUp) return;
+    if (!resolvedTicket || submitting || myAnswer || state.phase !== 'question' || timeUp) return;
+    unlockQuizAudio();
     setSubmitting(true);
     setSubmitError('');
     try {
-      await submitQuizAnswer({ ticketId: ticket.ticketId, choiceIndex, state });
+      await submitQuizAnswer({ ticketId: resolvedTicket.ticketId, choiceIndex, state });
     } catch (error) {
       setSubmitError(error instanceof Error ? error.message : 'উত্তর জমা হয়নি');
     } finally {
@@ -106,9 +239,9 @@ export default function QuizPlayer({ ticket, guestsLoaded }: QuizPlayerProps) {
   return (
     <div className="min-h-dvh bg-[#0F0C1A] text-[#F6EFE0] midnight-bg-glow px-4 py-6 font-body">
       <div className="max-w-md mx-auto">
-        {ticket && (
+        {resolvedTicket && (
           <a
-            href={getGuestCardPageUrl(ticket.ticketId)}
+            href={getGuestCardPageUrl(resolvedTicket.ticketId)}
             className="mb-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#1C1730] border border-[#D4AF37]/60 text-[#F0D78C] font-bold text-sm"
           >
             <ChevronLeft className="w-4 h-4" />
@@ -118,41 +251,53 @@ export default function QuizPlayer({ ticket, guestsLoaded }: QuizPlayerProps) {
         <p className="text-center text-[10px] uppercase tracking-[0.3em] text-[#D4AF37] font-black">Gaan Bristy Quiz</p>
         <h1 className="text-center text-xl font-black font-serif text-[#F0D78C] mt-1">স্টেজ কুইজ</h1>
 
+        {!resolvedTicket && !ticket && guestsLoaded && (
+          <p className="text-center text-[11px] text-[#B3A6C9] mt-2">
+            একটাই লিংক — নিজের নাম/মোবাইল দিয়ে খুঁজে যোগ দিন, আলাদা QR লাগবে না।
+          </p>
+        )}
+
+        {!ticket && resolvedTicket && (
+          <button type="button" onClick={handleForgetIdentity} className="mt-2 block mx-auto text-[11px] text-[#B3A6C9] underline">
+            আপনি {resolvedTicket.fullName} না? পরিবর্তন করুন
+          </button>
+        )}
+
         {!guestsLoaded || !stateReady ? (
           <p className="mt-10 text-center text-sm text-[#B3A6C9] flex items-center justify-center gap-2">
             <Loader2 className="w-4 h-4 animate-spin" /> কার্ড খোঁজা হচ্ছে...
           </p>
-        ) : !ticket ? (
-          <div className="mt-8 rounded-2xl border border-[#D4AF37]/40 bg-[#1C1730] p-5 text-center">
-            <ShieldAlert className="w-8 h-8 text-[#D4AF37] mx-auto mb-2" />
-            <p className="text-sm font-bold">গেস্ট কার্ডের QR স্ক্যান করুন</p>
-            <p className="text-xs text-[#B3A6C9] mt-2">শুধু রেজিস্টার্ড অ্যাপ্রুভড অতিথিরা খেলতে পারবেন।</p>
-          </div>
-        ) : ticket.status !== 'Confirmed' ? (
+        ) : !resolvedTicket ? (
+          <QuizSelfIdentify guests={guests} onIdentified={handleIdentified} />
+        ) : resolvedTicket.status !== 'Confirmed' ? (
           <div className="mt-8 rounded-2xl border border-[#A52C54]/50 bg-[#1C1730] p-5 text-center">
             <p className="text-sm font-bold">এই কার্ড এখনও অ্যাপ্রুভড নয়</p>
-            <p className="text-xs text-[#B3A6C9] mt-2">{ticket.ticketId}</p>
+            <p className="text-xs text-[#B3A6C9] mt-2">{resolvedTicket.ticketId}</p>
           </div>
         ) : (
           <>
             <div className="mt-4 flex items-center gap-3 rounded-2xl border border-[#D4AF37]/30 bg-[#1C1730] px-3 py-2">
-              {ticket.photoUrl ? (
-                <img src={ticket.photoUrl} alt="" className="w-10 h-10 rounded-full object-cover border border-[#D4AF37]/50" />
+              {resolvedTicket.photoUrl ? (
+                <img src={resolvedTicket.photoUrl} alt="" className="w-10 h-10 rounded-full object-cover border border-[#D4AF37]/50" />
               ) : (
                 <div className="w-10 h-10 rounded-full bg-[#7A1F3D] flex items-center justify-center font-black text-[#F0D78C]">
-                  {ticket.fullName.charAt(0)}
+                  {resolvedTicket.fullName.charAt(0)}
                 </div>
               )}
               <div className="min-w-0">
-                <p className="font-bold truncate">{ticket.fullName}</p>
-                <p className="text-[11px] text-[#B3A6C9] truncate">{ticket.familyName}</p>
+                <p className="font-bold truncate">{resolvedTicket.fullName}</p>
+                <p className="text-[11px] text-[#B3A6C9] truncate">{resolvedTicket.familyName}</p>
               </div>
             </div>
 
             {joinError && <p className="mt-3 text-xs text-[#FFB4C4]">{joinError}</p>}
 
             {state.phase === 'idle' && (
-              <p className="mt-8 text-center text-sm text-[#B3A6C9]">কুইজ বন্ধ — গেস্ট কার্ডে ফেরত যাচ্ছেন।</p>
+              <p className="mt-8 text-center text-sm text-[#B3A6C9]">
+                {ticket
+                  ? 'কুইজ বন্ধ — গেস্ট কার্ডে ফেরত যাচ্ছেন।'
+                  : 'কুইজ এখনও শুরু হয়নি — এই পেজেই থাকুন, হোস্ট শুরু করলে স্বয়ংক্রিয়ভাবে লবিতে যোগ হয়ে যাবেন।'}
+              </p>
             )}
 
             {(state.phase === 'lobby' || joining) && state.phase !== 'idle' && (
@@ -232,7 +377,7 @@ export default function QuizPlayer({ ticket, guestsLoaded }: QuizPlayerProps) {
                     {myRow && <p className="mt-2 text-sm text-[#B3A6C9]">আপনার স্থান #{myRow.rank} · {myRow.totalPoints} পয়েন্ট</p>}
                   </>
                 )}
-                <a href={getGuestCardPageUrl(ticket.ticketId)} className="inline-block mt-6 text-xs text-[#B3A6C9] underline">
+                <a href={getGuestCardPageUrl(resolvedTicket.ticketId)} className="inline-block mt-6 text-xs text-[#B3A6C9] underline">
                   গেস্ট কার্ডে ফিরুন
                 </a>
               </div>

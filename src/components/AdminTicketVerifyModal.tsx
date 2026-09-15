@@ -520,7 +520,7 @@ export default function AdminTicketVerifyModal({ isOpen, onClose, registeredTick
 
         {panelTab === 'guestbook' && <AdminGuestbookManager />}
 
-        {panelTab === 'quiz' && <AdminQuizPanel actorName={getAdminActorName()} />}
+        {panelTab === 'quiz' && <AdminQuizPanel actorName={getAdminActorName()} guests={registeredTickets} />}
 
         {panelTab === 'gate' && (
           <AdminGateLog

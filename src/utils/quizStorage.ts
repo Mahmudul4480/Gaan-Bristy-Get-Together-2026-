@@ -68,6 +68,18 @@ export function getQuizPlayUrl(ticketId: string): string {
   return url.toString();
 }
 
+/**
+ * One generic link (no guest id baked in) meant to be posted once in the
+ * WhatsApp group. Whoever taps it lands on the self-identify search screen
+ * in `QuizPlayer` and picks their own name/phone to join — no per-guest QR
+ * needed.
+ */
+export function getQuizJoinUrl(): string {
+  const url = new URL(window.location.origin + window.location.pathname);
+  url.searchParams.set('quiz', 'play');
+  return url.toString();
+}
+
 export function getQuizScreenUrl(): string {
   const url = new URL(window.location.origin + window.location.pathname);
   url.searchParams.set('quiz', 'screen');

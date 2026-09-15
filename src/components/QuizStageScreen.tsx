@@ -16,7 +16,13 @@ import {
   subscribeToQuizPlayers,
   subscribeToQuizState,
 } from '../utils/quizStorage';
-import { Music2, Trophy } from 'lucide-react';
+import {
+  playTimeUpSting,
+  playWinnerFanfare,
+  startQuestionCountdownMusic,
+  unlockQuizAudio,
+} from '../utils/quizAudio';
+import { Music2, Trophy, Volume2 } from 'lucide-react';
 
 export default function QuizStageScreen() {
   const [state, setState] = useState(IDLE_STATE);
@@ -24,6 +30,7 @@ export default function QuizStageScreen() {
   const [answers, setAnswers] = useState<import('../types').QuizAnswer[]>([]);
   const [now, setNow] = useState(Date.now());
   const [podiumStep, setPodiumStep] = useState(0);
+  const [soundReady, setSoundReady] = useState(false);
 
   useEffect(() => subscribeToQuizState(setState), []);
   useEffect(() => subscribeToQuizPlayers(setPlayers), []);
@@ -61,15 +68,41 @@ export default function QuizStageScreen() {
           origin: { y: 0.35 },
           colors: ['#D4AF37', '#F0D78C', '#7A1F3D', '#FFFFFF'],
         });
+        playWinnerFanfare();
       }, 4300),
     ];
     return () => timers.forEach((timer) => window.clearTimeout(timer));
   }, [state.phase, state.sessionId]);
 
+  // The "মিউজিক সহ" 20s answer countdown — one tick per second, driven by
+  // the venue's speakers via this projector tab.
+  useEffect(() => {
+    if (state.phase !== 'question') return;
+    const stop = startQuestionCountdownMusic(state.timerSeconds || DEFAULT_QUIZ_TIMER_SECONDS);
+    return stop;
+  }, [state.phase, state.sessionId, state.questionIndex, state.timerSeconds]);
+
+  useEffect(() => {
+    if (state.phase === 'reveal') playTimeUpSting();
+  }, [state.phase, state.sessionId, state.questionIndex]);
+
   const topThree = useMemo(() => board.slice(0, 3), [board]);
 
   return (
     <div className="min-h-dvh bg-[#0F0C1A] text-[#F6EFE0] midnight-bg-glow overflow-hidden">
+      {!soundReady && (
+        <button
+          type="button"
+          onClick={() => {
+            unlockQuizAudio();
+            setSoundReady(true);
+          }}
+          className="fixed top-4 right-4 z-50 inline-flex items-center gap-2 px-4 py-2.5 rounded-full gold-gradient-btn text-[#0F0C1A] font-extrabold text-sm cursor-pointer shadow-lg animate-pulse"
+        >
+          <Volume2 className="w-4 h-4" />
+          স্পিকারে সাউন্ড চালু করুন
+        </button>
+      )}
       <div className="max-w-6xl mx-auto px-6 py-8 min-h-dvh flex flex-col">
         <p className="text-center text-xs uppercase tracking-[0.4em] text-[#D4AF37] font-black">Gaan Bristy Get Together 2026</p>
         <h1 className="text-center text-3xl sm:text-5xl font-black font-serif royal-title-effect mt-2">স্টেজ কুইজ</h1>

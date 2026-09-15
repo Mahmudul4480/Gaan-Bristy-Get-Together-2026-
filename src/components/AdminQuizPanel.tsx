@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { QuizQuestionCount, QuizState } from '../types';
+import { QuizQuestionCount, QuizState, Ticket } from '../types';
 import {
   DEFAULT_QUIZ_TIMER_SECONDS,
   getQuizQuestions,
@@ -7,6 +7,7 @@ import {
 import { remainingQuestionMs } from '../utils/quizScoring';
 import {
   IDLE_STATE,
+  getQuizJoinUrl,
   getQuizScreenUrl,
   leaderboardForSession,
   openQuizLobby,
@@ -18,13 +19,14 @@ import {
   subscribeToQuizPlayers,
   subscribeToQuizState,
 } from '../utils/quizStorage';
-import { Check, Copy, Loader2, MonitorPlay, Music2, RotateCcw, Trophy } from 'lucide-react';
+import { Check, Copy, Loader2, MonitorPlay, Music2, RotateCcw, Send, Trophy } from 'lucide-react';
 
 interface AdminQuizPanelProps {
   actorName: string;
+  guests: Ticket[];
 }
 
-export default function AdminQuizPanel({ actorName }: AdminQuizPanelProps) {
+export default function AdminQuizPanel({ actorName, guests }: AdminQuizPanelProps) {
   const [state, setState] = useState<QuizState>(IDLE_STATE);
   const [players, setPlayers] = useState<import('../types').QuizPlayer[]>([]);
   const [answers, setAnswers] = useState<import('../types').QuizAnswer[]>([]);
@@ -32,6 +34,7 @@ export default function AdminQuizPanel({ actorName }: AdminQuizPanelProps) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
+  const [joinCopied, setJoinCopied] = useState(false);
   const [now, setNow] = useState(Date.now());
 
   useEffect(() => subscribeToQuizState(setState), []);
@@ -54,6 +57,21 @@ export default function AdminQuizPanel({ actorName }: AdminQuizPanelProps) {
     (answer) => answer.sessionId === state.sessionId && answer.questionIndex === state.questionIndex
   ).length;
   const screenUrl = useMemo(() => (typeof window === 'undefined' ? '' : getQuizScreenUrl()), []);
+  const joinUrl = useMemo(() => (typeof window === 'undefined' ? '' : getQuizJoinUrl()), []);
+  const whatsappShareUrl = useMemo(
+    () =>
+      `https://api.whatsapp.com/send?text=${encodeURIComponent(
+        `🎤 Gaan Bristy Get Together 2026 — স্টেজ কুইজ শুরু হচ্ছে! এখনই যোগ দিন 👉 ${joinUrl}`
+      )}`,
+    [joinUrl]
+  );
+
+  const confirmedGuests = useMemo(() => guests.filter((g) => g.status === 'Confirmed'), [guests]);
+  const joinedIds = useMemo(() => new Set(sessionPlayers.map((p) => p.ticketId)), [sessionPlayers]);
+  const notJoinedGuests = useMemo(
+    () => confirmedGuests.filter((g) => !joinedIds.has(g.ticketId)),
+    [confirmedGuests, joinedIds]
+  );
 
   const run = async (action: () => Promise<void>) => {
     setBusy(true);
@@ -77,15 +95,53 @@ export default function AdminQuizPanel({ actorName }: AdminQuizPanelProps) {
     }
   };
 
+  const copyJoinLink = async () => {
+    try {
+      await navigator.clipboard.writeText(joinUrl);
+      setJoinCopied(true);
+      window.setTimeout(() => setJoinCopied(false), 1600);
+    } catch {
+      setError('লিংক কপি হয়নি');
+    }
+  };
+
   return (
     <div className="space-y-4 font-body">
       <p className="text-xs text-[#B3A6C9] bg-[#0F0C1A] border border-[#D4AF37]/30 rounded-xl p-3">
         স্টেজ কুইজ Kahoot স্টাইল। প্রজেক্টরে{' '}
-        <span className="text-[#F0D78C] font-mono">?quiz=screen</span> খুলুন। গেস্ট QR সবসময় কার্ডই খোলে —
-        কুইজ চলাকালীন কার্ডে <span className="text-[#F0D78C] font-bold">কুইজে যোগ দিন</span> বাটন আসবে।
+        <span className="text-[#F0D78C] font-mono">?quiz=screen</span> খুলুন। নিচের{' '}
+        <span className="text-[#F0D78C] font-bold">জয়েন লিংক</span> WhatsApp গ্রুপে দিন — সবাই একই লিংকে ট্যাপ করে
+        নাম/মোবাইল লিখে যোগ দিতে পারবে (আলাদা QR লাগবে না)। নিজের গেস্ট QR স্ক্যান করলে সবসময় কার্ডই খোলে —
+        কুইজ চলাকালীন কার্ডেও <span className="text-[#F0D78C] font-bold">কুইজে যোগ দিন</span> বাটন আসবে।
         শেষে <span className="text-[#F0D78C] font-bold">কুইজ রিসেট / বন্ধ</span> চাপুন, নাহলে লবি খোলা থেকে যায়।
         সিস্টেম ১ম/২য়/৩য় ঠিক করবে — StarMaker কয়েন অ্যাপে হাতে গিফট করবেন।
       </p>
+
+      <div className="rounded-2xl border border-[#D4AF37]/30 bg-[#0F0C1A] p-4 space-y-2">
+        <p className="text-sm font-bold text-[#F0D78C]">অতিথিদের জয়েন লিংক (WhatsApp গ্রুপে দিন)</p>
+        <p className="text-[11px] text-[#B3A6C9]">
+          এই একটাই লিংক সবাইকে দিন — ট্যাপ করলে নাম/মোবাইল লিখে যে কেউ এখানেই যোগ দিতে পারবে, আলাদা QR স্ক্যান লাগবে না।
+        </p>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={copyJoinLink}
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#1C1730] border border-[#D4AF37]/50 text-[#F0D78C] text-xs font-bold cursor-pointer"
+          >
+            {joinCopied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+            {joinCopied ? 'কপি হয়েছে' : 'জয়েন লিংক কপি'}
+          </button>
+          <a
+            href={whatsappShareUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#26890C] border border-[#D4AF37]/50 text-white text-xs font-bold"
+          >
+            <Send className="w-3.5 h-3.5" />
+            WhatsApp-এ শেয়ার করুন
+          </a>
+        </div>
+      </div>
 
       <div className="flex flex-wrap gap-2">
         <button
@@ -140,18 +196,37 @@ export default function AdminQuizPanel({ actorName }: AdminQuizPanelProps) {
       {state.phase === 'lobby' && (
         <div className="rounded-2xl border border-[#D4AF37]/30 bg-[#0F0C1A] p-4 space-y-3">
           <p className="text-sm font-bold text-[#F0D78C] flex items-center gap-2">
-            <Music2 className="w-4 h-4" /> লবি চলছে · {sessionPlayers.length} জন
+            <Music2 className="w-4 h-4" /> লবি চলছে · {sessionPlayers.length}/{confirmedGuests.length} জন ঢুকেছে
           </p>
-          <div className="max-h-32 overflow-y-auto text-xs space-y-1">
-            {sessionPlayers.length === 0 ? (
-              <p className="text-[#B3A6C9]">এখনও কেউ জয়েন করেনি — স্টেজ থেকে QR স্ক্যান করতে বলুন।</p>
-            ) : (
-              sessionPlayers.map((player) => (
-                <p key={player.ticketId} className="text-[#F6EFE0]">
-                  {player.fullName} <span className="text-[#B3A6C9]">· {player.familyName}</span>
-                </p>
-              ))
-            )}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <p className="text-[11px] font-bold text-[#26890C] mb-1">✅ ঢুকেছে ({sessionPlayers.length})</p>
+              <div className="max-h-40 overflow-y-auto text-xs space-y-1 pr-1">
+                {sessionPlayers.length === 0 ? (
+                  <p className="text-[#B3A6C9]">এখনও কেউ জয়েন করেনি — জয়েন লিংক শেয়ার করুন।</p>
+                ) : (
+                  sessionPlayers.map((player) => (
+                    <p key={player.ticketId} className="text-[#F6EFE0] truncate">
+                      {player.fullName} <span className="text-[#B3A6C9]">· {player.familyName}</span>
+                    </p>
+                  ))
+                )}
+              </div>
+            </div>
+            <div>
+              <p className="text-[11px] font-bold text-[#A52C54] mb-1">⏳ ঢুকে নাই ({notJoinedGuests.length})</p>
+              <div className="max-h-40 overflow-y-auto text-xs space-y-1 pr-1">
+                {notJoinedGuests.length === 0 ? (
+                  <p className="text-[#B3A6C9]">সবাই ঢুকে গেছে 🎉</p>
+                ) : (
+                  notJoinedGuests.map((guest) => (
+                    <p key={guest.ticketId} className="text-[#B3A6C9] truncate">
+                      {guest.fullName}
+                    </p>
+                  ))
+                )}
+              </div>
+            </div>
           </div>
           <button
             type="button"
