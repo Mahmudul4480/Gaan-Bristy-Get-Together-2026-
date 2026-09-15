@@ -1,6 +1,6 @@
 import { Ticket } from '../types';
 import { EVENT_DETAILS, LOGO_URL } from '../data/eventData';
-import { getPaymentKind, paymentKindLabel, visibleTransactionId } from './paymentKind';
+import { getPaymentKind, hasCollectedPayment, paymentKindLabel, visibleTransactionId } from './paymentKind';
 
 const STATUS_LABEL_BN: Record<Ticket['status'], string> = {
   Confirmed: 'কনফার্মড',
@@ -79,13 +79,18 @@ function buildTableRows(guests: Ticket[]): string {
           <td style="padding:12px 10px; text-align:center; font-weight:800; font-size:14.5px; color:#1a0a14; border-bottom:1px solid #EADFC0;">${
             g.adultCount
           }</td>
-          <td style="padding:12px 10px; font-family:monospace; font-weight:700; font-size:13.5px; color:#1a0a14; border-bottom:1px solid #EADFC0; white-space:nowrap;">${escapeHtml(
+          <td style="padding:12px 10px; font-family:monospace; font-weight:700; font-size:13px; color:#1a0a14; border-bottom:1px solid #EADFC0;">${escapeHtml(
             trxId
-          )}</td>
+          )}<div style="font-size:11px; color:#6b5c4a; margin-top:2px; font-family: inherit;">${escapeHtml(
+            g.paymentMethod
+          )}</div></td>
           <td style="padding:12px 10px; text-align:center; border-bottom:1px solid #EADFC0;">${pill(
             paymentKindLabel(kind),
             pColors
           )}</td>
+          <td style="padding:12px 10px; text-align:right; font-weight:800; font-size:15px; color:#7A1F3D; border-bottom:1px solid #EADFC0; white-space:nowrap;">${
+            g.totalAmount
+          }/-</td>
           <td style="padding:12px 10px; text-align:center; border-bottom:1px solid #EADFC0;">
             ${pill(STATUS_LABEL_BN[g.status], sColors)}
             <div style="font-size:10.5px; color:#8a7a63; margin-top:4px;">${byLine}</div>
@@ -99,10 +104,26 @@ function buildTableRows(guests: Ticket[]): string {
 }
 
 function buildReportHtml(guests: Ticket[]): string {
+  const total = guests.length;
+  const confirmed = guests.filter((g) => g.status === 'Confirmed').length;
+  const pending = guests.filter((g) => g.status === 'Pending').length;
+  const rejected = guests.filter((g) => g.status === 'Rejected').length;
+  const paid = guests.filter((g) => getPaymentKind(g) === 'paid').length;
+  const due = guests.filter((g) => getPaymentKind(g) === 'due').length;
+  const complimentary = guests.filter((g) => getPaymentKind(g) === 'complimentary').length;
+  const totalCollected = guests.filter(hasCollectedPayment).reduce((sum, g) => sum + (g.totalAmount || 0), 0);
   const generatedAt = new Date().toLocaleString('bn-BD', { dateStyle: 'long', timeStyle: 'short' });
 
+  const statCard = (label: string, value: string | number, color = '#7A1F3D') => `
+    <div style="flex:1; min-width:140px; background:#FFFFFF; border:2px solid #EADFC0; border-radius:14px; padding:12px 16px; text-align:center;">
+      <p style="margin:0; font-size:11.5px; font-weight:700; color:#8a7a63; text-transform:uppercase; letter-spacing:0.5px;">${escapeHtml(
+        label
+      )}</p>
+      <p style="margin:4px 0 0; font-size:24px; font-weight:900; color:${color};">${escapeHtml(String(value))}</p>
+    </div>`;
+
   return `
-  <div id="gb-guest-list-pdf-report" style="width:1600px; background:#FFFFFF; font-family: 'Hind Siliguri', 'Noto Sans Bengali', 'Segoe UI', sans-serif; color:#1a0a14;">
+  <div id="gb-guest-list-pdf-report" style="width:1700px; background:#FFFFFF; font-family: 'Hind Siliguri', 'Noto Sans Bengali', 'Segoe UI', sans-serif; color:#1a0a14;">
     <div style="background:linear-gradient(135deg,#1a0a14,#3a0f1f 60%,#7A1F3D); padding:34px 50px; display:flex; align-items:center; gap:26px; border-bottom:7px solid #D4AF37;">
       <img src="${LOGO_URL}" width="86" height="86" style="border-radius:50%; border:3px solid #D4AF37; object-fit:cover; background:#fff;" />
       <div style="flex:1;">
@@ -121,8 +142,18 @@ function buildReportHtml(guests: Ticket[]): string {
       <div style="text-align:right;">
         <p style="margin:0; font-size:22px; font-weight:900; color:#F0D78C;">অতিথি তালিকা</p>
         <p style="margin:6px 0 0; font-size:12.5px; color:#C9BBD9;">তৈরি হয়েছে: ${escapeHtml(generatedAt)}</p>
-        <p style="margin:4px 0 0; font-size:13px; color:#F0D78C; font-weight:800;">মোট: ${guests.length} জন</p>
       </div>
+    </div>
+
+    <div style="display:flex; gap:14px; padding:22px 50px; background:#FBF6E9; border-bottom:2px solid #D4AF37; flex-wrap:wrap;">
+      ${statCard('মোট রেজিস্ট্রেশন', total)}
+      ${statCard('কনফার্মড', confirmed, '#1E7A3B')}
+      ${statCard('পেন্ডিং', pending, '#9A6B00')}
+      ${statCard('রিজেক্টেড', rejected, '#A52C2C')}
+      ${statCard('পেইড', paid, '#1E7A3B')}
+      ${statCard('ডিউ', due, '#A52C2C')}
+      ${statCard('সম্মানী', complimentary, '#5B3FA0')}
+      ${statCard('মোট আদায় (টাকা)', totalCollected.toLocaleString('bn-BD'), '#7A1F3D')}
     </div>
 
     <table style="width:100%; border-collapse:collapse; font-size:13.5px;">
@@ -133,8 +164,9 @@ function buildReportHtml(guests: Ticket[]): string {
           <th style="padding:14px 10px; text-align:left; color:#F0D78C; font-weight:900; font-size:13px; text-transform:uppercase; letter-spacing:0.4px; border-bottom:3px solid #D4AF37;">নাম / পরিবার</th>
           <th style="padding:14px 10px; text-align:left; color:#F0D78C; font-weight:900; font-size:13px; text-transform:uppercase; letter-spacing:0.4px; border-bottom:3px solid #D4AF37;">যোগাযোগ</th>
           <th style="padding:14px 10px; text-align:center; color:#F0D78C; font-weight:900; font-size:13px; text-transform:uppercase; letter-spacing:0.4px; border-bottom:3px solid #D4AF37;">Adult</th>
-          <th style="padding:14px 10px; text-align:left; color:#F0D78C; font-weight:900; font-size:13px; text-transform:uppercase; letter-spacing:0.4px; border-bottom:3px solid #D4AF37;">Transaction ID</th>
+          <th style="padding:14px 10px; text-align:left; color:#F0D78C; font-weight:900; font-size:13px; text-transform:uppercase; letter-spacing:0.4px; border-bottom:3px solid #D4AF37;">Transaction ID / মেথড</th>
           <th style="padding:14px 10px; text-align:center; color:#F0D78C; font-weight:900; font-size:13px; text-transform:uppercase; letter-spacing:0.4px; border-bottom:3px solid #D4AF37;">পেমেন্ট</th>
+          <th style="padding:14px 10px; text-align:right; color:#F0D78C; font-weight:900; font-size:13px; text-transform:uppercase; letter-spacing:0.4px; border-bottom:3px solid #D4AF37;">পরিমাণ</th>
           <th style="padding:14px 10px; text-align:center; color:#F0D78C; font-weight:900; font-size:13px; text-transform:uppercase; letter-spacing:0.4px; border-bottom:3px solid #D4AF37;">স্ট্যাটাস</th>
           <th style="padding:14px 10px; text-align:left; color:#F0D78C; font-weight:900; font-size:13px; text-transform:uppercase; letter-spacing:0.4px; border-bottom:3px solid #D4AF37;">ইস্যু তারিখ</th>
         </tr>
@@ -172,16 +204,14 @@ async function waitForImages(root: HTMLElement): Promise<void> {
 }
 
 export async function downloadGuestsPdf(guests: Ticket[]): Promise<void> {
-  // "রিজেক্টেড" গেস্টদের এই লিস্টে দরকার নেই — বাদ দেয়া হচ্ছে।
-  const listGuests = guests.filter((g) => g.status !== 'Rejected');
-  if (listGuests.length === 0) return;
+  if (guests.length === 0) return;
 
   const container = document.createElement('div');
   container.style.position = 'fixed';
   container.style.left = '-99999px';
   container.style.top = '0';
   container.style.zIndex = '-1';
-  container.innerHTML = buildReportHtml(listGuests);
+  container.innerHTML = buildReportHtml(guests);
   document.body.appendChild(container);
 
   try {
