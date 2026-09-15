@@ -19,11 +19,17 @@ export interface GuestTicketInput {
   songRequest?: string;
   createdByAdmin?: boolean;
   paymentKind?: PaymentKind;
+  /**
+   * Pass a collision-checked id (e.g. from `generateUniqueTicketId`) whenever
+   * possible. Without this, two manual entries can randomly land on the same
+   * `GB2026-####` id and silently merge/overwrite each other's card data.
+   */
+  ticketId?: string;
 }
 
 export function buildGuestTicket(input: GuestTicketInput): Ticket {
   const randomCode = parseInt(input.fullName.length.toString() + Date.now().toString().slice(-4), 10) % 9000 + 1000;
-  const ticketId = generateTicketId();
+  const ticketId = input.ticketId || generateTicketId();
   const paymentKind = input.paymentKind ?? 'paid';
   const totalAmount = paymentKind === 'complimentary' ? 0 : input.adultCount * EVENT_DETAILS.feeAdult;
   const transactionId =

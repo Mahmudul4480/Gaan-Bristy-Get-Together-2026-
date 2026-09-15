@@ -3,7 +3,7 @@ import { AdminRole, Ticket } from '../types';
 import { EVENT_DETAILS } from '../data/eventData';
 import { buildGuestTicket } from '../utils/createGuestTicket';
 import { findDuplicateTransactionId } from '../utils/guestExport';
-import { saveHonorableGuest, getGuestCardUrl } from '../utils/guestStorage';
+import { generateUniqueTicketId, getHonorableGuestById, saveHonorableGuest, getGuestCardUrl } from '../utils/guestStorage';
 import {
   paymentKindLabel,
   isRealTransactionId,
@@ -128,6 +128,24 @@ export default function AdminManualGuestForm({
       return;
     }
 
+    setIsSubmitting(true);
+    setErrors((prev) => {
+      const next = { ...prev };
+      delete next.submit;
+      return next;
+    });
+
+    // Random GB2026-#### ids used to be generated with no collision check —
+    // two manual entries could land on the same id and silently overwrite
+    // each other's card. Reserve a unique id (checked against both the
+    // locally known list and Firestore) before building the ticket.
+    let ticketId = generateUniqueTicketId(existingGuests.map((g) => g.ticketId));
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const clash = await getHonorableGuestById(ticketId);
+      if (!clash) break;
+      ticketId = generateUniqueTicketId([...existingGuests.map((g) => g.ticketId), ticketId]);
+    }
+
     const baseTicket = buildGuestTicket({
       fullName: form.fullName,
       familyName: form.familyName,
@@ -141,6 +159,7 @@ export default function AdminManualGuestForm({
       songRequest: form.songRequest || undefined,
       createdByAdmin: true,
       paymentKind: form.paymentKind,
+      ticketId,
     });
 
     const ticket: Ticket = issuesCardNow
@@ -151,13 +170,6 @@ export default function AdminManualGuestForm({
           approvedAt: new Date().toISOString(),
         }
       : { ...baseTicket, status: 'Pending', createdBy: actorName };
-
-    setIsSubmitting(true);
-    setErrors((prev) => {
-      const next = { ...prev };
-      delete next.submit;
-      return next;
-    });
 
     try {
       await saveHonorableGuest(ticket);
