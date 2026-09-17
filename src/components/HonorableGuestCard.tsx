@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { QRCodeCanvas } from 'qrcode.react';
 import { Ticket } from '../types';
 import { LOGO_URL, EVENT_DETAILS } from '../data/eventData';
@@ -6,11 +6,19 @@ import { getGuestCardUrl } from '../utils/guestStorage';
 import { getPaymentKind } from '../utils/paymentKind';
 import { Download, FileText, Loader2, ShieldCheck, Shirt } from 'lucide-react';
 
+export interface HonorableGuestCardHandle {
+  capturePngBlob: (options?: { skipScroll?: boolean; scale?: number }) => Promise<Blob>;
+}
+
 interface HonorableGuestCardProps {
   ticket: Ticket;
   compact?: boolean;
   showQr?: boolean;
   showActions?: boolean;
+}
+
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => window.setTimeout(resolve, ms));
 }
 
 const CARD_NOTES = ['♪', '♫', '♬', '♩'];
@@ -291,12 +299,11 @@ function DressCodeHighlight({ compact = false }: { compact?: boolean }) {
   );
 }
 
-export default function HonorableGuestCard({
-  ticket,
-  compact = false,
-  showQr = false,
-  showActions = true,
-}: HonorableGuestCardProps) {
+const HonorableGuestCard = forwardRef<HonorableGuestCardHandle, HonorableGuestCardProps>(
+  function HonorableGuestCard(
+    { ticket, compact = false, showQr = false, showActions = true },
+    ref
+  ) {
   const cardRef = useRef<HTMLDivElement>(null);
   const qrWrapRef = useRef<HTMLDivElement>(null);
   const qrCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -354,7 +361,7 @@ export default function HonorableGuestCard({
     return () => retryTimers.forEach((timer) => window.clearTimeout(timer));
   }, [showQr, compact, cardUrl, qrSize]);
 
-  const renderCardCanvas = async (mode: CaptureMode) => {
+  const renderCardCanvas = async (mode: CaptureMode, scaleOverride?: number) => {
     const sourceRoot = cardRef.current;
     if (!sourceRoot) return null;
 
@@ -363,7 +370,7 @@ export default function HonorableGuestCard({
     const { default: html2canvas } = await import('html2canvas');
 
     const rect = sourceRoot.getBoundingClientRect();
-    let scale = 3;
+    let scale = scaleOverride ?? 3;
     while ((rect.height * scale > 12000 || rect.width * scale > 12000) && scale > 1) {
       scale -= 0.5;
     }
@@ -389,22 +396,36 @@ export default function HonorableGuestCard({
     }
   };
 
-  const captureCard = async () => {
+  const captureCard = async (options?: { skipScroll?: boolean; scale?: number }) => {
     if (!cardRef.current) return null;
 
-    if (showQr && !qrImageUrlRef.current) {
-      const canvas = qrCanvasRef.current;
-      if (canvas && canvas.width > 0 && canvas.height > 0) {
-        const nextUrl = canvas.toDataURL('image/png');
-        qrImageUrlRef.current = nextUrl;
-        setQrImageUrl(nextUrl);
-        await new Promise<void>((resolve) => window.requestAnimationFrame(() => resolve()));
-      } else {
+    if (showQr) {
+      const deadline = Date.now() + 5000;
+      while (!qrImageUrlRef.current && Date.now() < deadline) {
+        const canvas = qrCanvasRef.current;
+        if (canvas && canvas.width > 0 && canvas.height > 0) {
+          const nextUrl = canvas.toDataURL('image/png');
+          qrImageUrlRef.current = nextUrl;
+          setQrImageUrl(nextUrl);
+          break;
+        }
+        await delay(80);
+      }
+      if (!qrImageUrlRef.current) {
         throw new Error('QR কোড লোড হচ্ছে — এক সেকেন্ড পর আবার চেষ্টা করুন');
+      }
+
+      const qrImgDeadline = Date.now() + 2000;
+      while (Date.now() < qrImgDeadline) {
+        const qrImg = cardRef.current.querySelector('img[alt="Guest card QR code"]') as HTMLImageElement | null;
+        if (qrImg && qrImg.complete && qrImg.naturalWidth > 0) break;
+        await delay(50);
       }
     }
 
-    cardRef.current.scrollIntoView({ block: 'center', behavior: 'auto' });
+    if (!options?.skipScroll) {
+      cardRef.current.scrollIntoView({ block: 'center', behavior: 'auto' });
+    }
     await waitForImages(cardRef.current);
     await document.fonts?.ready?.catch(() => undefined);
     await new Promise<void>((resolve) => {
@@ -412,29 +433,39 @@ export default function HonorableGuestCard({
     });
 
     try {
-      return await renderCardCanvas('rich');
+      return await renderCardCanvas('rich', options?.scale);
     } catch (error) {
       console.warn('[Guest card] Rich capture failed, retrying without backgrounds:', error);
-      return renderCardCanvas('safe');
+      return renderCardCanvas('safe', options?.scale);
     }
   };
+
+  const canvasToPngBlob = async (
+    options?: { skipScroll?: boolean; scale?: number }
+  ): Promise<Blob> => {
+    const canvas = await captureCard(options);
+    if (!canvas) {
+      throw new Error('কার্ড খুঁজে পাওয়া যায়নি');
+    }
+
+    const blob = await new Promise<Blob | null>((resolve) => {
+      canvas.toBlob((result) => resolve(result), 'image/png', 1);
+    });
+    if (!blob) {
+      throw new Error('PNG তৈরি করা যায়নি');
+    }
+    return blob;
+  };
+
+  useImperativeHandle(ref, () => ({
+    capturePngBlob: (options) => canvasToPngBlob({ skipScroll: true, scale: 2, ...options }),
+  }));
 
   const handleDownloadPNG = async () => {
     setIsGenerating(true);
     setDownloadError('');
     try {
-      const canvas = await captureCard();
-      if (!canvas) {
-        throw new Error('কার্ড খুঁজে পাওয়া যায়নি');
-      }
-
-      const blob = await new Promise<Blob | null>((resolve) => {
-        canvas.toBlob((result) => resolve(result), 'image/png', 1);
-      });
-      if (!blob) {
-        throw new Error('PNG তৈরি করা যায়নি');
-      }
-
+      const blob = await canvasToPngBlob();
       triggerFileDownload(blob, `Honorable_Guest_${ticket.ticketId}.png`);
     } catch (error) {
       console.error('[Guest card] PNG download failed:', error);
@@ -686,4 +717,7 @@ export default function HonorableGuestCard({
       )}
     </div>
   );
-}
+  }
+);
+
+export default HonorableGuestCard;

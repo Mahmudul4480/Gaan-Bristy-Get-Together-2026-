@@ -15,6 +15,7 @@ import {
   subscribeToDeleteRequests,
 } from '../utils/deleteRequestStorage';
 import HonorableGuestCard from './HonorableGuestCard';
+import BulkGuestCardDownloader from './BulkGuestCardDownloader';
 import {
   FileSpreadsheet,
   FileJson,
@@ -437,6 +438,7 @@ export default function AdminGuestList({ guests, adminRole, actorName, onEditGue
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <BulkGuestCardDownloader guests={guests} />
           <button
             type="button"
             disabled={guests.length === 0}
