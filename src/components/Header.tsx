@@ -1,18 +1,20 @@
 import { useState } from 'react';
 import { navigateToSection } from '../utils/scrollToSection';
 import { LOGO_URL } from '../data/eventData';
-import { Ticket as TicketIcon, Users, Calendar, MapPin, Image as ImageIcon, ShieldCheck, Menu, X, MessageSquare } from 'lucide-react';
+import { Ticket as TicketIcon, Users, Calendar, MapPin, Image as ImageIcon, ShieldCheck, Menu, X, MessageSquare, Maximize2 } from 'lucide-react';
 
 interface HeaderProps {
   onOpenRegister: () => void;
   onOpenAdminVerify: () => void;
   onOpenCanvaGuide: () => void;
+  onOpenFullscreen?: () => void;
   activeSection: string;
 }
 
 export default function Header({
   onOpenRegister,
   onOpenAdminVerify,
+  onOpenFullscreen,
   activeSection,
 }: HeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -115,6 +117,18 @@ export default function Header({
 
         {/* Header Actions */}
         <div id="header-actions" className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+          {onOpenFullscreen && (
+            <button
+              type="button"
+              onClick={onOpenFullscreen}
+              id="header-fullscreen-fx-btn"
+              className="hidden sm:flex items-center gap-1.5 text-xs sm:text-sm font-semibold bg-[#1C1730] hover:bg-[#251F3D] text-[#F0D78C] border border-[#D4AF37]/50 px-3 py-2 rounded-xl transition shadow-md cursor-pointer"
+              title="লোগো ও মিউজিক নোট ফুলস্ক্রিন"
+            >
+              <Maximize2 className="w-4 h-4 text-[#D4AF37]" />
+              <span>ফুলস্ক্রিন</span>
+            </button>
+          )}
           {/* Gate Verification Admin Button */}
           <button
             onClick={onOpenAdminVerify}
@@ -216,6 +230,16 @@ export default function Header({
           </button>
 
           <div className="pt-2 border-t border-[#D4AF37]/20 flex flex-col gap-2">
+            {onOpenFullscreen && (
+              <button
+                type="button"
+                onClick={() => { setMobileMenuOpen(false); onOpenFullscreen(); }}
+                className="w-full flex items-center justify-center gap-2 bg-[#0F0C1A] text-[#F0D78C] border border-[#D4AF37]/50 py-2.5 rounded-lg text-sm font-semibold"
+              >
+                <Maximize2 className="w-4 h-4 text-[#D4AF37]" />
+                ফুলস্ক্রিন — লোগো ও নোট
+              </button>
+            )}
             <button 
               onClick={() => { setMobileMenuOpen(false); onOpenAdminVerify(); }} 
               className="w-full flex items-center justify-center gap-2 bg-[#0F0C1A] text-[#F6EFE0] border border-[#D4AF37]/30 py-2.5 rounded-lg text-sm font-semibold"

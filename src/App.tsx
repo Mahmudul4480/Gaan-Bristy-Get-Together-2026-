@@ -1,4 +1,4 @@
-import { useState, useEffect, lazy, Suspense } from 'react';
+import { useState, useEffect, lazy, Suspense, useCallback } from 'react';
 import Header from './components/Header';
 import Hero from './components/Hero';
 import AboutFamilySection from './components/AboutFamilySection';
@@ -18,7 +18,7 @@ import { isAdminUrlMatch } from './utils/adminStorage';
 import { isGateUrlMatch } from './utils/gateStorage';
 import { bindHashNavigation, navigateToSection } from './utils/scrollToSection';
 import { trackGuestbookOpen, trackRegisterOpen, trackSectionView } from './utils/analytics';
-import { MessageSquare, Ticket as TicketIcon } from 'lucide-react';
+import { MessageSquare, Ticket as TicketIcon, X } from 'lucide-react';
 
 // Loaded only when actually opened, so a first-time visitor's homepage
 // doesn't have to download the admin panel, registration form, or quiz code.
@@ -56,6 +56,7 @@ export default function App() {
   const [guestsReady, setGuestsReady] = useState(!isFirebaseConfigured);
   const [selectedGuestId, setSelectedGuestId] = useState<string | null>(() => getGuestIdFromUrl());
   const [activeSection] = useState('hero');
+  const [isFxFullscreen, setIsFxFullscreen] = useState(false);
   const quizMode = getQuizMode();
   const isGateApp = isGateUrlMatch(window.location.search);
 
@@ -130,6 +131,52 @@ export default function App() {
     setIsRegisterOpen(true);
   };
 
+  const exitFxFullscreen = useCallback(async () => {
+    const doc = document as Document & { webkitExitFullscreen?: () => Promise<void> | void };
+    if (document.fullscreenElement || (doc as Document & { webkitFullscreenElement?: Element }).webkitFullscreenElement) {
+      try {
+        if (document.exitFullscreen) await document.exitFullscreen();
+        else doc.webkitExitFullscreen?.();
+      } catch {
+        /* already exited */
+      }
+    }
+    setIsFxFullscreen(false);
+  }, []);
+
+  const enterFxFullscreen = useCallback(async () => {
+    setIsFxFullscreen(true);
+    const root = document.getElementById('app-root') as
+      | (HTMLElement & { webkitRequestFullscreen?: () => Promise<void> | void })
+      | null;
+    try {
+      if (root?.requestFullscreen) await root.requestFullscreen();
+      else root?.webkitRequestFullscreen?.();
+    } catch {
+      /* browser blocked fullscreen — overlay still hides UI */
+    }
+  }, []);
+
+  useEffect(() => {
+    const onChange = () => {
+      const fs =
+        document.fullscreenElement ||
+        (document as Document & { webkitFullscreenElement?: Element }).webkitFullscreenElement;
+      if (!fs) setIsFxFullscreen(false);
+    };
+    document.addEventListener('fullscreenchange', onChange);
+    document.addEventListener('webkitfullscreenchange', onChange);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsFxFullscreen(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('fullscreenchange', onChange);
+      document.removeEventListener('webkitfullscreenchange', onChange);
+      window.removeEventListener('keydown', onKey);
+    };
+  }, []);
+
   if (isGateApp) {
     return (
       <Suspense fallback={null}>
@@ -159,7 +206,7 @@ export default function App() {
   }
 
   return (
-    <div id="app-root" className="relative min-h-screen bg-[#0F0C1A] text-[#F6EFE0] font-sans antialiased selection:bg-[#D4AF37] selection:text-[#0F0C1A] midnight-bg-glow overflow-x-hidden">
+    <div id="app-root" className={`relative min-h-screen bg-[#0F0C1A] text-[#F6EFE0] font-sans antialiased selection:bg-[#D4AF37] selection:text-[#0F0C1A] midnight-bg-glow overflow-x-hidden${isFxFullscreen ? ' fx-fullscreen' : ''}`}>
       <SiteSeo />
 
       <div id="top-announcement-bar" className="bg-[#7A1F3D] text-[#F6EFE0] py-2 px-3 sm:px-4 border-b border-[#D4AF37]/30 text-xs sm:text-sm font-semibold flex items-center justify-between gap-2 shadow-lg z-50 relative">
@@ -184,17 +231,22 @@ export default function App() {
         </div>
       </div>
 
-      <FallingMusicNotes />
+      <FallingMusicNotes fillViewport={isFxFullscreen} />
 
       <Header
         onOpenRegister={() => handleOpenRegister('header')}
         onOpenAdminVerify={() => setIsAdminVerifyOpen(true)}
         onOpenCanvaGuide={() => setIsCanvaGuideOpen(true)}
+        onOpenFullscreen={enterFxFullscreen}
         activeSection={activeSection}
       />
 
       <main id="main-content">
-        <Hero onOpenRegister={() => handleOpenRegister('hero')} onExploreSchedule={handleExploreSchedule} />
+        <Hero
+          onOpenRegister={() => handleOpenRegister('hero')}
+          onExploreSchedule={handleExploreSchedule}
+          onOpenFullscreen={enterFxFullscreen}
+        />
         <AboutFamilySection />
         <EventDetails onOpenRegister={() => handleOpenRegister('event_details')} />
         <Schedule />
@@ -211,6 +263,17 @@ export default function App() {
       </main>
 
       <AgencyFooter />
+
+      {isFxFullscreen && (
+        <button
+          type="button"
+          onClick={exitFxFullscreen}
+          className="fixed top-4 right-4 z-[100] inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-[#7A1F3D] border border-[#D4AF37] text-[#F0D78C] font-bold text-sm cursor-pointer shadow-lg"
+        >
+          <X className="w-4 h-4" />
+          ফুলস্ক্রিন বন্ধ
+        </button>
+      )}
 
       {isRegisterOpen && (
         <Suspense fallback={<ModalLoadingOverlay />}>

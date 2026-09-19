@@ -12,7 +12,7 @@ function getCanvasHeight(viewportHeight: number, mobile: boolean) {
   return Math.min(viewportHeight * 0.62, 560);
 }
 
-export default function FallingMusicNotes() {
+export default function FallingMusicNotes({ fillViewport = false }: { fillViewport?: boolean }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   useEffect(() => {
@@ -50,6 +50,11 @@ export default function FallingMusicNotes() {
     let animationFrameId = 0;
     let mobile = isMobileViewport();
 
+    const canvasHeightFor = () => {
+      if (fillViewport || !mobile) return window.innerHeight;
+      return getCanvasHeight(window.innerHeight, mobile);
+    };
+
     const pickType = (): 'note' | 'umbrella' | 'gb' => {
       const r = Math.random();
       if (r > 0.72) return 'umbrella';
@@ -59,7 +64,7 @@ export default function FallingMusicNotes() {
 
     const makeDrop = (forceType?: 'note' | 'umbrella' | 'gb'): NoteDrop => {
       const type = forceType ?? pickType();
-      const canvasHeight = getCanvasHeight(window.innerHeight, mobile);
+      const canvasHeight = canvasHeightFor();
 
       const base: NoteDrop = {
         x: Math.random() * canvas.width,
@@ -95,7 +100,7 @@ export default function FallingMusicNotes() {
     const resize = () => {
       mobile = isMobileViewport();
       canvas.width = window.innerWidth;
-      canvas.height = getCanvasHeight(window.innerHeight, mobile);
+      canvas.height = canvasHeightFor();
     };
 
     const init = () => {
@@ -160,13 +165,13 @@ export default function FallingMusicNotes() {
       window.removeEventListener('resize', init);
       cancelAnimationFrame(animationFrameId);
     };
-  }, []);
+  }, [fillViewport]);
 
   return (
     <canvas
       ref={canvasRef}
       id="notes-canvas"
-      className="notes-canvas fixed pointer-events-none w-full"
+      className={`notes-canvas fixed pointer-events-none w-full ${fillViewport ? 'notes-canvas--full' : ''}`}
       aria-hidden="true"
     />
   );

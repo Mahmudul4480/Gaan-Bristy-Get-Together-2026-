@@ -1,16 +1,17 @@
 import CountdownTimer from './CountdownTimer';
 import HeroBrandLockup from './HeroBrandLockup';
 import { EVENT_DETAILS, isRegistrationOpen } from '../data/eventData';
-import { Calendar, Clock, MapPin, Sparkles, AlertTriangle, ArrowRight, Music, Utensils, Gift, Smile, Shirt } from 'lucide-react';
+import { Calendar, Clock, MapPin, Sparkles, AlertTriangle, ArrowRight, Music, Utensils, Gift, Smile, Shirt, Maximize2 } from 'lucide-react';
 import AddToCalendar from './AddToCalendar';
 import GaanBristyUmbrella from './GaanBristyUmbrella';
 
 interface HeroProps {
   onOpenRegister: () => void;
   onExploreSchedule: () => void;
+  onOpenFullscreen?: () => void;
 }
 
-export default function Hero({ onOpenRegister, onExploreSchedule }: HeroProps) {
+export default function Hero({ onOpenRegister, onExploreSchedule, onOpenFullscreen }: HeroProps) {
   const remainingSeats = EVENT_DETAILS.totalSeats - EVENT_DETAILS.reservedSeatsCount;
   const percentageFilled = Math.round((EVENT_DETAILS.reservedSeatsCount / EVENT_DETAILS.totalSeats) * 100);
   const registrationOpen = isRegistrationOpen();
@@ -208,6 +209,18 @@ export default function Hero({ onOpenRegister, onExploreSchedule }: HeroProps) {
               >
                 <span>ইভেন্ট শিডিউল</span>
               </button>
+
+              {onOpenFullscreen && (
+                <button
+                  type="button"
+                  onClick={onOpenFullscreen}
+                  id="hero-fullscreen-fx-btn"
+                  className="w-full sm:w-auto px-6 py-4 bg-[#7A1F3D] hover:bg-[#8d2548] text-[#F0D78C] font-semibold text-sm rounded-full border border-[#D4AF37] transition flex items-center justify-center gap-2 cursor-pointer shadow-md"
+                >
+                  <Maximize2 className="w-4 h-4" />
+                  <span>ফুলস্ক্রিন</span>
+                </button>
+              )}
 
               <AddToCalendar variant="compact" />
             </div>

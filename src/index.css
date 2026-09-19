@@ -594,6 +594,22 @@ section#hero {
   height: 100%;
 }
 
+.notes-canvas--full,
+#app-root.fx-fullscreen .notes-canvas {
+  inset: 0 !important;
+  top: 0 !important;
+  height: 100% !important;
+  z-index: 2;
+}
+
+#app-root.fx-fullscreen #top-announcement-bar,
+#app-root.fx-fullscreen #main-header,
+#app-root.fx-fullscreen #main-content,
+#app-root.fx-fullscreen #agency-footer {
+  visibility: hidden;
+  pointer-events: none;
+}
+
 @media (max-width: 767px) {
   .notes-canvas {
     inset: auto 0 auto 0;
