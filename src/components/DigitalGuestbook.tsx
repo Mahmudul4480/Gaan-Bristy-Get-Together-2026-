@@ -9,7 +9,12 @@ import {
   subscribeToGuestbookEntries,
   updateGuestbookLikes,
 } from '../utils/guestbookStorage';
-import { MessageSquarePlus, Heart, Music, Send, Sparkles, User, Search, CheckCircle2, MessageCircle, Star, Loader2, AlertCircle, ChevronDown } from 'lucide-react';
+import { MessageSquarePlus, Heart, Music, Send, Sparkles, User, Search, CheckCircle2, MessageCircle, Star, Loader2, AlertCircle, ChevronDown, Download, Lock } from 'lucide-react';
+
+/** Reward for leaving a guestbook message — a Drive folder of event photos. */
+const GUEST_PHOTOS_DRIVE_URL =
+  'https://drive.google.com/drive/folders/1Mzij3njeIxnI_AGYuLM22Ens_ohb5Ang?usp=sharing';
+const GUESTBOOK_POSTED_STORAGE_KEY = 'gb_guestbook_has_posted';
 
 const TEAM_WELCOME_ENTRIES: GuestbookEntry[] = [
   {
@@ -173,6 +178,14 @@ export default function DigitalGuestbook() {
     return {};
   });
 
+  const [hasPosted, setHasPosted] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem(GUESTBOOK_POSTED_STORAGE_KEY) === 'true';
+    } catch {
+      return false;
+    }
+  });
+
   const [formName, setFormName] = useState('');
   const [formStarMakerId, setFormStarMakerId] = useState('');
   const [formFavoriteSong, setFormFavoriteSong] = useState('');
@@ -262,6 +275,12 @@ export default function DigitalGuestbook() {
       setFormFavoriteSong('');
       setFormMessage('');
       setSubmittedSuccess(true);
+      setHasPosted(true);
+      try {
+        localStorage.setItem(GUESTBOOK_POSTED_STORAGE_KEY, 'true');
+      } catch {
+        // Ignore — worst case they just see the unlock banner again next visit.
+      }
       setTimeout(() => setSubmittedSuccess(false), 4000);
     } catch (error) {
       setSubmitError(error instanceof Error ? error.message : 'বার্তা পোস্ট করা যায়নি।');
@@ -301,6 +320,23 @@ export default function DigitalGuestbook() {
             ২০২৬ এর গ্র্যান্ড মিলনমেলা উপলক্ষে আপনার মূল্যবান শুভেচ্ছা ও মতামত লিখে গেস্টবুকে পোস্ট করুন — সবাই একই জায়গায় দেখতে পাবে।
           </p>
           <div className="w-24 h-1 bg-gradient-to-r from-[#7A1F3D] to-[#D4AF37] mx-auto my-3 rounded-full"></div>
+
+          {hasPosted ? (
+            <a
+              href={GUEST_PHOTOS_DRIVE_URL}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-[#D4AF37] to-[#F0D78C] text-[#0F0C1A] font-extrabold text-sm shadow-xl hover:scale-[1.03] transition"
+            >
+              <Download className="w-4 h-4" />
+              ইভেন্টের সব ছবি ডাউনলোড করুন (Google Drive)
+            </a>
+          ) : (
+            <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#1C1730] border border-[#D4AF37]/30 text-[#B3A6C9] text-xs font-semibold">
+              <Lock className="w-3.5 h-3.5 text-[#D4AF37] shrink-0" />
+              <span>নিচে একটা শুভেচ্ছা বার্তা পোস্ট করুন — সাথে সাথেই ইভেন্টের ছবি ডাউনলোড করার লিংক পেয়ে যাবেন!</span>
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
@@ -313,9 +349,20 @@ export default function DigitalGuestbook() {
             </div>
 
             {submittedSuccess && (
-              <div className="mb-5 p-3.5 bg-[#7A1F3D]/30 border border-[#7A1F3D] text-white rounded-2xl text-xs font-bold flex items-center gap-2 animate-bounce">
-                <CheckCircle2 className="w-5 h-5 text-[#7A1F3D] shrink-0" />
-                <span>ধন্যবাদ! আপনার বার্তাটি সবার জন্য গেস্টবুকে যুক্ত হয়েছে।</span>
+              <div className="mb-5 p-3.5 bg-[#7A1F3D]/30 border border-[#7A1F3D] text-white rounded-2xl text-xs font-bold space-y-2">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-5 h-5 text-[#7A1F3D] shrink-0" />
+                  <span>ধন্যবাদ! আপনার বার্তাটি সবার জন্য গেস্টবুকে যুক্ত হয়েছে।</span>
+                </div>
+                <a
+                  href={GUEST_PHOTOS_DRIVE_URL}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1.5 text-[#F0D78C] underline underline-offset-2"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  এখনই ইভেন্টের ছবি ডাউনলোড করুন
+                </a>
               </div>
             )}
 
